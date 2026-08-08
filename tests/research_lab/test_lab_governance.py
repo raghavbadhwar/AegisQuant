@@ -15,7 +15,13 @@ from aegis.contracts import (
     ShadowResult,
     canonical_sha256,
 )
-from aegis.research_lab.boundaries import CandidateBoundaryError, validate_candidate_target
+from aegis.observability.manifests import local_build_fingerprint
+from aegis.research_lab.boundaries import (
+    CandidateBoundaryError,
+    candidate_overlay_hash,
+    validate_candidate_target,
+    validate_patch_scope,
+)
 from aegis.research_lab.builders import (
     build_experiment,
     build_promotion_decision,
@@ -34,6 +40,7 @@ from aegis.research_lab.validation import (
     validation_statistics,
 )
 
+ROOT = Path(__file__).resolve().parents[2]
 NOW = datetime(2026, 8, 8, tzinfo=UTC)
 
 
@@ -42,7 +49,13 @@ def learning_candidate() -> LearningCandidate:
         candidate_id="candidate-skill-1",
         candidate_type="skill",
         target_id="quant-signal-analysis",
-        proposed_patch="Tighten the point-in-time precondition.",
+        proposed_patch=(
+            "diff --git a/skills/candidates/quant-signal.md "
+            "b/skills/candidates/quant-signal.md\n"
+            "--- a/skills/candidates/quant-signal.md\n"
+            "+++ b/skills/candidates/quant-signal.md\n"
+            "@@ -1 +1 @@\n-old rule\n+point-in-time rule\n"
+        ),
         trigger_case_ids=["case-1"],
         evidence_ids=["evidence-1"],
         diagnosis="A precondition was underspecified.",
@@ -187,13 +200,16 @@ def test_promotion_requires_independent_validation_and_human_hash_binding(
         passed=True,
         evaluated_at=NOW,
     )
+    revision, tree_hash, _ = local_build_fingerprint(ROOT)
+    patch_hash = canonical_sha256(candidate.proposed_patch)
+    target_path = "skills/candidates/quant-signal.md"
     patch = CandidatePatchMetadata(
         candidate_id=candidate.candidate_id,
-        target_path="skills/candidates/quant-signal.md",
-        base_revision="abc123",
-        base_tree_hash="1" * 64,
-        patch_hash=canonical_sha256(candidate.proposed_patch),
-        candidate_tree_hash="2" * 64,
+        target_path=target_path,
+        base_revision=revision,
+        base_tree_hash=tree_hash,
+        patch_hash=patch_hash,
+        candidate_tree_hash=candidate_overlay_hash(tree_hash, patch_hash, target_path),
     )
     unlock_values = dict(
         unlock_id="human-holdout-unlock-1",
@@ -237,7 +253,7 @@ def test_promotion_requires_independent_validation_and_human_hash_binding(
         patch=patch,
         holdout_unlock=holdout_unlock,
         shadow_result=shadow_result,
-        project_root=tmp_path,
+        project_root=ROOT,
     )
     self_approved = build_promotion_decision(
         **{
@@ -254,7 +270,7 @@ def test_promotion_requires_independent_validation_and_human_hash_binding(
             patch=patch,
             holdout_unlock=holdout_unlock,
             shadow_result=shadow_result,
-            project_root=tmp_path,
+            project_root=ROOT,
         )
 
     rejected = candidate.model_copy(update={"status": "rejected"})
@@ -266,7 +282,7 @@ def test_promotion_requires_independent_validation_and_human_hash_binding(
             patch=patch,
             holdout_unlock=holdout_unlock,
             shadow_result=shadow_result,
-            project_root=tmp_path,
+            project_root=ROOT,
         )
     same_evaluator = build_promotion_decision(
         **{
@@ -283,7 +299,7 @@ def test_promotion_requires_independent_validation_and_human_hash_binding(
             patch=patch,
             holdout_unlock=holdout_unlock,
             shadow_result=shadow_result,
-            project_root=tmp_path,
+            project_root=ROOT,
         )
     early_decision = build_promotion_decision(
         **{
@@ -300,7 +316,7 @@ def test_promotion_requires_independent_validation_and_human_hash_binding(
             patch=patch,
             holdout_unlock=holdout_unlock,
             shadow_result=shadow_result,
-            project_root=tmp_path,
+            project_root=ROOT,
         )
     disconnected_patch = patch.model_copy(update={"patch_hash": "3" * 64})
     with pytest.raises(PromotionDenied, match="patch metadata"):
@@ -311,7 +327,7 @@ def test_promotion_requires_independent_validation_and_human_hash_binding(
             patch=disconnected_patch,
             holdout_unlock=holdout_unlock,
             shadow_result=shadow_result,
-            project_root=tmp_path,
+            project_root=ROOT,
         )
 
 
@@ -362,3 +378,14 @@ def test_matured_outcome_postmortem_is_append_only_and_candidate_only(tmp_path: 
     )
     with pytest.raises(OutcomeIntegrityError, match="not mature"):
         ledger.append_outcome(immature)
+
+
+def test_candidate_patch_cannot_hide_a_locked_file_change() -> None:
+    malicious = (
+        "diff --git a/aegis/fund/run_cycle.py b/aegis/fund/run_cycle.py\n"
+        "--- a/aegis/fund/run_cycle.py\n"
+        "+++ b/aegis/fund/run_cycle.py\n"
+        "@@ -1 +1 @@\n-old\n+unsafe\n"
+    )
+    with pytest.raises(CandidateBoundaryError, match=r"undeclared path|declared target"):
+        validate_patch_scope(malicious, "skills/candidates/declared-safe.md")

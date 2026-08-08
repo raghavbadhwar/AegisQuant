@@ -13,8 +13,9 @@ from aegis.contracts import (
     ValidationReport,
     canonical_sha256,
 )
+from aegis.observability.manifests import local_build_fingerprint
 
-from .boundaries import validate_candidate_target
+from .boundaries import candidate_overlay_hash, validate_candidate_target, validate_patch_scope
 
 
 class PromotionDenied(RuntimeError):
@@ -48,6 +49,14 @@ def authorize_promotion(
     if candidate.status != "shadow":
         raise PromotionDenied("candidate must complete shadow status before promotion")
     validate_candidate_target(project_root, patch.target_path)
+    validate_patch_scope(candidate.proposed_patch, patch.target_path)
+    revision, tree_hash, _ = local_build_fingerprint(project_root)
+    if patch.base_revision != revision or patch.base_tree_hash != tree_hash:
+        raise PromotionDenied("candidate patch base does not match the current build")
+    if patch.candidate_tree_hash != candidate_overlay_hash(
+        patch.base_tree_hash, patch.patch_hash, patch.target_path
+    ):
+        raise PromotionDenied("candidate overlay hash does not match patch metadata")
     if patch.candidate_id != candidate.candidate_id or patch.patch_hash != canonical_sha256(
         candidate.proposed_patch
     ):
