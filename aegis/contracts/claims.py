@@ -117,6 +117,19 @@ class ClaimGraphSnapshot(ContractModel):
             for numeric in self.numeric_claims
         ):
             raise ValueError("numeric claim provenance disagrees with its claim")
+        derived = {
+            (edge.source_id, edge.target_id)
+            for edge in self.edges
+            if edge.source_kind == "claim"
+            and edge.target_kind == "calculation"
+            and edge.relation == "DERIVED_BY"
+        }
+        if any(
+            numeric.calculation_id is None
+            or (numeric.claim_id, numeric.calculation_id) not in derived
+            for numeric in self.numeric_claims
+        ):
+            raise ValueError("numeric claim requires a matching DERIVED_BY calculation edge")
         payload = {
             "case_id": self.case_id,
             "claims": self.claims,

@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import json
 from datetime import timedelta
+from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
 import pytest
 
-from aegis.contracts import Claim, ClaimEdge, EvidenceAuditPolicy
+from aegis.contracts import Claim, ClaimEdge, EvidenceAuditPolicy, NumericClaim
 from aegis.data import FixtureDataClient
 from aegis.evidence import EvidenceLedger, audit_evidence, build_claim_graph
 from aegis.fund.models import FixtureForecastProvider, ForecastIntegrityError, load_replay_manifest
@@ -261,3 +262,59 @@ def test_replay_graph_rejects_unsealed_memory_reader() -> None:
             preflight.evidence,
             FalseReportingMemoryReader(),  # type: ignore[arg-type]
         )
+
+
+def test_nonexistent_calculation_id_blocks_numeric_claim() -> None:
+    _, _, _, preflight = components()
+    evidence = preflight.evidence.records[0]
+    claim = Claim(
+        claim_id="numeric-made-up",
+        case_id=preflight.case_id,
+        statement="Made-up exact number.",
+        claim_type="numeric",
+        material=True,
+        evidence_ids=[evidence.evidence_id],
+    )
+    numeric = NumericClaim(
+        claim_id=claim.claim_id,
+        name="made_up",
+        value=Decimal("123"),
+        unit="ratio",
+        evidence_id=evidence.evidence_id,
+        coordinates="forecast_id=self;field=value",
+        calculation_id="made-up-nonexistent-calculation",
+    )
+    edges = [
+        ClaimEdge(
+            edge_id="made-up-support",
+            source_kind="evidence",
+            source_id=evidence.evidence_id,
+            relation="SUPPORTS",
+            target_kind="claim",
+            target_id=claim.claim_id,
+        ),
+        ClaimEdge(
+            edge_id="made-up-derived",
+            source_kind="claim",
+            source_id=claim.claim_id,
+            relation="DERIVED_BY",
+            target_kind="calculation",
+            target_id=numeric.calculation_id or "missing",
+        ),
+    ]
+    graph = build_claim_graph(preflight.case_id, [claim], [numeric], edges)
+    audit = audit_evidence(preflight.evidence, graph, EvidenceAuditPolicy())
+    assert not audit.approved
+    assert any(finding.code == "numeric-provenance" for finding in audit.findings)
+
+
+def test_cio_exact_number_must_match_registered_deterministic_calculation(
+    tmp_path: Path,
+) -> None:
+    outputs = json.loads((ROOT / "data/fixtures/agent_outputs.json").read_text())
+    outputs["roles"]["cio"]["forecasts"][0]["expected_excess_return"] = 0.086
+    path = tmp_path / "mutated-cio.json"
+    path.write_text(json.dumps(outputs))
+    case, snapshot, provider = make_provider(ReplayModelProvider(path, "nvda-earnings-demo"))
+    with pytest.raises(ForecastIntegrityError, match="deterministic calculation"):
+        provider.research(case, snapshot)

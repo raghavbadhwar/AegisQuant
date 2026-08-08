@@ -25,6 +25,10 @@ from aegis.contracts import (
 )
 from aegis.data import MarketSnapshot
 from aegis.evidence import audit_evidence, build_claim_graph
+from aegis.evidence.calculations import (
+    forecast_calculation_id,
+    resolve_registered_calculation,
+)
 from aegis.fund.models import ForecastIntegrityError, ResearchDossier, build_dossier
 from aegis.harness.agent_loader import AgentPrompt
 from aegis.harness.budgets import Budget
@@ -347,15 +351,32 @@ class LangGraphForecastProvider:
                         status="verified",
                     )
                 )
+                calculation_id = forecast_calculation_id(forecast.ticker, field_name)
+                expected_value = resolve_registered_calculation(calculation_id)
+                actual_value = Decimal(str(value))
+                if expected_value is None or actual_value != expected_value:
+                    raise ForecastIntegrityError(
+                        "forecast exact number failed deterministic calculation"
+                    )
                 numeric_claims.append(
                     NumericClaim(
                         claim_id=numeric_id,
                         name=field_name,
-                        value=Decimal(str(value)),
+                        value=actual_value,
                         unit="ratio",
                         evidence_id=forecast.evidence_ids[0],
                         coordinates=(f"forecast_id={forecast.forecast_id};field={field_name}"),
-                        calculation_id=f"{forecast.model_name}:structured-output-v1",
+                        calculation_id=calculation_id,
+                    )
+                )
+                edges.append(
+                    ClaimEdge(
+                        edge_id=f"{numeric_id}:derived-by:{calculation_id}",
+                        source_kind="claim",
+                        source_id=numeric_id,
+                        relation="DERIVED_BY",
+                        target_kind="calculation",
+                        target_id=calculation_id,
                     )
                 )
                 for evidence_id in forecast.evidence_ids:

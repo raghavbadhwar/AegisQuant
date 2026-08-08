@@ -11,6 +11,11 @@ from aegis.contracts import (
     canonical_sha256,
 )
 
+from .calculations import (
+    registered_calculation_identity,
+    resolve_registered_calculation,
+)
+
 
 def audit_evidence(
     bundle: EvidenceBundle,
@@ -79,12 +84,22 @@ def audit_evidence(
     claim_by_id = {claim.claim_id: claim for claim in graph.claims}
     for numeric in graph.numeric_claims:
         numeric_parent = claim_by_id.get(numeric.claim_id)
+        identity = (
+            registered_calculation_identity(numeric.calculation_id)
+            if numeric.calculation_id
+            else None
+        )
+        evidence = evidence_by_id.get(numeric.evidence_id)
         if (
-            numeric.evidence_id not in evidence_by_id
+            evidence is None
             or numeric_parent is None
             or numeric.evidence_id not in numeric_parent.evidence_ids
             or not numeric.coordinates
             or not numeric.calculation_id
+            or identity is None
+            or identity[1] != numeric.name
+            or identity[0] not in evidence.entity_ids
+            or resolve_registered_calculation(numeric.calculation_id) != numeric.value
         ):
             findings.append(
                 AuditFinding(
