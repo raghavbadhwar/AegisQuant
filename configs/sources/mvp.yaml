@@ -1,0 +1,101 @@
+
+- source_id: sec-edgar
+  display_name: SEC EDGAR
+  source_type: official_api
+  domains: [data.sec.gov, www.sec.gov]
+  markets: [US]
+  information_types: [regulatory_filing, fundamentals]
+  live_safe: true
+  historical_safe: true
+  point_in_time_safe: true
+  requires_auth: false
+  credential_scope: null
+  licence_classification: public-government
+  obey_robots: true
+  minimum_interval_seconds: 1
+  max_pages_per_job: 5
+  max_depth: 1
+  retention_policy: immutable
+  parser_profile: sec-json-xbrl-v1
+  reliability_prior: 0.98
+  version: 1.0.0
+- source_id: company-ir
+  display_name: Approved company investor relations
+  source_type: official_web
+  domains: [investor.apple.com]
+  markets: [US]
+  information_types: [company_announcement, earnings]
+  live_safe: true
+  historical_safe: false
+  point_in_time_safe: false
+  requires_auth: false
+  credential_scope: null
+  licence_classification: public-web
+  obey_robots: true
+  minimum_interval_seconds: 2
+  max_pages_per_job: 3
+  max_depth: 1
+  retention_policy: immutable
+  parser_profile: html-v1
+  reliability_prior: 0.90
+  version: 1.0.0
+- source_id: rss-company-news
+  display_name: Company news RSS
+  source_type: rss
+  domains: [investor.apple.com]
+  markets: [US]
+  information_types: [company_announcement]
+  live_safe: true
+  historical_safe: false
+  point_in_time_safe: false
+  requires_auth: false
+  credential_scope: null
+  licence_classification: public-rss
+  obey_robots: true
+  minimum_interval_seconds: 2
+  max_pages_per_job: 3
+  max_depth: 0
+  retention_policy: immutable
+  parser_profile: rss-v1
+  reliability_prior: 0.85
+  version: 1.0.0
+- source_id: agent-reach-github
+  display_name: Agent Reach GitHub activity
+  source_type: community
+  domains: [agent-reach.invalid]
+  markets: [global]
+  information_types: [github_activity]
+  live_safe: true
+  historical_safe: false
+  point_in_time_safe: false
+  requires_auth: false
+  credential_scope: null
+  licence_classification: connector-dependent
+  obey_robots: true
+  minimum_interval_seconds: 5
+  max_pages_per_job: 3
+  max_depth: 0
+  retention_policy: immutable
+  parser_profile: agent-reach-json-v1
+  reliability_prior: 0.55
+  version: 1.0.0
+- source_id: scrapling-approved-web
+  display_name: Scrapling approved web
+  source_type: crawler
+  domains: [investor.apple.com]
+  markets: [US]
+  information_types: [company_announcement]
+  live_safe: true
+  historical_safe: false
+  point_in_time_safe: false
+  requires_auth: false
+  credential_scope: null
+  licence_classification: public-web
+  obey_robots: true
+  minimum_interval_seconds: 5
+  max_pages_per_job: 2
+  max_depth: 1
+  retention_policy: immutable
+  parser_profile: scrapling-html-v1
+  reliability_prior: 0.70
+  version: 1.0.0

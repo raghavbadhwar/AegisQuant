@@ -3,7 +3,8 @@ name: postmortem
 version: 1.0.0
 role: Postmortem Agent
 model_alias: memory-synthesis
-skills: []
+skills:
+- postmortem-learning
 allowed_tools:
 - artifact.read
 - outcome.read

@@ -10,20 +10,29 @@ from langgraph.graph import END, START, StateGraph
 
 from aegis.contracts import (
     AlphaForecast,
+    Claim,
+    ClaimEdge,
+    ClaimGraphSnapshot,
+    EvidenceAuditPolicy,
     EvidenceBundle,
+    MemoryHit,
+    MemoryQuery,
     ResearchArtifact,
     ResearchCase,
     canonical_sha256,
 )
 from aegis.data import MarketSnapshot
+from aegis.evidence import audit_evidence, build_claim_graph
 from aegis.fund.models import ForecastIntegrityError, ResearchDossier, build_dossier
+from aegis.harness.agent_loader import AgentPrompt
 from aegis.harness.budgets import Budget
 from aegis.harness.capability_broker import CapabilityBroker
 from aegis.harness.context_compiler import compile_context
-from aegis.harness.model_router import ModelProvider, ModelProviderError
+from aegis.harness.model_router import ModelProvider, ModelProviderError, ReplayModelProvider
 from aegis.harness.network_guard import deny_network_io
 from aegis.harness.skill_loader import SkillDefinition
 from aegis.harness.state import DeskState
+from aegis.memory.protocol import MemoryReader
 from aegis.observability import GraphEvent
 
 _ROLE_SKILLS = {
@@ -50,8 +59,12 @@ class LangGraphForecastProvider:
         self,
         model_provider: ModelProvider,
         skills: dict[str, SkillDefinition],
+        agent_prompts: dict[str, AgentPrompt],
         evidence: EvidenceBundle,
+        memory_reader: MemoryReader | None = None,
     ) -> None:
+        if type(model_provider) is not ReplayModelProvider:
+            raise ValueError("replay graph requires the sealed ReplayModelProvider")
         if model_provider.network_enabled:
             raise ValueError("replay LangGraph provider requires a network-denied model provider")
         missing = sorted(set(_ROLE_SKILLS.values()).difference(skills))
@@ -59,7 +72,12 @@ class LangGraphForecastProvider:
             raise ValueError(f"missing graph skills: {missing}")
         self.model_provider = model_provider
         self.skills = skills
+        missing_prompts = sorted(set(_ROLE_SKILLS).difference(agent_prompts))
+        if missing_prompts:
+            raise ValueError(f"missing graph agent prompts: {missing_prompts}")
+        self.agent_prompts = agent_prompts
         self.evidence = evidence
+        self.memory_reader = memory_reader
         self._capabilities: CapabilityBroker | None = None
         self.graph = self._build_graph()
 
@@ -75,6 +93,8 @@ class LangGraphForecastProvider:
                 max_tool_calls=skill.metadata.max_tool_calls,
                 max_cost_usd=skill.metadata.max_cost_usd,
             ),
+            memory_hits=state.get("memory_hits", ()),
+            memory_snapshot_hash=state.get("memory_snapshot_hash", canonical_sha256([])),
         )
         return context.input_hash
 
@@ -120,6 +140,7 @@ class LangGraphForecastProvider:
             model_alias=skill.metadata.model_alias,
             actual_model=actual_model,
             skill_versions=[skill.version_id],
+            prompt_versions=[self.agent_prompts[role].version_id],
             evidence_ids=evidence_ids,
             payload=payload,
             warnings=warning,
@@ -132,6 +153,49 @@ class LangGraphForecastProvider:
             node=role,
             event_type="node_complete",
             status="abstained" if warning else "completed",
+            occurred_at=state["case"].as_of,
+            metadata={"artifact_id": artifact.artifact_id, "input_hash": input_hash},
+        )
+        return artifact, event
+
+    def _synthetic_abstention_artifact(
+        self,
+        state: DeskState,
+        role: str,
+        artifact_type: str,
+        task: str,
+        reason: str,
+        extra: dict[str, Any] | None = None,
+    ) -> tuple[ResearchArtifact, GraphEvent]:
+        skill = self.skills[_ROLE_SKILLS[role]]
+        input_hash = self._context_hash(state, role, task)
+        payload: dict[str, Any] = {
+            "input_hash": input_hash,
+            "output": {"abstained": True, "abstain_reason": reason, "evidence_ids": []},
+        }
+        if extra:
+            payload.update(extra)
+        artifact = ResearchArtifact(
+            artifact_id=f"{state['case'].case_id}:{role}",
+            case_id=state["case"].case_id,
+            artifact_type=artifact_type,
+            producer_agent=role,
+            model_alias=skill.metadata.model_alias,
+            actual_model="deterministic/auditor-failure-abstention",
+            skill_versions=[skill.version_id],
+            prompt_versions=[self.agent_prompts[role].version_id],
+            evidence_ids=[],
+            payload=payload,
+            warnings=[reason],
+            content_hash=canonical_sha256(payload),
+        )
+        event = GraphEvent(
+            event_id=f"{state['case'].case_id}:{role}:complete",
+            case_id=state["case"].case_id,
+            sequence=_SEQUENCE[role],
+            node=role,
+            event_type="node_complete",
+            status="abstained",
             occurred_at=state["case"].as_of,
             metadata={"artifact_id": artifact.artifact_id, "input_hash": input_hash},
         )
@@ -168,15 +232,118 @@ class LangGraphForecastProvider:
             update["failed_roles"] = frozenset({"coordinator"})
         return update
 
+    @staticmethod
+    def _build_claims(
+        case: ResearchCase,
+        evidence: EvidenceBundle,
+        artifacts: tuple[ResearchArtifact, ...],
+        forecasts: tuple[AlphaForecast, ...] = (),
+    ) -> tuple[ClaimGraphSnapshot, tuple[ResearchArtifact, ...]]:
+        claims: list[Claim] = []
+        edges: list[ClaimEdge] = []
+        updated_artifacts: list[ResearchArtifact] = []
+        for artifact in artifacts:
+            output = artifact.payload.get("output")
+            summary = output.get("summary") if isinstance(output, dict) else None
+            claim_ids: list[str] = []
+            if isinstance(summary, str) and summary.strip() and artifact.evidence_ids:
+                claim_id = f"{artifact.artifact_id}:claim"
+                claim_ids.append(claim_id)
+                claims.append(
+                    Claim(
+                        claim_id=claim_id,
+                        case_id=case.case_id,
+                        statement=summary,
+                        claim_type=(
+                            "opinion"
+                            if artifact.producer_agent in {"bull", "bear", "base-rate"}
+                            else "factual"
+                        ),
+                        material=True,
+                        evidence_ids=artifact.evidence_ids,
+                        status="verified",
+                    )
+                )
+                for evidence_id in artifact.evidence_ids:
+                    edges.append(
+                        ClaimEdge(
+                            edge_id=f"{evidence_id}:supports:{claim_id}",
+                            source_kind="evidence",
+                            source_id=evidence_id,
+                            relation="SUPPORTS",
+                            target_kind="claim",
+                            target_id=claim_id,
+                        )
+                    )
+                edges.append(
+                    ClaimEdge(
+                        edge_id=f"{claim_id}:used-in:{artifact.artifact_id}",
+                        source_kind="claim",
+                        source_id=claim_id,
+                        relation="USED_IN",
+                        target_kind="artifact",
+                        target_id=artifact.artifact_id,
+                    )
+                )
+            updated_artifacts.append(artifact.model_copy(update={"claim_ids": claim_ids}))
+        cio_ids = [
+            artifact.artifact_id for artifact in artifacts if artifact.producer_agent == "cio"
+        ]
+        for forecast in forecasts:
+            if forecast.abstained:
+                continue
+            claim_id = f"{forecast.forecast_id}:claim"
+            claims.append(
+                Claim(
+                    claim_id=claim_id,
+                    case_id=case.case_id,
+                    statement=forecast.thesis,
+                    claim_type="forecast",
+                    material=True,
+                    evidence_ids=forecast.evidence_ids,
+                    status="verified",
+                )
+            )
+            for evidence_id in forecast.evidence_ids:
+                edges.append(
+                    ClaimEdge(
+                        edge_id=f"{evidence_id}:supports:{claim_id}",
+                        source_kind="evidence",
+                        source_id=evidence_id,
+                        relation="SUPPORTS",
+                        target_kind="claim",
+                        target_id=claim_id,
+                    )
+                )
+            if cio_ids:
+                edges.append(
+                    ClaimEdge(
+                        edge_id=f"{cio_ids[0]}:used-in:{forecast.forecast_id}",
+                        source_kind="artifact",
+                        source_id=cio_ids[0],
+                        relation="USED_IN",
+                        target_kind="forecast",
+                        target_id=forecast.forecast_id,
+                    )
+                )
+        return build_claim_graph(case.case_id, claims, [], edges), tuple(updated_artifacts)
+
     def _audit(self, state: DeskState) -> DeskState:
         specialist_ids = [
             f"{state['case'].case_id}:{role}"
             for role in ("quant", "fundamentals", "event-behavioral")
         ]
+        specialist_artifacts = tuple(state["artifacts"][key] for key in specialist_ids)
+        claim_graph, _ = self._build_claims(state["case"], state["evidence"], specialist_artifacts)
+        deterministic_audit = audit_evidence(state["evidence"], claim_graph, EvidenceAuditPolicy())
+        if not deterministic_audit.approved:
+            raise ForecastIntegrityError("deterministic evidence audit blocked the case")
         audited_hash = canonical_sha256(
             {
-                "artifacts": [state["artifacts"][key].content_hash for key in specialist_ids],
+                "artifacts": [artifact.content_hash for artifact in specialist_artifacts],
                 "evidence": state["evidence"],
+                "claim_graph": claim_graph,
+                "deterministic_audit": deterministic_audit,
             }
         )
         artifact, event = self._artifact(
@@ -202,6 +369,8 @@ class LangGraphForecastProvider:
         if not set(approved_ids).issubset(bundle_ids):
             raise ForecastIntegrityError("evidence auditor approved evidence outside the bundle")
         update["approved_evidence_ids"] = approved_ids
+        update["claim_graph"] = claim_graph
+        update["deterministic_audit"] = deterministic_audit
         return update
 
     def _review_node(self, role: str) -> Callable[[DeskState], DeskState]:
@@ -218,15 +387,23 @@ class LangGraphForecastProvider:
             )
             approved_ids = set(state.get("approved_evidence_ids", ()))
             if "evidence-auditor" in state.get("failed_roles", frozenset()):
-                approved_ids = {record.evidence_id for record in state["evidence"].records}
-            artifact, event = self._artifact(
-                state,
-                role,
-                f"{role}_opening_memo",
-                f"Produce the independent {role} opening memo.",
-                {"opening_input_hash": opening_input_hash},
-                approved_ids,
-            )
+                artifact, event = self._synthetic_abstention_artifact(
+                    state,
+                    role,
+                    f"{role}_opening_memo",
+                    f"Produce the independent {role} opening memo.",
+                    "evidence auditor failed; no evidence was approved",
+                    {"opening_input_hash": opening_input_hash},
+                )
+            else:
+                artifact, event = self._artifact(
+                    state,
+                    role,
+                    f"{role}_opening_memo",
+                    f"Produce the independent {role} opening memo.",
+                    {"opening_input_hash": opening_input_hash},
+                    approved_ids,
+                )
             update = self._update(artifact, event)
             if artifact.warnings:
                 update["failed_roles"] = frozenset({role})
@@ -243,17 +420,25 @@ class LangGraphForecastProvider:
             }
         )
         approved_ids = set(state.get("approved_evidence_ids", ()))
-        if "evidence-auditor" in state.get("failed_roles", frozenset()):
-            approved_ids = {record.evidence_id for record in state["evidence"].records}
-        artifact, event = self._artifact(
-            state,
-            "cio",
-            "cio_synthesis",
-            "Synthesize only approved artifacts into AlphaForecasts.",
-            {"synthesis_input_hash": synthesis_hash},
-            approved_ids,
-        )
         failed_roles = set(state.get("failed_roles", frozenset()))
+        if "evidence-auditor" in failed_roles:
+            artifact, event = self._synthetic_abstention_artifact(
+                state,
+                "cio",
+                "cio_synthesis",
+                "Synthesize only approved artifacts into AlphaForecasts.",
+                "evidence auditor failed; no evidence was approved",
+                {"synthesis_input_hash": synthesis_hash},
+            )
+        else:
+            artifact, event = self._artifact(
+                state,
+                "cio",
+                "cio_synthesis",
+                "Synthesize only approved artifacts into AlphaForecasts.",
+                {"synthesis_input_hash": synthesis_hash},
+                approved_ids,
+            )
         if artifact.warnings:
             failed_roles.add("cio")
         forecasts: tuple[AlphaForecast, ...] = ()
@@ -284,8 +469,7 @@ class LangGraphForecastProvider:
 
     def _verifier(self, state: DeskState) -> DeskState:
         allowed_ids = set(state.get("approved_evidence_ids", ()))
-        if "evidence-auditor" in state.get("failed_roles", frozenset()):
-            allowed_ids = {record.evidence_id for record in state["evidence"].records}
+        auditor_failed = "evidence-auditor" in state.get("failed_roles", frozenset())
         forecasts = state.get("forecasts", ())
         valid = (
             {forecast.ticker for forecast in forecasts} == set(state["case"].tickers)
@@ -296,14 +480,24 @@ class LangGraphForecastProvider:
                 for forecast in forecasts
             )
         )
-        artifact, event = self._artifact(
-            state,
-            "verifier",
-            "forecast_verification",
-            "Verify forecast schema, evidence coverage, horizon, and numeric coherence.",
-            {"deterministic_checks_passed": valid},
-            allowed_ids,
-        )
+        if auditor_failed:
+            artifact, event = self._synthetic_abstention_artifact(
+                state,
+                "verifier",
+                "forecast_verification",
+                "Verify forecast schema, evidence coverage, horizon, and numeric coherence.",
+                "evidence auditor failed; verification cannot authorize evidence",
+                {"deterministic_checks_passed": valid},
+            )
+        else:
+            artifact, event = self._artifact(
+                state,
+                "verifier",
+                "forecast_verification",
+                "Verify forecast schema, evidence coverage, horizon, and numeric coherence.",
+                {"deterministic_checks_passed": valid},
+                allowed_ids,
+            )
         output = artifact.payload.get("output")
         provider_passed = isinstance(output, dict) and output.get("passed") is True
         if not valid or not provider_passed:
@@ -408,6 +602,25 @@ class LangGraphForecastProvider:
         self._capabilities = CapabilityBroker(case.mode)
         for role, skill_name in _ROLE_SKILLS.items():
             self._capabilities.register(role, self.skills[skill_name])
+        memory_hits: tuple[MemoryHit, ...] = ()
+        memory_snapshot_hash = canonical_sha256([])
+        if self.memory_reader is not None:
+            memory_hits = self.memory_reader.search(
+                MemoryQuery(
+                    text=case.research_question,
+                    as_of=case.as_of,
+                    entity_ids=list(case.tickers),
+                    top_k=8,
+                )
+            )
+            if any(
+                hit.item.status != "approved"
+                or hit.item.available_at > case.as_of
+                or (hit.item.expires_at is not None and hit.item.expires_at <= case.as_of)
+                for hit in memory_hits
+            ):
+                raise ForecastIntegrityError("memory backend returned ineligible memory")
+            memory_snapshot_hash = self.memory_reader.snapshot(case.as_of).content_hash
         initial: DeskState = {
             "case": case,
             "snapshot": snapshot,
@@ -416,6 +629,8 @@ class LangGraphForecastProvider:
             "events": {},
             "failed_roles": frozenset(),
             "approved_evidence_ids": (),
+            "memory_hits": memory_hits,
+            "memory_snapshot_hash": memory_snapshot_hash,
             "forecasts": (),
             "status": "started",
         }
@@ -426,4 +641,18 @@ class LangGraphForecastProvider:
             sorted(result["events"].values(), key=lambda event: (event.sequence, event.event_id))
         )
         forecasts = tuple(sorted(result["forecasts"], key=lambda item: item.ticker))
-        return build_dossier(case, self.evidence, artifacts, forecasts, events)
+        claim_graph, artifacts = self._build_claims(case, self.evidence, artifacts, forecasts)
+        deterministic_audit = audit_evidence(self.evidence, claim_graph, EvidenceAuditPolicy())
+        if not deterministic_audit.approved:
+            raise ForecastIntegrityError("final deterministic evidence audit blocked the case")
+        return build_dossier(
+            case,
+            self.evidence,
+            artifacts,
+            forecasts,
+            events,
+            claim_graph,
+            deterministic_audit,
+            memory_hits,
+            memory_snapshot_hash,
+        )

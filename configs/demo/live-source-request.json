@@ -1,0 +1,14 @@
+{
+  "as_of": "2026-08-08T20:00:00+00:00",
+  "case_id": "live-source-demo",
+  "corroboration_required": false,
+  "entity_ids": [
+    "AAPL"
+  ],
+  "freshness": null,
+  "information_type": "company_announcement",
+  "max_cost_usd": 0.0,
+  "max_sources": 1,
+  "mode": "live_research",
+  "query": "Apple investor relations announcement"
+}

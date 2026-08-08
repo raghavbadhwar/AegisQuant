@@ -54,7 +54,9 @@ class ResearchArtifact(ContractModel):
     model_alias: Annotated[str, Field(min_length=1)]
     actual_model: Annotated[str, Field(min_length=1)]
     skill_versions: list[str] = Field(default_factory=list)
+    prompt_versions: list[str] = Field(default_factory=list)
     evidence_ids: list[str] = Field(default_factory=list)
+    claim_ids: list[str] = Field(default_factory=list)
     payload: dict[str, Any] = Field(default_factory=dict)
     warnings: list[str] = Field(default_factory=list)
     content_hash: str

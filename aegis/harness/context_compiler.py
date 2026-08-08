@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict
 
-from aegis.contracts import EvidenceBundle, ResearchCase, canonical_sha256
+from aegis.contracts import EvidenceBundle, MemoryHit, ResearchCase, canonical_sha256
 from aegis.data import MarketSnapshot
 from aegis.harness.budgets import Budget
 
@@ -18,6 +18,8 @@ class ContextPack(BaseModel):
     evidence: EvidenceBundle
     allowed_tools: tuple[str, ...]
     budget: Budget
+    memory_hits: tuple[MemoryHit, ...] = ()
+    memory_snapshot_hash: str = canonical_sha256([])
     warnings: tuple[str, ...] = ()
     input_hash: str
 
@@ -30,6 +32,8 @@ def compile_context(
     allowed_tools: tuple[str, ...],
     budget: Budget,
     warnings: tuple[str, ...] = (),
+    memory_hits: tuple[MemoryHit, ...] = (),
+    memory_snapshot_hash: str = canonical_sha256([]),
 ) -> ContextPack:
     payload = {
         "case": case,
@@ -38,6 +42,8 @@ def compile_context(
         "evidence": evidence,
         "allowed_tools": allowed_tools,
         "budget": budget,
+        "memory_hits": memory_hits,
+        "memory_snapshot_hash": memory_snapshot_hash,
         "warnings": warnings,
     }
     return ContextPack(
@@ -47,6 +53,8 @@ def compile_context(
         evidence=evidence,
         allowed_tools=allowed_tools,
         budget=budget,
+        memory_hits=memory_hits,
+        memory_snapshot_hash=memory_snapshot_hash,
         warnings=warnings,
         input_hash=canonical_sha256(payload),
     )

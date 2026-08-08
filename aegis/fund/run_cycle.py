@@ -47,6 +47,21 @@ def run_cycle(
         data_client.network_enabled or forecast_provider.network_enabled
     ):
         raise RuntimeError(f"network-capable provider forbidden in {case.mode} mode")
+    if case.mode in {"replay", "historical"}:
+        from aegis.data import FixtureDataClient
+        from aegis.fund.models import FixtureForecastProvider
+        from aegis.harness.graph import LangGraphForecastProvider
+        from aegis.quant.models import DeterministicCompositeProvider
+
+        if type(data_client) is not FixtureDataClient:
+            raise RuntimeError(f"unsealed data provider forbidden in {case.mode} mode")
+        sealed_provider_types = {
+            FixtureForecastProvider,
+            LangGraphForecastProvider,
+            DeterministicCompositeProvider,
+        }
+        if type(forecast_provider) not in sealed_provider_types:
+            raise RuntimeError(f"unsealed forecast provider forbidden in {case.mode} mode")
 
     held = broker.quantities()
     requested = sorted(set(case.tickers) | set(held))
@@ -135,13 +150,13 @@ def run_cycle(
         raw_evidence_hashes={
             record.evidence_id: record.content_hash for record in evidence.records
         },
-        memory_snapshot_hash=canonical_sha256([]),
+        memory_snapshot_hash=dossier.memory_snapshot_hash,
         relation_snapshot_hash=canonical_sha256([]),
         skill_versions=sorted(
             {version for artifact in dossier.artifacts for version in artifact.skill_versions}
         ),
         prompt_versions=sorted(
-            {version for artifact in dossier.artifacts for version in artifact.skill_versions}
+            {version for artifact in dossier.artifacts for version in artifact.prompt_versions}
         ),
         model_deployments=sorted(
             {artifact.actual_model for artifact in dossier.artifacts}

@@ -1,16 +1,17 @@
 from __future__ import annotations
 
+import shutil
 import sqlite3
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
+import pandas as pd
 import pytest
 
 from aegis.brokers import SimBroker
-from aegis.contracts import AlphaForecast, EvidenceBundle, ResearchCase, canonical_sha256
-from aegis.data import DataIntegrityError, FixtureDataClient, MarketSnapshot
+from aegis.data import DataIntegrityError, FixtureDataClient
 from aegis.fund.ledger import LedgerIntegrityError, SQLiteRunLedger
-from aegis.fund.models import FixtureForecastProvider, build_dossier, load_replay_manifest
+from aegis.fund.models import FixtureForecastProvider, load_replay_manifest
 from aegis.fund.run_cycle import run_cycle
 from aegis.fund.spec import load_fund_spec
 
@@ -62,35 +63,6 @@ def test_ledger_tamper_is_detected(tmp_path: Path) -> None:
         ledger.get(record.run_id)
 
 
-class AbstainingProvider:
-    network_enabled = False
-
-    def __init__(self, evidence: EvidenceBundle) -> None:
-        self._evidence = evidence
-
-    def research(self, case: ResearchCase, snapshot: MarketSnapshot):  # type: ignore[no-untyped-def]
-        evidence = self._evidence.model_copy(update={"case_id": case.case_id, "as_of": case.as_of})
-        forecasts = tuple(
-            AlphaForecast(
-                forecast_id=f"abstain-{ticker}",
-                model_name="failed-model",
-                ticker=ticker,
-                as_of=case.as_of,
-                horizon_days=case.horizon_days,
-                expected_excess_return=None,
-                expected_volatility=None,
-                probability_positive=0.5,
-                confidence=0.0,
-                uncertainty=1.0,
-                thesis="",
-                abstained=True,
-                abstain_reason="provider unavailable",
-            )
-            for ticker in sorted(case.tickers)
-        )
-        return build_dossier(case, evidence, (), forecasts, ())
-
-
 def test_all_model_abstentions_hold_existing_book(tmp_path: Path) -> None:
     _, case, fund, data, provider, ledger = setup_components(tmp_path)
     broker = SimBroker(fund.capital)
@@ -103,40 +75,38 @@ def test_all_model_abstentions_hold_existing_book(tmp_path: Path) -> None:
             "created_at": datetime(2024, 2, 26, 21, 5, tzinfo=UTC),
         }
     )
+    forecasts_path = tmp_path / "abstaining-forecasts.json"
+    abstaining = []
+    for forecast in first.forecasts:
+        payload = forecast.model_dump(mode="json")
+        payload.update(
+            {
+                "forecast_id": f"abstain-{forecast.ticker}",
+                "model_name": "failed-model",
+                "as_of": later.as_of.isoformat(),
+                "expected_excess_return": None,
+                "expected_volatility": None,
+                "thesis": "",
+                "evidence_ids": [],
+                "abstained": True,
+                "abstain_reason": "provider unavailable",
+            }
+        )
+        abstaining.append(payload)
+    forecasts_path.write_text(__import__("json").dumps(abstaining))
+    abstaining_provider = FixtureForecastProvider(
+        forecasts_path, ROOT / "data/fixtures/evidence/replay_evidence.jsonl"
+    )
     second = run_cycle(
         fund,
         later,
         broker,
         data,
-        AbstainingProvider(first.evidence),
+        abstaining_provider,
         SQLiteRunLedger(tmp_path / "follow-up.sqlite"),
     )
     assert second.orders == ()
     assert broker.quantities() == held
-
-
-class MissingTickerDataClient:
-    network_enabled = False
-
-    def __init__(self, delegate: FixtureDataClient, missing: str) -> None:
-        self.delegate = delegate
-        self.missing = missing
-        self.dataset_hash = delegate.dataset_hash
-
-    def latest_snapshot(self, tickers, as_of):  # type: ignore[no-untyped-def]
-        snapshot = self.delegate.latest_snapshot(tickers, as_of)
-        bars = tuple(bar for bar in snapshot.bars if bar.ticker != self.missing)
-        return MarketSnapshot(
-            as_of=as_of,
-            bars=bars,
-            content_hash=canonical_sha256([bar.model_dump(mode="json") for bar in bars]),
-        )
-
-    def price_history(self, *args, **kwargs):  # type: ignore[no-untyped-def]
-        return self.delegate.price_history(*args, **kwargs)
-
-    def sector_map(self, tickers, as_of):  # type: ignore[no-untyped-def]
-        return self.delegate.sector_map(tickers, as_of)
 
 
 def test_missing_mark_for_held_position_halts_before_research(tmp_path: Path) -> None:
@@ -144,12 +114,19 @@ def test_missing_mark_for_held_position_halts_before_research(tmp_path: Path) ->
     broker = SimBroker(fund.capital)
     run_cycle(fund, case, broker, data, provider, ledger)
     missing = sorted(broker.quantities())[0]
+    fixture_root = tmp_path / "missing-fixtures"
+    fixture_root.mkdir()
+    for name in ("fundamentals.parquet", "earnings.parquet"):
+        shutil.copy2(ROOT / "data/fixtures" / name, fixture_root / name)
+    prices = pd.read_parquet(ROOT / "data/fixtures/prices.parquet")
+    prices = prices[prices["ticker"] != missing]
+    prices.to_parquet(fixture_root / "prices.parquet", index=False)
     with pytest.raises(DataIntegrityError, match="missing point-in-time marks"):
         run_cycle(
             fund,
             case,
             broker,
-            MissingTickerDataClient(data, missing),
+            FixtureDataClient(fixture_root),
             provider,
             SQLiteRunLedger(tmp_path / "missing.sqlite"),
         )

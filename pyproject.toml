@@ -20,10 +20,17 @@ dependencies = [
 
 [project.optional-dependencies]
 agents = []
+sources = [
+  "httpx>=0.28,<1",
+]
 live = [
   "httpx>=0.28,<1",
   "litellm>=1.60,<1.80",
   "yfinance>=0.2.54,<2",
+]
+lab = [
+  "purgedcv>=0.1.2,<0.2",
+  "qtype @ git+https://github.com/VernonOY/qtype.git@5277e433a524742c80889af8982377f2bbf8d8f3",
 ]
 dashboard = [
   "plotly>=6,<7",
@@ -47,6 +54,9 @@ dev = [
 [build-system]
 requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["aegis", "apps"]

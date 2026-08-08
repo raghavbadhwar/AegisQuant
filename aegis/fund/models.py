@@ -17,8 +17,11 @@ from pydantic import (
 
 from aegis.contracts import (
     AlphaForecast,
+    ClaimGraphSnapshot,
+    EvidenceAuditResult,
     EvidenceBundle,
     EvidenceRecord,
+    MemoryHit,
     ResearchArtifact,
     ResearchCase,
     canonical_sha256,
@@ -67,6 +70,10 @@ class ResearchDossier(BaseModel):
     artifacts: tuple[ResearchArtifact, ...]
     forecasts: tuple[AlphaForecast, ...]
     graph_events: tuple[GraphEvent, ...]
+    claim_graph: ClaimGraphSnapshot | None = None
+    evidence_audit: EvidenceAuditResult | None = None
+    memory_hits: tuple[MemoryHit, ...] = ()
+    memory_snapshot_hash: str = canonical_sha256([])
     content_hash: str
 
     def hash_payload(self) -> dict[str, object]:
@@ -77,6 +84,10 @@ class ResearchDossier(BaseModel):
             "artifacts": self.artifacts,
             "forecasts": self.forecasts,
             "graph_events": self.graph_events,
+            "claim_graph": self.claim_graph,
+            "evidence_audit": self.evidence_audit,
+            "memory_hits": self.memory_hits,
+            "memory_snapshot_hash": self.memory_snapshot_hash,
         }
 
     @model_validator(mode="after")
@@ -90,6 +101,16 @@ class ResearchDossier(BaseModel):
         for artifact in self.artifacts:
             if not set(artifact.evidence_ids).issubset(evidence_ids):
                 raise ValueError("artifact cites evidence outside the dossier")
+        if self.claim_graph is not None:
+            if self.claim_graph.case_id != self.case_id:
+                raise ValueError("claim graph does not match the dossier case")
+            claim_ids = {claim.claim_id for claim in self.claim_graph.claims}
+            if any(not set(artifact.claim_ids).issubset(claim_ids) for artifact in self.artifacts):
+                raise ValueError("artifact cites a claim outside the dossier claim graph")
+        if self.evidence_audit is not None and (
+            self.evidence_audit.case_id != self.case_id or not self.evidence_audit.approved
+        ):
+            raise ValueError("dossier requires an approved deterministic evidence audit")
         if self.content_hash != canonical_sha256(self.hash_payload()):
             raise ValueError("dossier content_hash mismatch")
         return self
@@ -101,6 +122,10 @@ def build_dossier(
     artifacts: tuple[ResearchArtifact, ...],
     forecasts: tuple[AlphaForecast, ...],
     graph_events: tuple[GraphEvent, ...],
+    claim_graph: ClaimGraphSnapshot | None = None,
+    evidence_audit: EvidenceAuditResult | None = None,
+    memory_hits: tuple[MemoryHit, ...] = (),
+    memory_snapshot_hash: str = canonical_sha256([]),
 ) -> ResearchDossier:
     payload = {
         "case_id": case.case_id,
@@ -109,6 +134,10 @@ def build_dossier(
         "artifacts": artifacts,
         "forecasts": forecasts,
         "graph_events": graph_events,
+        "claim_graph": claim_graph,
+        "evidence_audit": evidence_audit,
+        "memory_hits": memory_hits,
+        "memory_snapshot_hash": memory_snapshot_hash,
     }
     return ResearchDossier(
         case_id=case.case_id,
@@ -117,6 +146,10 @@ def build_dossier(
         artifacts=artifacts,
         forecasts=forecasts,
         graph_events=graph_events,
+        claim_graph=claim_graph,
+        evidence_audit=evidence_audit,
+        memory_hits=memory_hits,
+        memory_snapshot_hash=memory_snapshot_hash,
         content_hash=canonical_sha256(payload),
     )
 

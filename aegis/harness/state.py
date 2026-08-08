@@ -4,7 +4,15 @@ from __future__ import annotations
 
 from typing import Annotated, TypedDict
 
-from aegis.contracts import AlphaForecast, EvidenceBundle, ResearchArtifact, ResearchCase
+from aegis.contracts import (
+    AlphaForecast,
+    ClaimGraphSnapshot,
+    EvidenceAuditResult,
+    EvidenceBundle,
+    MemoryHit,
+    ResearchArtifact,
+    ResearchCase,
+)
 from aegis.data import MarketSnapshot
 from aegis.observability import GraphEvent
 
@@ -35,5 +43,9 @@ class DeskState(TypedDict, total=False):
     events: Annotated[dict[str, GraphEvent], merge_events]
     failed_roles: Annotated[frozenset[str], merge_roles]
     approved_evidence_ids: tuple[str, ...]
+    claim_graph: ClaimGraphSnapshot
+    deterministic_audit: EvidenceAuditResult
+    memory_hits: tuple[MemoryHit, ...]
+    memory_snapshot_hash: str
     forecasts: tuple[AlphaForecast, ...]
     status: str

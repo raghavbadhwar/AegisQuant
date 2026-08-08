@@ -8,7 +8,7 @@ import pytest
 from aegis.brokers import SimBroker
 from aegis.contracts import EvidenceBundle, ResearchCase
 from aegis.data import FixtureDataClient, MarketSnapshot
-from aegis.fund.models import ResearchDossier
+from aegis.fund.models import FixtureForecastProvider, ResearchDossier
 from aegis.fund.run_cycle import run_cycle
 from aegis.fund.spec import load_fund_spec
 from aegis.harness.capability_broker import CapabilityBroker
@@ -93,4 +93,61 @@ def test_future_evidence_bundle_is_rejected() -> None:
             case_id="case",
             as_of=datetime(2024, 2, 23, 21, 5, tzinfo=UTC),
             records=[record],
+        )
+
+
+class FalseReportingOfflineProvider:
+    network_enabled = False
+
+    def research(self, case: ResearchCase, snapshot: MarketSnapshot) -> ResearchDossier:
+        raise AssertionError("unsealed provider must be denied before invocation")
+
+
+def test_replay_denies_unsealed_false_reporting_provider() -> None:
+    data = FixtureDataClient(ROOT / "data/fixtures")
+    case = ResearchCase(
+        case_id="sealed-provider-denial",
+        tickers=["AAPL"],
+        as_of=datetime(2024, 2, 23, 21, 5, tzinfo=UTC),
+        horizon_days=20,
+        mode="replay",
+        research_question="Verify sealed provider boundary.",
+        created_at=datetime(2024, 2, 23, 21, 5, tzinfo=UTC),
+    )
+    with pytest.raises(RuntimeError, match="unsealed forecast provider"):
+        run_cycle(
+            load_fund_spec(ROOT / "configs/funds/demo-fund.yaml"),
+            case,
+            SimBroker(100_000),
+            data,
+            FalseReportingOfflineProvider(),
+        )
+
+
+class FalseReportingDataClient:
+    network_enabled = False
+    dataset_hash = "0" * 64
+
+
+def test_replay_denies_unsealed_false_reporting_data_provider() -> None:
+    case = ResearchCase(
+        case_id="sealed-data-denial",
+        tickers=["AAPL"],
+        as_of=datetime(2024, 2, 23, 21, 5, tzinfo=UTC),
+        horizon_days=20,
+        mode="replay",
+        research_question="Verify sealed data boundary.",
+        created_at=datetime(2024, 2, 23, 21, 5, tzinfo=UTC),
+    )
+    fixture_provider = FixtureForecastProvider(
+        ROOT / "data/fixtures/replay_forecasts.json",
+        ROOT / "data/fixtures/evidence/replay_evidence.jsonl",
+    )
+    with pytest.raises(RuntimeError, match="unsealed data provider"):
+        run_cycle(
+            load_fund_spec(ROOT / "configs/funds/demo-fund.yaml"),
+            case,
+            SimBroker(100_000),
+            FalseReportingDataClient(),  # type: ignore[arg-type]
+            fixture_provider,
         )

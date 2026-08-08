@@ -69,3 +69,21 @@ def test_documented_backtest_command_succeeds(tmp_path: Path) -> None:
     assert payload["metrics"]["cycles"] == len(payload["records"])
     assert payload["metrics"]["total_cost"] > 0
     assert all(record["case"]["mode"] == "historical" for record in payload["records"])
+
+
+def test_source_plan_is_typed_official_first_and_historical_denied(tmp_path: Path) -> None:
+    runner = CliRunner()
+    live = runner.invoke(
+        app,
+        ["sources", "plan", "configs/demo/live-source-request.json"],
+    )
+    assert live.exit_code == 0, live.output
+    payload = json.loads(live.stdout)
+    assert payload["source_ids"] == ["company-ir"]
+    request = json.loads((ROOT / "configs/demo/live-source-request.json").read_text())
+    request["mode"] = "historical"
+    historical_path = tmp_path / "historical-source.json"
+    historical_path.write_text(json.dumps(request))
+    historical = runner.invoke(app, ["sources", "plan", str(historical_path)])
+    assert historical.exit_code != 0
+    assert "forbidden in historical" in str(historical.exception)

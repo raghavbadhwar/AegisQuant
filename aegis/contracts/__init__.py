@@ -2,46 +2,116 @@
 
 from .artifacts import ResearchArtifact, canonical_json, canonical_sha256
 from .case import ResearchCase, RunMode
-from .claims import Claim, NumericClaim
-from .evidence import EvidenceBundle, EvidenceRecord
+from .claims import Claim, ClaimEdge, ClaimGraphSnapshot, NumericClaim
+from .evidence import (
+    AuditFinding,
+    EvidenceAuditPolicy,
+    EvidenceAuditResult,
+    EvidenceBundle,
+    EvidenceRecord,
+)
 from .execution import Fill, Order, OrderSide, OrderStatus, Position, SimulationMode
 from .forecasts import AlphaForecast
+from .lab import (
+    CandidatePatchMetadata,
+    ExperimentRecord,
+    HoldoutUnlock,
+    HypothesisDeclaration,
+    OutcomeRecord,
+    PostmortemReport,
+    PromotionDecision,
+    ShadowResult,
+    ValidationReport,
+)
 from .learning import CandidateType, EvaluationStatus, LearningCandidate
-from .memory import MemoryHit, MemoryItem, MemoryQuery, MemoryStatus
+from .memory import (
+    MemoryCandidate,
+    MemoryGovernanceDecision,
+    MemoryHit,
+    MemoryItem,
+    MemoryQuery,
+    MemorySnapshot,
+    MemorySnapshotEntry,
+    MemoryStatus,
+    TypedRelation,
+)
 from .portfolio import PortfolioProposal
 from .risk import RiskDecision, RiskPolicy
-from .source import EventCandidate, ScrapeJob, SourceManifest, SourceRequest, SourceType
+from .source import (
+    EventCandidate,
+    FetchedDocument,
+    NormalizedDocument,
+    RawDocumentReceipt,
+    ScrapeJob,
+    SourceAcquisitionResult,
+    SourceAttempt,
+    SourceHealthSnapshot,
+    SourceManifest,
+    SourceMode,
+    SourcePlan,
+    SourceRequest,
+    SourceTime,
+    SourceType,
+)
 
 __all__ = [
     "AlphaForecast",
+    "AuditFinding",
+    "CandidatePatchMetadata",
     "CandidateType",
     "Claim",
+    "ClaimEdge",
+    "ClaimGraphSnapshot",
     "EvaluationStatus",
     "EventCandidate",
+    "EvidenceAuditPolicy",
+    "EvidenceAuditResult",
     "EvidenceBundle",
     "EvidenceRecord",
+    "ExperimentRecord",
+    "FetchedDocument",
     "Fill",
+    "HoldoutUnlock",
+    "HypothesisDeclaration",
     "LearningCandidate",
+    "MemoryCandidate",
+    "MemoryGovernanceDecision",
     "MemoryHit",
     "MemoryItem",
     "MemoryQuery",
+    "MemorySnapshot",
+    "MemorySnapshotEntry",
     "MemoryStatus",
+    "NormalizedDocument",
     "NumericClaim",
     "Order",
     "OrderSide",
     "OrderStatus",
+    "OutcomeRecord",
     "PortfolioProposal",
     "Position",
+    "PostmortemReport",
+    "PromotionDecision",
+    "RawDocumentReceipt",
     "ResearchArtifact",
     "ResearchCase",
     "RiskDecision",
     "RiskPolicy",
     "RunMode",
     "ScrapeJob",
+    "ShadowResult",
     "SimulationMode",
+    "SourceAcquisitionResult",
+    "SourceAttempt",
+    "SourceHealthSnapshot",
     "SourceManifest",
+    "SourceMode",
+    "SourcePlan",
     "SourceRequest",
+    "SourceTime",
     "SourceType",
+    "TypedRelation",
+    "ValidationReport",
     "canonical_json",
     "canonical_sha256",
 ]

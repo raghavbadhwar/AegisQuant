@@ -26,11 +26,11 @@ class LearningCandidate(ContractModel):
     diagnosis: Annotated[str, Field(min_length=1)]
     expected_improvement: Annotated[str, Field(min_length=1)]
     falsifiable_metric: Annotated[str, Field(min_length=1)]
-    minimum_required_delta: float
+    minimum_required_delta: float = Field(allow_inf_nan=False)
     applicable_entities: list[str] = Field(default_factory=list)
     applicable_strategies: list[str] = Field(default_factory=list)
     applicable_regimes: list[str] = Field(default_factory=list)
-    risk_class: Annotated[str, Field(min_length=1)]
+    risk_class: Literal["low", "medium", "high", "critical"]
     evaluation_suite_id: Annotated[str, Field(min_length=1)]
     proposer_model: Annotated[str, Field(min_length=1)]
     proposer_id: Annotated[str, Field(min_length=1)]

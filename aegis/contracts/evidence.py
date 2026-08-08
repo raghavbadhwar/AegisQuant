@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import AwareDatetime, Field, field_validator, model_validator
 
@@ -34,6 +34,8 @@ class EvidenceRecord(ContractModel):
     injection_flags: list[str] = Field(default_factory=list)
     parser_version: Annotated[str, Field(min_length=1)]
     extractor_version: Annotated[str, Field(min_length=1)]
+    source_manifest_version: Annotated[str, Field(min_length=1)] = "unversioned"
+    normalized_content_hash: str | None = None
 
     @field_validator("content_hash")
     @classmethod
@@ -55,6 +57,7 @@ class EvidenceBundle(ContractModel):
     case_id: Annotated[str, Field(min_length=1)]
     as_of: AwareDatetime
     records: list[EvidenceRecord] = Field(default_factory=list)
+    mode: Literal["replay", "historical", "live_research"] = "historical"
 
     @model_validator(mode="after")
     def ids_are_unique_and_point_in_time_safe(self) -> EvidenceBundle:
@@ -63,6 +66,31 @@ class EvidenceBundle(ContractModel):
             raise ValueError("evidence IDs must be unique")
         if any(record.available_at > self.as_of for record in self.records):
             raise ValueError("evidence available after bundle as_of is not point-in-time safe")
-        if any(not record.historical_safe for record in self.records):
+        if self.mode in {"replay", "historical"} and any(
+            not record.historical_safe for record in self.records
+        ):
             raise ValueError("evidence bundle contains a historically unsafe record")
         return self
+
+
+class EvidenceAuditPolicy(ContractModel):
+    minimum_extraction_confidence: UnitInterval = 0.7
+    maximum_age_days: int | None = Field(default=None, ge=0)
+    block_injection_flags: bool = True
+
+
+class AuditFinding(ContractModel):
+    code: Annotated[str, Field(min_length=1)]
+    severity: Literal["warning", "blocker"]
+    message: Annotated[str, Field(min_length=1)]
+    evidence_ids: list[str] = Field(default_factory=list)
+    claim_ids: list[str] = Field(default_factory=list)
+
+
+class EvidenceAuditResult(ContractModel):
+    case_id: Annotated[str, Field(min_length=1)]
+    approved: bool
+    approved_evidence_ids: list[str] = Field(default_factory=list)
+    approved_claim_ids: list[str] = Field(default_factory=list)
+    findings: list[AuditFinding] = Field(default_factory=list)
+    audited_input_hash: str
