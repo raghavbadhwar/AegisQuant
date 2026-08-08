@@ -49,11 +49,23 @@ def _git_revision(root: Path) -> str:
 def local_build_fingerprint(root: Path) -> tuple[str, str, str]:
     """Hash deterministic source/config inputs without shelling out."""
     digest = hashlib.sha256()
-    roots = [root / "aegis", root / "apps", root / "configs", root / "policies"]
+    roots = [
+        root / "aegis",
+        root / "apps",
+        root / "configs",
+        root / "policies",
+        root / "skills",
+    ]
     files: list[Path] = [root / "pyproject.toml", root / "uv.lock"]
     for directory in roots:
         if directory.exists():
-            files.extend(path for path in directory.rglob("*") if path.is_file())
+            files.extend(
+                path
+                for path in directory.rglob("*")
+                if path.is_file()
+                and "__pycache__" not in path.parts
+                and path.suffix not in {".pyc", ".pyo"}
+            )
     for path in sorted(files, key=lambda item: item.relative_to(root).as_posix()):
         relative = path.relative_to(root).as_posix().encode()
         digest.update(len(relative).to_bytes(4, "big"))

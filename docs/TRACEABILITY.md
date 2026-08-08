@@ -17,6 +17,18 @@ Authoritative criteria are in `docs/BUILD_SPEC.md`. Status values are `PASS`, `I
 | Tamper-evident ledger | `aegis/fund/ledger.py` | `test_ledger_tamper_is_detected` | PASS |
 | Unit/lint/type gates | pyproject/CI | `pytest`, `ruff`, `mypy` | PASS |
 
+## Release 1 — replayable agent desk
+
+| Requirement | Implementation | Verification | Status |
+|---|---|---|---|
+| Versioned Markdown skills | `skills/**`, `aegis/harness/skill_loader.py` | `tests/unit/test_harness.py` | PASS |
+| Runtime capabilities and budgets | `capability_broker.py`, `budgets.py` | harness and security tests | PASS |
+| Deterministic parallel LangGraph desk | `aegis/harness/{state,graph}.py` | `tests/integration/test_graph_replay.py` | PASS |
+| Independent Bull/Bear/Base-Rate | graph join and opening input hash | graph independence test | PASS |
+| CIO evidence confinement | artifact evidence allowlist | adversarial rogue-evidence test | PASS |
+| Verifier/model-failure abstention | verifier/CIO branches | injected role-failure tests | PASS |
+| Full dossier/replay determinism | `ResearchDossier`, canonical reducers | CLI byte comparison and graph determinism | PASS |
+
 ## Capability-complete criteria
 
 | Spec AC | Short name | Target release | Status |
@@ -34,10 +46,10 @@ Authoritative criteria are in `docs/BUILD_SPEC.md`. Status values are `PASS`, `I
 | 11 | governed memory candidates | 3 | PLANNED |
 | 12 | contradictory/superseded memory visible | 3 | PLANNED |
 | 13 | PIT-safe memory retrieval | 3 | PLANNED |
-| 14 | independent Bull/Bear openings | 1 | PLANNED |
-| 15 | CIO synthesis confinement | 1 | PLANNED |
-| 16 | verifier-forced abstention | 1 | PLANNED |
-| 17 | LLM abstain/held-price halt | 0/1 | IN PROGRESS |
+| 14 | independent Bull/Bear openings | 1 | PASS |
+| 15 | CIO synthesis confinement | 1 | PASS |
+| 16 | verifier-forced abstention | 1 | PASS |
+| 17 | LLM abstain/held-price halt | 0/1 | PASS |
 | 18 | deterministic construction | 0 | PASS |
 | 19 | deterministic auditable risk | 0 | PASS |
 | 20 | order/cash/position/NAV reconciliation | 0 | PASS |

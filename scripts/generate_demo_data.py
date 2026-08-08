@@ -197,6 +197,69 @@ def main() -> None:
     (OUT / "replay_forecasts.json").write_text(
         json.dumps(forecasts, indent=2, sort_keys=True) + "\n"
     )
+    all_evidence_ids = [f"demo-{ticker.lower()}-20240223-price" for ticker in TICKERS[:-1]]
+    agent_outputs = {
+        "version": "replay-agent-desk-v1",
+        "case_id": "nvda-earnings-demo",
+        "roles": {
+            "coordinator": {
+                "depth": "L2-event",
+                "selected_roles": ["quant", "fundamentals", "event-behavioral"],
+                "retry_budget": 1,
+            },
+            "quant": {
+                "summary": "Deterministic relative momentum and volatility review completed.",
+                "evidence_ids": all_evidence_ids,
+                "warnings": [],
+            },
+            "fundamentals": {
+                "summary": "Point-in-time quality and balance-sheet fixture review completed.",
+                "evidence_ids": all_evidence_ids,
+                "warnings": ["Demo evidence is intentionally synthetic."],
+            },
+            "event-behavioral": {
+                "summary": (
+                    "Event salience and reaction-path review completed from replay evidence."
+                ),
+                "evidence_ids": all_evidence_ids,
+                "warnings": [],
+            },
+            "evidence-auditor": {
+                "approved": True,
+                "coverage": 1.0,
+                "contradictions": [],
+                "evidence_ids": all_evidence_ids,
+            },
+            "bull": {
+                "summary": (
+                    "The strongest admissible upside case is supported by the approved bundle."
+                ),
+                "evidence_ids": all_evidence_ids,
+            },
+            "bear": {
+                "summary": "The strongest admissible downside case remains material and uncertain.",
+                "evidence_ids": all_evidence_ids,
+            },
+            "base-rate": {
+                "summary": "Base rates temper event extrapolation in this deterministic demo.",
+                "evidence_ids": all_evidence_ids,
+            },
+            "cio": {
+                "summary": "Synthesis is confined to verified artifacts and recorded forecasts.",
+                "forecasts": forecasts,
+                "evidence_ids": all_evidence_ids,
+            },
+            "verifier": {
+                "passed": True,
+                "checks": ["schema", "evidence", "horizon", "numeric-coherence"],
+                "evidence_ids": all_evidence_ids,
+            },
+        },
+    }
+    (OUT / "agent_outputs.json").write_text(
+        json.dumps(agent_outputs, indent=2, sort_keys=True) + "\n"
+    )
+
     case = {
         "case_id": "nvda-earnings-demo",
         "mode": "replay",
@@ -205,6 +268,7 @@ def main() -> None:
         "horizon_days": 20,
         "research_question": "Assess the approved demo universe after the NVDA earnings event.",
         "fund_path": "configs/funds/demo-fund.yaml",
+        "agent_output_fixture": "data/fixtures/agent_outputs.json",
         "tickers": TICKERS[:-1],
         "forecast_fixture": "data/fixtures/replay_forecasts.json",
         "evidence_fixture": "data/fixtures/evidence/replay_evidence.jsonl",

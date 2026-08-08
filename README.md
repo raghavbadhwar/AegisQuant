@@ -55,11 +55,16 @@ Replay and backtest share `aegis.fund.run_cycle.run_cycle`, deterministic portfo
 - position, gross, net, turnover, cash, sector, strategy, stale-price, shorting, and leverage controls;
 - deterministic commission/slippage simulation with atomic batch validation;
 - canonical cycle receipts and tamper-evident idempotent SQLite ledger;
-- full reproducibility manifest with code/tree/lock/data/evidence/model/cost hashes;
+- full reproducibility manifest with code/tree/lock/data/evidence/model/skill/cost hashes;
 - weekly/monthly backtesting through the production cycle path;
-- no-key CLI and offline acceptance tests.
+- a replayable LangGraph desk with Coordinator, Quant, Fundamentals, Event/Behavioral,
+  Evidence Auditor, independent Bull/Bear/Base-Rate reviewers, CIO, and Verifier;
+- strict versioned Markdown skills, bounded context packs, capability authorization,
+  budgets, stable parallel reducers, model-failure abstention, and dossier hashing;
+- no-key CLI and offline/adversarial acceptance tests.
 
-The next release adds the replayable LangGraph specialist desk and versioned Markdown skill harness before any web or memory integration.
+The next release adds the evidence claim graph and controlled source-intelligence pipeline;
+web acquisition remains disabled until those boundaries pass security tests.
 
 ## Architecture rule
 

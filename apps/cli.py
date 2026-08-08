@@ -12,9 +12,12 @@ from aegis.brokers import SimBroker
 from aegis.data import FixtureDataClient
 from aegis.fund.backtest import backtest_fund
 from aegis.fund.ledger import SQLiteRunLedger
-from aegis.fund.models import FixtureForecastProvider, load_replay_manifest
+from aegis.fund.models import FixtureForecastProvider, ForecastProvider, load_replay_manifest
 from aegis.fund.run_cycle import run_cycle
 from aegis.fund.spec import load_fund_spec
+from aegis.harness.graph import LangGraphForecastProvider
+from aegis.harness.model_router import ReplayModelProvider
+from aegis.harness.skill_loader import load_skill_tree
 
 app = typer.Typer(
     name="aegis",
@@ -35,15 +38,30 @@ def replay(
     ledger: Annotated[Path, typer.Option(help="Append-only SQLite run ledger")] = Path(
         "run_data/aegisquant.sqlite"
     ),
+    desk: Annotated[str, typer.Option(help="Research provider: graph or fixture")] = "graph",
 ) -> None:
     """Run a deterministic, network-denied, no-key replay cycle."""
     manifest = load_replay_manifest(_project_path(case_path))
     case = manifest.research_case()
     fund = load_fund_spec(_project_path(manifest.fund_path))
     data_client = FixtureDataClient(PROJECT_ROOT / "data/fixtures")
-    provider = FixtureForecastProvider(
+    fixture_provider = FixtureForecastProvider(
         _project_path(manifest.forecast_fixture), _project_path(manifest.evidence_fixture)
     )
+    provider: ForecastProvider
+    if desk == "graph":
+        preflight = fixture_provider.research(
+            case, data_client.latest_snapshot(case.tickers, case.as_of)
+        )
+        provider = LangGraphForecastProvider(
+            ReplayModelProvider(_project_path(manifest.agent_output_fixture), case.case_id),
+            load_skill_tree(PROJECT_ROOT / "skills"),
+            preflight.evidence,
+        )
+    elif desk == "fixture":
+        provider = fixture_provider
+    else:
+        raise typer.BadParameter("desk must be 'graph' or 'fixture'")
     record = run_cycle(
         fund,
         case,

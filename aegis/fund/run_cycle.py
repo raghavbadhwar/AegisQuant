@@ -50,10 +50,10 @@ def run_cycle(
 
     held = broker.quantities()
     requested = sorted(set(case.tickers) | set(held))
-    snapshot = data_client.latest_snapshot(requested, case.created_at)
+    snapshot = data_client.latest_snapshot(requested, case.as_of)
     bars = {bar.ticker: bar for bar in snapshot.bars}
     for bar in snapshot.bars:
-        if bar.available_at > case.created_at:
+        if bar.available_at > case.as_of:
             raise PointInTimeViolation(f"future price bar reached cycle: {bar.ticker}")
     missing = sorted(set(requested).difference(bars))
     if missing:
@@ -70,8 +70,9 @@ def run_cycle(
     equity_before_decimal = broker.equity(marks)
     cash_before_decimal = broker.cash
     current_weights = broker.weights(marks) if held else {}
-    evidence = forecast_provider.evidence_bundle(case)
-    forecasts = forecast_provider.forecast_batch(case, snapshot)
+    dossier = forecast_provider.research(case, snapshot)
+    evidence = dossier.evidence
+    forecasts = dossier.forecasts
     proposal = construct_portfolio(
         forecasts, fund.portfolio, fund.risk.minimum_confidence, current_weights
     )
@@ -136,9 +137,16 @@ def run_cycle(
         },
         memory_snapshot_hash=canonical_sha256([]),
         relation_snapshot_hash=canonical_sha256([]),
-        skill_versions=[],
-        prompt_versions=[],
-        model_deployments=sorted({forecast.model_name for forecast in forecasts}),
+        skill_versions=sorted(
+            {version for artifact in dossier.artifacts for version in artifact.skill_versions}
+        ),
+        prompt_versions=sorted(
+            {version for artifact in dossier.artifacts for version in artifact.skill_versions}
+        ),
+        model_deployments=sorted(
+            {artifact.actual_model for artifact in dossier.artifacts}
+            | {forecast.model_name for forecast in forecasts}
+        ),
         embedding_versions=[],
         reranker_versions=[],
         cost_assumptions={
@@ -154,6 +162,7 @@ def run_cycle(
             "fund": fund.model_dump(mode="json"),
             "snapshot_hash": snapshot.content_hash,
             "reproducibility": reproducibility.model_dump(mode="json"),
+            "dossier_hash": dossier.content_hash,
             "evidence": evidence.model_dump(mode="json"),
             "forecasts": [item.model_dump(mode="json") for item in forecasts],
             "broker_before": {
@@ -171,6 +180,7 @@ def run_cycle(
         fund=fund,
         reproducibility=reproducibility,
         snapshot=snapshot,
+        dossier=dossier,
         evidence=evidence,
         forecasts=forecasts,
         portfolio=proposal,

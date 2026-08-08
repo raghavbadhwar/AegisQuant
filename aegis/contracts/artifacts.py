@@ -9,7 +9,7 @@ from datetime import date, datetime
 from enum import Enum
 from typing import Annotated, Any
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from ._base import ContractModel, validate_sha256
 
@@ -63,3 +63,9 @@ class ResearchArtifact(ContractModel):
     @classmethod
     def content_hash_is_sha256(cls, value: str) -> str:
         return validate_sha256(value)
+
+    @model_validator(mode="after")
+    def hash_matches_payload(self) -> ResearchArtifact:
+        if self.content_hash != canonical_sha256(self.payload):
+            raise ValueError("content_hash does not match canonical artifact payload")
+        return self

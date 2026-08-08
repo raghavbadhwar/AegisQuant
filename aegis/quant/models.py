@@ -11,10 +11,13 @@ from aegis.contracts import (
     AlphaForecast,
     EvidenceBundle,
     EvidenceRecord,
+    ResearchArtifact,
     ResearchCase,
     canonical_sha256,
 )
 from aegis.data import DataClient, MarketSnapshot
+from aegis.fund.models import ResearchDossier, build_dossier
+from aegis.observability import GraphEvent
 
 
 class DeterministicCompositeProvider:
@@ -31,8 +34,7 @@ class DeterministicCompositeProvider:
     def _evidence_id(case: ResearchCase, ticker: str) -> str:
         return f"hist-{ticker.lower()}-{case.as_of:%Y%m%d}"
 
-    def evidence_bundle(self, case: ResearchCase) -> EvidenceBundle:
-        snapshot = self.data_client.latest_snapshot(case.tickers, case.as_of)
+    def _evidence_bundle(self, case: ResearchCase, snapshot: MarketSnapshot) -> EvidenceBundle:
         records: list[EvidenceRecord] = []
         for bar in snapshot.bars:
             payload = bar.model_dump(mode="json")
@@ -61,10 +63,10 @@ class DeterministicCompositeProvider:
             )
         return EvidenceBundle(case_id=case.case_id, as_of=case.as_of, records=records)
 
-    def forecast_batch(
+    def _forecast_batch(
         self, case: ResearchCase, snapshot: MarketSnapshot
     ) -> tuple[AlphaForecast, ...]:
-        bundle = self.evidence_bundle(case)
+        bundle = self._evidence_bundle(case, snapshot)
         evidence_ids = {record.entity_ids[0]: record.evidence_id for record in bundle.records}
         start = case.as_of - timedelta(days=140)
         forecasts: list[AlphaForecast] = []
@@ -133,3 +135,34 @@ class DeterministicCompositeProvider:
                 )
             )
         return tuple(forecasts)
+
+    def research(self, case: ResearchCase, snapshot: MarketSnapshot) -> ResearchDossier:
+        evidence = self._evidence_bundle(case, snapshot)
+        forecasts = self._forecast_batch(case, snapshot)
+        payload = {
+            "model": "deterministic-composite-v1",
+            "forecasts": [forecast.model_dump(mode="json") for forecast in forecasts],
+        }
+        artifact = ResearchArtifact(
+            artifact_id=f"{case.case_id}:deterministic-composite",
+            case_id=case.case_id,
+            artifact_type="deterministic_forecast_batch",
+            producer_agent="quant-model",
+            model_alias="quant-code",
+            actual_model="deterministic-composite-v1",
+            skill_versions=["quant-signal-analysis@deterministic-v1"],
+            evidence_ids=sorted(record.evidence_id for record in evidence.records),
+            payload=payload,
+            content_hash=canonical_sha256(payload),
+        )
+        event = GraphEvent(
+            event_id=f"{case.case_id}:deterministic-composite",
+            case_id=case.case_id,
+            sequence=0,
+            node="deterministic-composite",
+            event_type="provider_complete",
+            status="completed",
+            occurred_at=case.as_of,
+            metadata={"forecast_count": len(forecasts)},
+        )
+        return build_dossier(case, evidence, (artifact,), forecasts, (event,))

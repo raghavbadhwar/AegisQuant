@@ -1,16 +1,16 @@
 from __future__ import annotations
 
 import sqlite3
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
 
 from aegis.brokers import SimBroker
-from aegis.contracts import AlphaForecast, EvidenceBundle, ResearchCase
-from aegis.data import FixtureDataClient
+from aegis.contracts import AlphaForecast, EvidenceBundle, ResearchCase, canonical_sha256
+from aegis.data import DataIntegrityError, FixtureDataClient, MarketSnapshot
 from aegis.fund.ledger import LedgerIntegrityError, SQLiteRunLedger
-from aegis.fund.models import FixtureForecastProvider, load_replay_manifest
+from aegis.fund.models import FixtureForecastProvider, build_dossier, load_replay_manifest
 from aegis.fund.run_cycle import run_cycle
 from aegis.fund.spec import load_fund_spec
 
@@ -68,11 +68,9 @@ class AbstainingProvider:
     def __init__(self, evidence: EvidenceBundle) -> None:
         self._evidence = evidence
 
-    def evidence_bundle(self, case: ResearchCase) -> EvidenceBundle:
-        return self._evidence.model_copy(update={"case_id": case.case_id, "as_of": case.as_of})
-
-    def forecast_batch(self, case: ResearchCase, snapshot):  # type: ignore[no-untyped-def]
-        return tuple(
+    def research(self, case: ResearchCase, snapshot: MarketSnapshot):  # type: ignore[no-untyped-def]
+        evidence = self._evidence.model_copy(update={"case_id": case.case_id, "as_of": case.as_of})
+        forecasts = tuple(
             AlphaForecast(
                 forecast_id=f"abstain-{ticker}",
                 model_name="failed-model",
@@ -90,6 +88,7 @@ class AbstainingProvider:
             )
             for ticker in sorted(case.tickers)
         )
+        return build_dossier(case, evidence, (), forecasts, ())
 
 
 def test_all_model_abstentions_hold_existing_book(tmp_path: Path) -> None:
@@ -114,3 +113,58 @@ def test_all_model_abstentions_hold_existing_book(tmp_path: Path) -> None:
     )
     assert second.orders == ()
     assert broker.quantities() == held
+
+
+class MissingTickerDataClient:
+    network_enabled = False
+
+    def __init__(self, delegate: FixtureDataClient, missing: str) -> None:
+        self.delegate = delegate
+        self.missing = missing
+        self.dataset_hash = delegate.dataset_hash
+
+    def latest_snapshot(self, tickers, as_of):  # type: ignore[no-untyped-def]
+        snapshot = self.delegate.latest_snapshot(tickers, as_of)
+        bars = tuple(bar for bar in snapshot.bars if bar.ticker != self.missing)
+        return MarketSnapshot(
+            as_of=as_of,
+            bars=bars,
+            content_hash=canonical_sha256([bar.model_dump(mode="json") for bar in bars]),
+        )
+
+    def price_history(self, *args, **kwargs):  # type: ignore[no-untyped-def]
+        return self.delegate.price_history(*args, **kwargs)
+
+    def sector_map(self, tickers, as_of):  # type: ignore[no-untyped-def]
+        return self.delegate.sector_map(tickers, as_of)
+
+
+def test_missing_mark_for_held_position_halts_before_research(tmp_path: Path) -> None:
+    _, case, fund, data, provider, ledger = setup_components(tmp_path)
+    broker = SimBroker(fund.capital)
+    run_cycle(fund, case, broker, data, provider, ledger)
+    missing = sorted(broker.quantities())[0]
+    with pytest.raises(DataIntegrityError, match="missing point-in-time marks"):
+        run_cycle(
+            fund,
+            case,
+            broker,
+            MissingTickerDataClient(data, missing),
+            provider,
+            SQLiteRunLedger(tmp_path / "missing.sqlite"),
+        )
+
+
+def test_replay_price_cutoff_is_as_of_not_later_case_creation(tmp_path: Path) -> None:
+    _, case, fund, data, provider, _ = setup_components(tmp_path)
+    delayed_case = case.model_copy(update={"created_at": case.as_of + timedelta(days=3)})
+    record = run_cycle(
+        fund,
+        delayed_case,
+        SimBroker(fund.capital),
+        data,
+        provider,
+        SQLiteRunLedger(tmp_path / "delayed.sqlite"),
+    )
+    assert record.snapshot.as_of == case.as_of
+    assert max(bar.available_at for bar in record.snapshot.bars) <= case.as_of

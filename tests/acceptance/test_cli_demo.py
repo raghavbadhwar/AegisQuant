@@ -41,6 +41,9 @@ def test_no_key_replay_is_offline_and_byte_stable(tmp_path: Path, monkeypatch) -
     assert len(manifest["environment_lock_hash"]) == 64
     assert len(manifest["dataset_hash"]) == 64
     assert manifest["raw_evidence_hashes"]
+    assert any(name.endswith("/coordinator") for name in manifest["model_deployments"])
+    assert any(name.endswith("/verifier") for name in manifest["model_deployments"])
+    assert len(manifest["prompt_versions"]) == 10
     assert "canary-must-not-be-read" not in outputs[0]
 
 

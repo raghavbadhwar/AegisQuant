@@ -19,6 +19,7 @@ from aegis.contracts import (
     canonical_sha256,
 )
 from aegis.data import MarketSnapshot
+from aegis.fund.models import ResearchDossier
 from aegis.fund.spec import FundSpec
 from aegis.observability import ReproducibilityManifest
 from aegis.risk import RiskEvaluation
@@ -37,6 +38,7 @@ class CycleRecord(BaseModel):
     fund: FundSpec
     reproducibility: ReproducibilityManifest
     snapshot: MarketSnapshot
+    dossier: ResearchDossier
     evidence: EvidenceBundle
     forecasts: tuple[AlphaForecast, ...]
     portfolio: PortfolioProposal
