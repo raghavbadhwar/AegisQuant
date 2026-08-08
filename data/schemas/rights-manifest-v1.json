@@ -1,0 +1,135 @@
+{
+  "$defs": {
+    "RightsDecision": {
+      "enum": [
+        "ALLOW",
+        "QUARANTINE",
+        "DENY"
+      ],
+      "title": "RightsDecision",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "allowed_purposes": {
+      "items": {
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+        "type": "string"
+      },
+      "title": "Allowed Purposes",
+      "type": "array"
+    },
+    "allowed_tenant_ids": {
+      "items": {
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+        "type": "string"
+      },
+      "title": "Allowed Tenant Ids",
+      "type": "array"
+    },
+    "attribution_required": {
+      "title": "Attribution Required",
+      "type": "boolean"
+    },
+    "decided_at": {
+      "format": "date-time",
+      "title": "Decided At",
+      "type": "string"
+    },
+    "decision": {
+      "$ref": "#/$defs/RightsDecision"
+    },
+    "expires_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Expires At"
+    },
+    "may_create_derivatives": {
+      "title": "May Create Derivatives",
+      "type": "boolean"
+    },
+    "may_display": {
+      "title": "May Display",
+      "type": "boolean"
+    },
+    "may_embed": {
+      "title": "May Embed",
+      "type": "boolean"
+    },
+    "may_export": {
+      "title": "May Export",
+      "type": "boolean"
+    },
+    "may_send_to_external_model": {
+      "title": "May Send To External Model",
+      "type": "boolean"
+    },
+    "may_store": {
+      "title": "May Store",
+      "type": "boolean"
+    },
+    "retention_days": {
+      "anyOf": [
+        {
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Retention Days"
+    },
+    "rights_manifest_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Rights Manifest Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "terms_version": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Terms Version",
+      "type": "string"
+    },
+    "territory_codes": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Territory Codes",
+      "type": "array"
+    }
+  },
+  "required": [
+    "rights_manifest_id",
+    "terms_version",
+    "decision",
+    "allowed_purposes",
+    "allowed_tenant_ids",
+    "may_store",
+    "may_embed",
+    "may_send_to_external_model",
+    "may_create_derivatives",
+    "may_display",
+    "may_export",
+    "attribution_required",
+    "decided_at"
+  ],
+  "title": "RightsManifest",
+  "type": "object"
+}

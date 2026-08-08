@@ -1,0 +1,196 @@
+{
+  "$defs": {
+    "OrderIntent": {
+      "additionalProperties": false,
+      "properties": {
+        "client_order_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Client Order Id",
+          "type": "string"
+        },
+        "currency": {
+          "pattern": "^[A-Z]{3}$",
+          "title": "Currency",
+          "type": "string"
+        },
+        "instrument_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Instrument Id",
+          "type": "string"
+        },
+        "instrument_version": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Instrument Version",
+          "type": "string"
+        },
+        "limit_price": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Limit Price"
+        },
+        "order_type": {
+          "$ref": "#/$defs/OrderType"
+        },
+        "quantity": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Quantity"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "side": {
+          "$ref": "#/$defs/OrderSide"
+        },
+        "time_in_force": {
+          "$ref": "#/$defs/TimeInForce"
+        },
+        "venue_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Venue Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "client_order_id",
+        "instrument_id",
+        "instrument_version",
+        "venue_id",
+        "side",
+        "order_type",
+        "time_in_force",
+        "quantity",
+        "currency"
+      ],
+      "title": "OrderIntent",
+      "type": "object"
+    },
+    "OrderSide": {
+      "enum": [
+        "BUY",
+        "SELL"
+      ],
+      "title": "OrderSide",
+      "type": "string"
+    },
+    "OrderType": {
+      "enum": [
+        "MARKET",
+        "LIMIT"
+      ],
+      "title": "OrderType",
+      "type": "string"
+    },
+    "TimeInForce": {
+      "enum": [
+        "DAY"
+      ],
+      "title": "TimeInForce",
+      "type": "string"
+    },
+    "TradingEnvironment": {
+      "enum": [
+        "SIM",
+        "PAPER"
+      ],
+      "title": "TradingEnvironment",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "account_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Account Id",
+      "type": "string"
+    },
+    "broker_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Broker Id",
+      "type": "string"
+    },
+    "case_id": {
+      "format": "uuid",
+      "title": "Case Id",
+      "type": "string"
+    },
+    "environment": {
+      "$ref": "#/$defs/TradingEnvironment"
+    },
+    "legal_entity_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Legal Entity Id",
+      "type": "string"
+    },
+    "orders": {
+      "items": {
+        "$ref": "#/$defs/OrderIntent"
+      },
+      "maxItems": 1000,
+      "minItems": 1,
+      "title": "Orders",
+      "type": "array"
+    },
+    "portfolio_state_sequence": {
+      "minimum": 0,
+      "title": "Portfolio State Sequence",
+      "type": "integer"
+    },
+    "request_id": {
+      "format": "uuid",
+      "title": "Request Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "strategy_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Strategy Id",
+      "type": "string"
+    },
+    "tenant_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Tenant Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "environment",
+    "legal_entity_id",
+    "account_id",
+    "broker_id",
+    "strategy_id",
+    "case_id",
+    "request_id",
+    "portfolio_state_sequence",
+    "orders"
+  ],
+  "title": "OrderBundle",
+  "type": "object"
+}

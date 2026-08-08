@@ -1,0 +1,227 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "available_at": {
+      "format": "date-time",
+      "title": "Available At",
+      "type": "string"
+    },
+    "capture_metadata_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Capture Metadata Digest",
+      "type": "string"
+    },
+    "document_type": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Document Type",
+      "type": "string"
+    },
+    "entity_ids": {
+      "items": {
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+        "type": "string"
+      },
+      "title": "Entity Ids",
+      "type": "array"
+    },
+    "event_time": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Event Time"
+    },
+    "evidence_id": {
+      "format": "uuid",
+      "title": "Evidence Id",
+      "type": "string"
+    },
+    "extraction_confidence": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "title": "Extraction Confidence"
+    },
+    "extractor_version": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Extractor Version",
+      "type": "string"
+    },
+    "first_observed_at": {
+      "format": "date-time",
+      "title": "First Observed At",
+      "type": "string"
+    },
+    "historical_safe": {
+      "title": "Historical Safe",
+      "type": "boolean"
+    },
+    "ingested_at": {
+      "format": "date-time",
+      "title": "Ingested At",
+      "type": "string"
+    },
+    "parser_version": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Parser Version",
+      "type": "string"
+    },
+    "prompt_injection_flags": {
+      "default": [],
+      "items": {
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+        "type": "string"
+      },
+      "title": "Prompt Injection Flags",
+      "type": "array"
+    },
+    "published_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Published At"
+    },
+    "raw_content_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Raw Content Digest",
+      "type": "string"
+    },
+    "raw_object_uri": {
+      "maxLength": 2048,
+      "minLength": 1,
+      "title": "Raw Object Uri",
+      "type": "string"
+    },
+    "revised_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Revised At"
+    },
+    "revision_id": {
+      "anyOf": [
+        {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Revision Id"
+    },
+    "rights_manifest_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Rights Manifest Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "source_quality": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "title": "Source Quality"
+    },
+    "source_type": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Source Type",
+      "type": "string"
+    },
+    "source_url": {
+      "anyOf": [
+        {
+          "maxLength": 2048,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Source Url"
+    },
+    "tenant_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Tenant Id",
+      "type": "string"
+    },
+    "untrusted_content": {
+      "const": true,
+      "default": true,
+      "title": "Untrusted Content",
+      "type": "boolean"
+    },
+    "vendor_ingested_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Vendor Ingested At"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "evidence_id",
+    "source_type",
+    "entity_ids",
+    "document_type",
+    "first_observed_at",
+    "available_at",
+    "ingested_at",
+    "raw_object_uri",
+    "raw_content_digest",
+    "capture_metadata_digest",
+    "extractor_version",
+    "parser_version",
+    "rights_manifest_id",
+    "source_quality",
+    "extraction_confidence",
+    "historical_safe"
+  ],
+  "title": "EvidenceRecord",
+  "type": "object"
+}

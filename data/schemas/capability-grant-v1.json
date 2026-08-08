@@ -1,0 +1,129 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "agent_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Agent Id",
+      "type": "string"
+    },
+    "allowed_data_scopes": {
+      "items": {
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+        "type": "string"
+      },
+      "title": "Allowed Data Scopes",
+      "type": "array"
+    },
+    "allowed_domains": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Allowed Domains",
+      "type": "array"
+    },
+    "allowed_tools": {
+      "items": {
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Allowed Tools",
+      "type": "array"
+    },
+    "case_id": {
+      "format": "uuid",
+      "title": "Case Id",
+      "type": "string"
+    },
+    "expires_at": {
+      "format": "date-time",
+      "title": "Expires At",
+      "type": "string"
+    },
+    "grant_id": {
+      "format": "uuid",
+      "title": "Grant Id",
+      "type": "string"
+    },
+    "issued_at": {
+      "format": "date-time",
+      "title": "Issued At",
+      "type": "string"
+    },
+    "issued_by_policy": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Issued By Policy",
+      "type": "string"
+    },
+    "maximum_cost_usd": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "title": "Maximum Cost Usd"
+    },
+    "maximum_tool_calls": {
+      "maximum": 1000,
+      "minimum": 0,
+      "title": "Maximum Tool Calls",
+      "type": "integer"
+    },
+    "may_propose_memory": {
+      "default": false,
+      "title": "May Propose Memory",
+      "type": "boolean"
+    },
+    "may_propose_skill_changes": {
+      "default": false,
+      "title": "May Propose Skill Changes",
+      "type": "boolean"
+    },
+    "may_read_portfolio": {
+      "default": false,
+      "title": "May Read Portfolio",
+      "type": "boolean"
+    },
+    "may_read_private_research": {
+      "default": false,
+      "title": "May Read Private Research",
+      "type": "boolean"
+    },
+    "may_write_case_artifacts": {
+      "default": false,
+      "title": "May Write Case Artifacts",
+      "type": "boolean"
+    },
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "tenant_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Tenant Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "grant_id",
+    "tenant_id",
+    "agent_id",
+    "case_id",
+    "allowed_tools",
+    "allowed_data_scopes",
+    "allowed_domains",
+    "maximum_tool_calls",
+    "maximum_cost_usd",
+    "issued_at",
+    "expires_at",
+    "issued_by_policy"
+  ],
+  "title": "CapabilityGrant",
+  "type": "object"
+}

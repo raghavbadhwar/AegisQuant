@@ -1,0 +1,54 @@
+# Build plan
+
+Status legend: `[ ]` not started, `[~]` active, `[x]` verified.
+
+## M0 — security kernel (active)
+
+- [x] Consolidated architecture reviewed by independent engineering, quant, risk, execution, and security roles.
+- [x] Scope locked to fixture-only research plus simulation/paper contracts.
+- [~] Strict shared contracts with tenant, environment, chronology, provenance, rights, and content digests.
+- [~] Append-only hash-chained case ledger with idempotency conflict detection.
+- [~] Capability reference-monitor core with deny-by-default authorization.
+- [~] Asymmetric, domain-separated exact-order risk decision contract and verifier.
+- [ ] PostgreSQL migrations, forced RLS, non-owner roles, and cross-tenant tests.
+- [ ] Immutable object-store interface, local WORM test backend, retention policy tests.
+- [ ] Temporal replay-safe golden workflow and crash/idempotency tests.
+- [ ] CI supply-chain gates, SBOM, image digests, secret/license/vulnerability scanning.
+- [ ] Independent re-audit of M0 evidence.
+
+## M1 — reproducible research case
+
+- Fixture/canonical-source-only evidence pipeline.
+- Frozen data/relation/memory/skill/model manifests.
+- Evidence auditor and forecast verifier using recorded model fixtures first.
+- Forensic replay with networking disabled and identical artifact/event hashes.
+
+## M2 — controlled intelligence
+
+- Egress-proxied Source Gateway and rights engine.
+- Agent Reach and Scrapling only behind typed, allowlisted adapters; runtime installation disabled.
+- Quarantine, malware/active-content controls, injection taint, and capability mediation.
+- PydanticAI under Temporal; LiteLLM alias allowlist and privacy policy.
+- GBrain adapter as a derived projection only.
+
+## M3 — quant control experiment
+
+- PIT security master, calendars, corporate actions, trial ledger, and data snapshots.
+- One pre-registered daily SPY/cash deterministic control strategy; no optimizer, behavior, graph, leverage, shorting, or claimed alpha.
+- Cash, distribution, cost, walk-forward, placebo, multiple-testing, and independent accounting checks.
+
+## M4 — hard risk and paper execution
+
+- Policy-as-data compiler and deterministic rule engine.
+- Signed exact-order authorization, one-time atomic consumption, kill epochs, and human approval proof.
+- NautilusTrader isolated paper adapter only after LGPL and adapter due diligence.
+- Reconciliation, uncertain-outcome handling, TCA, and chaos tests.
+
+## M5 — governed learning
+
+- Horizon-matured attribution, learning candidates, independent evaluation, shadow/canary, rollback.
+- No automatic promotion for prompts, skills, routes, features, strategies, risk, or permissions.
+
+## M6 — live-readiness assessment (not authorization)
+
+Requires jurisdiction-specific legal/compliance determination, data contracts, broker/venue rules, model validation, security certification, operational runbooks, human governance, and explicit user approval. Live trading is not implied by completion of earlier milestones.
