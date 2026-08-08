@@ -6,15 +6,15 @@ Status legend: `[ ]` not started, `[~]` active, `[x]` verified.
 
 - [x] Consolidated architecture reviewed by independent engineering, quant, risk, execution, and security roles.
 - [x] Scope locked to fixture-only research plus simulation/paper contracts.
-- [~] Strict shared contracts with tenant, environment, chronology, provenance, rights, and content digests.
-- [~] Append-only hash-chained case ledger with idempotency conflict detection.
-- [~] Capability reference-monitor core with deny-by-default authorization.
-- [~] Asymmetric, domain-separated exact-order risk decision contract and verifier.
-- [ ] PostgreSQL migrations, forced RLS, non-owner roles, and cross-tenant tests.
-- [ ] Immutable object-store interface, local WORM test backend, retention policy tests.
+- [x] Strict shared contracts with tenant, environment, chronology, provenance, rights, and content digests.
+- [x] Append-only hash-chained case ledger with idempotency conflict detection.
+- [x] Capability reference-monitor core with deny-by-default authorization.
+- [x] Asymmetric, domain-separated exact-order risk decision contract and verifier.
+- [x] PostgreSQL migrations, bound-role forced RLS, non-owner roles, and cross-tenant tests.
+- [x] Immutable object-store interface, local reference backend, metadata/retention integrity tests.
 - [ ] Temporal replay-safe golden workflow and crash/idempotency tests.
 - [ ] CI supply-chain gates, SBOM, image digests, secret/license/vulnerability scanning.
-- [ ] Independent re-audit of M0 evidence.
+- [x] Independent adversarial re-audit of the implemented M0 slice (no P0/P1 blockers).
 
 ## M1 — reproducible research case
 
