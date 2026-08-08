@@ -63,7 +63,7 @@ Replay and backtest share `aegis.fund.run_cycle.run_cycle`, deterministic portfo
   budgets, stable parallel reducers, model-failure abstention, and dossier hashing;
 - deterministic claim graphs and non-model evidence audit gates;
 - mode-gated, official-first source registry/planner, immutable raw store, safe HTML/JSON/XML/text normalization, injection scanning, health/watchers, narrow Agent Reach/Scrapling boundaries, and a live-research CLI;
-- append-only governed SQLite memory, PIT/expiry/status filtering, contradiction visibility, exact memory snapshot hashes, and a failure-safe optional GBrain adapter;
+- append-only governed SQLite memory, EvidenceLedger-bound approval, PIT/expiry/status filtering, contradiction visibility, exact memory snapshot hashes, and a failure-safe optional GBrain adapter;
 - locked candidate surfaces, immutable experiment history, built-in and pinned qtype preflight, purged walk-forward/CPCV/PBO/PSR/DSR validation, shadow contracts, independent evaluation, and hash-bound human promotion decisions;
 - a strictly read-only Streamlit dashboard over validated cycle receipts;
 - no-key CLI and offline/adversarial acceptance tests.
@@ -102,7 +102,7 @@ The agent graph is a forecast provider. It never crosses the portfolio/risk/exec
 ## Specifications
 
 - Authoritative build specification: [`docs/BUILD_SPEC.md`](docs/BUILD_SPEC.md)
-- Preserved v2 source: [`docs/AegisQuant_MVP_Capability_Upgrade_v2.md`](docs/AegisQuant_MVP_Capability_Upgrade_v2.md)
+- v2 compatibility pointer: [`docs/AegisQuant_MVP_Capability_Upgrade_v2.md`](docs/AegisQuant_MVP_Capability_Upgrade_v2.md)
 - Historical v1: [`docs/AegisQuant_MVP_Build_Spec.md`](docs/AegisQuant_MVP_Build_Spec.md)
 
 ## Provenance and license
