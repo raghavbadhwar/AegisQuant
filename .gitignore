@@ -21,8 +21,17 @@ wheels/
 *.egg
 
 # Virtual Environment
+.venv/
 venv/
 ENV/
+
+# Tool caches and local run state
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+run_data/
 
 # Environment Variables
 .env

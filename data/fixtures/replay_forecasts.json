@@ -1,0 +1,172 @@
+[
+  {
+    "abstain_reason": null,
+    "abstained": false,
+    "as_of": "2024-02-23T21:05:00+00:00",
+    "base_case": 0.085,
+    "catalyst_dates": [],
+    "components": {
+      "momentum": 0.14,
+      "quality": 0.28
+    },
+    "confidence": 0.78,
+    "downside_case": -0.06375,
+    "evidence_ids": [
+      "demo-aapl-20240223-price"
+    ],
+    "expected_excess_return": 0.085,
+    "expected_volatility": 0.22,
+    "forecast_id": "replay-cio-v2-aapl-20240223",
+    "horizon_days": 20,
+    "invalidation_conditions": [
+      "fixture schema or point-in-time validation fails"
+    ],
+    "metadata": {
+      "provider": "fixture",
+      "version": "v2"
+    },
+    "model_name": "replay-cio-v2",
+    "probability_positive": 0.64,
+    "thesis": "Deterministic replay forecast for AAPL from approved local fixtures.",
+    "thesis_expiry": "2024-03-31T21:05:00+00:00",
+    "ticker": "AAPL",
+    "uncertainty": 0.22,
+    "upside_case": 0.1275
+  },
+  {
+    "abstain_reason": null,
+    "abstained": false,
+    "as_of": "2024-02-23T21:05:00+00:00",
+    "base_case": 0.095,
+    "catalyst_dates": [],
+    "components": {
+      "momentum": 0.18,
+      "quality": 0.34
+    },
+    "confidence": 0.84,
+    "downside_case": -0.07125,
+    "evidence_ids": [
+      "demo-msft-20240223-price"
+    ],
+    "expected_excess_return": 0.095,
+    "expected_volatility": 0.2,
+    "forecast_id": "replay-cio-v2-msft-20240223",
+    "horizon_days": 20,
+    "invalidation_conditions": [
+      "fixture schema or point-in-time validation fails"
+    ],
+    "metadata": {
+      "provider": "fixture",
+      "version": "v2"
+    },
+    "model_name": "replay-cio-v2",
+    "probability_positive": 0.68,
+    "thesis": "Deterministic replay forecast for MSFT from approved local fixtures.",
+    "thesis_expiry": "2024-03-31T21:05:00+00:00",
+    "ticker": "MSFT",
+    "uncertainty": 0.16,
+    "upside_case": 0.1425
+  },
+  {
+    "abstain_reason": null,
+    "abstained": false,
+    "as_of": "2024-02-23T21:05:00+00:00",
+    "base_case": 0.14,
+    "catalyst_dates": [],
+    "components": {
+      "momentum": 0.2,
+      "quality": 0.3
+    },
+    "confidence": 0.8,
+    "downside_case": -0.105,
+    "evidence_ids": [
+      "demo-nvda-20240223-price"
+    ],
+    "expected_excess_return": 0.14,
+    "expected_volatility": 0.38,
+    "forecast_id": "replay-cio-v2-nvda-20240223",
+    "horizon_days": 20,
+    "invalidation_conditions": [
+      "fixture schema or point-in-time validation fails"
+    ],
+    "metadata": {
+      "provider": "fixture",
+      "version": "v2"
+    },
+    "model_name": "replay-cio-v2",
+    "probability_positive": 0.7,
+    "thesis": "Deterministic replay forecast for NVDA from approved local fixtures.",
+    "thesis_expiry": "2024-03-31T21:05:00+00:00",
+    "ticker": "NVDA",
+    "uncertainty": 0.2,
+    "upside_case": 0.21
+  },
+  {
+    "abstain_reason": null,
+    "abstained": false,
+    "as_of": "2024-02-23T21:05:00+00:00",
+    "base_case": 0.075,
+    "catalyst_dates": [],
+    "components": {
+      "momentum": 0.11,
+      "quality": 0.2
+    },
+    "confidence": 0.7,
+    "downside_case": -0.05625,
+    "evidence_ids": [
+      "demo-amzn-20240223-price"
+    ],
+    "expected_excess_return": 0.075,
+    "expected_volatility": 0.3,
+    "forecast_id": "replay-cio-v2-amzn-20240223",
+    "horizon_days": 20,
+    "invalidation_conditions": [
+      "fixture schema or point-in-time validation fails"
+    ],
+    "metadata": {
+      "provider": "fixture",
+      "version": "v2"
+    },
+    "model_name": "replay-cio-v2",
+    "probability_positive": 0.61,
+    "thesis": "Deterministic replay forecast for AMZN from approved local fixtures.",
+    "thesis_expiry": "2024-03-31T21:05:00+00:00",
+    "ticker": "AMZN",
+    "uncertainty": 0.3,
+    "upside_case": 0.1125
+  },
+  {
+    "abstain_reason": null,
+    "abstained": false,
+    "as_of": "2024-02-23T21:05:00+00:00",
+    "base_case": 0.07,
+    "catalyst_dates": [],
+    "components": {
+      "momentum": 0.1,
+      "quality": 0.22
+    },
+    "confidence": 0.72,
+    "downside_case": -0.0525,
+    "evidence_ids": [
+      "demo-googl-20240223-price"
+    ],
+    "expected_excess_return": 0.07,
+    "expected_volatility": 0.24,
+    "forecast_id": "replay-cio-v2-googl-20240223",
+    "horizon_days": 20,
+    "invalidation_conditions": [
+      "fixture schema or point-in-time validation fails"
+    ],
+    "metadata": {
+      "provider": "fixture",
+      "version": "v2"
+    },
+    "model_name": "replay-cio-v2",
+    "probability_positive": 0.6,
+    "thesis": "Deterministic replay forecast for GOOGL from approved local fixtures.",
+    "thesis_expiry": "2024-03-31T21:05:00+00:00",
+    "ticker": "GOOGL",
+    "uncertainty": 0.28,
+    "upside_case": 0.105
+  }
+]

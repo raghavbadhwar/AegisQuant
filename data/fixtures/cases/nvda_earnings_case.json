@@ -1,0 +1,18 @@
+{
+  "as_of": "2024-02-23T21:05:00+00:00",
+  "case_id": "nvda-earnings-demo",
+  "created_at": "2024-02-23T21:05:00+00:00",
+  "evidence_fixture": "data/fixtures/evidence/replay_evidence.jsonl",
+  "forecast_fixture": "data/fixtures/replay_forecasts.json",
+  "fund_path": "configs/funds/demo-fund.yaml",
+  "horizon_days": 20,
+  "mode": "replay",
+  "research_question": "Assess the approved demo universe after the NVDA earnings event.",
+  "tickers": [
+    "AAPL",
+    "MSFT",
+    "NVDA",
+    "AMZN",
+    "GOOGL"
+  ]
+}
