@@ -32,6 +32,7 @@ from aegis.harness.model_router import ModelProvider, ModelProviderError, Replay
 from aegis.harness.network_guard import deny_network_io
 from aegis.harness.skill_loader import SkillDefinition
 from aegis.harness.state import DeskState
+from aegis.memory.local_backend import LocalMemoryBackend
 from aegis.memory.protocol import MemoryReader
 from aegis.observability import GraphEvent
 
@@ -77,6 +78,8 @@ class LangGraphForecastProvider:
             raise ValueError(f"missing graph agent prompts: {missing_prompts}")
         self.agent_prompts = agent_prompts
         self.evidence = evidence
+        if memory_reader is not None and type(memory_reader) is not LocalMemoryBackend:
+            raise ValueError("replay graph requires the sealed LocalMemoryBackend")
         self.memory_reader = memory_reader
         self._capabilities: CapabilityBroker | None = None
         self.graph = self._build_graph()

@@ -214,3 +214,23 @@ def test_graph_context_retrieves_only_governed_point_in_time_memory(tmp_path: Pa
     assert [hit.item.memory_id for hit in dossier.memory_hits] == ["graph-memory"]
     assert dossier.memory_snapshot_hash == backend.snapshot(case.as_of).content_hash
     assert all(artifact.payload["input_hash"] for artifact in dossier.artifacts)
+
+
+class FalseReportingMemoryReader:
+    def search(self, query):  # type: ignore[no-untyped-def]
+        raise AssertionError("unsealed memory reader must not be invoked")
+
+    def snapshot(self, as_of):  # type: ignore[no-untyped-def]
+        raise AssertionError("unsealed memory reader must not be invoked")
+
+
+def test_replay_graph_rejects_unsealed_memory_reader() -> None:
+    manifest, case, _, preflight = components()
+    with pytest.raises(ValueError, match="sealed LocalMemoryBackend"):
+        LangGraphForecastProvider(
+            ReplayModelProvider(ROOT / manifest.agent_output_fixture, case.case_id),
+            load_skill_tree(ROOT / "skills"),
+            load_agent_tree(ROOT / "aegis/agents"),
+            preflight.evidence,
+            FalseReportingMemoryReader(),  # type: ignore[arg-type]
+        )
