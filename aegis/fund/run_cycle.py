@@ -144,14 +144,13 @@ def run_cycle(
         data_snapshot_hash=snapshot.content_hash,
         dataset_hash=data_client.dataset_hash,
         source_manifest_versions={
-            record.source_id: f"{record.parser_version}/{record.extractor_version}"
-            for record in evidence.records
+            record.source_id: record.source_manifest_version for record in evidence.records
         },
         raw_evidence_hashes={
             record.evidence_id: record.content_hash for record in evidence.records
         },
         memory_snapshot_hash=dossier.memory_snapshot_hash,
-        relation_snapshot_hash=canonical_sha256([]),
+        relation_snapshot_hash=dossier.relation_snapshot_hash,
         skill_versions=sorted(
             {version for artifact in dossier.artifacts for version in artifact.skill_versions}
         ),

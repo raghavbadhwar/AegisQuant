@@ -61,7 +61,10 @@ class RawStore:
             raw_uri=body_path.as_posix(),
             byte_length=len(fetched.body),
         )
-        metadata_path = body_path.with_name(f"{digest}.{fetched.request_id}.json")
+        receipt_hash = hashlib.sha256(canonical_json(receipt).encode()).hexdigest()
+        metadata_path = body_path.with_name(
+            f"{digest}.{fetched.request_id}.{receipt_hash[:16]}.json"
+        )
         metadata = (canonical_json(receipt) + "\n").encode()
         if metadata_path.exists() and metadata_path.read_bytes() != metadata:
             raise RawStoreError("retrieval metadata is immutable")

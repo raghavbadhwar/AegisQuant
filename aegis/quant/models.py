@@ -59,9 +59,12 @@ class DeterministicCompositeProvider:
                     injection_flags=[],
                     parser_version="parquet-v1",
                     extractor_version="deterministic-composite-v1",
+                    source_manifest_version="fixture-prices@1.0.0",
                 )
             )
-        return EvidenceBundle(case_id=case.case_id, as_of=case.as_of, records=records)
+        return EvidenceBundle(
+            case_id=case.case_id, as_of=case.as_of, records=records, mode="historical"
+        )
 
     def _forecast_batch(
         self, case: ResearchCase, snapshot: MarketSnapshot
@@ -137,6 +140,8 @@ class DeterministicCompositeProvider:
         return tuple(forecasts)
 
     def research(self, case: ResearchCase, snapshot: MarketSnapshot) -> ResearchDossier:
+        if case.mode != "historical":
+            raise ValueError("deterministic composite provider is historical-only")
         evidence = self._evidence_bundle(case, snapshot)
         forecasts = self._forecast_batch(case, snapshot)
         payload = {

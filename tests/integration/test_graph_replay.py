@@ -7,7 +7,9 @@ from typing import Any
 
 import pytest
 
+from aegis.contracts import Claim, ClaimEdge, EvidenceAuditPolicy
 from aegis.data import FixtureDataClient
+from aegis.evidence import EvidenceLedger, audit_evidence, build_claim_graph
 from aegis.fund.models import FixtureForecastProvider, ForecastIntegrityError, load_replay_manifest
 from aegis.harness.agent_loader import load_agent_tree
 from aegis.harness.graph import LangGraphForecastProvider
@@ -82,6 +84,10 @@ def test_full_graph_dossier_is_deterministic_and_complete() -> None:
     }
     assert all(not forecast.abstained for forecast in first.forecasts)
     assert all(artifact.prompt_versions for artifact in first.artifacts)
+    assert first.claim_graph is not None
+    assert first.claim_graph.numeric_claims
+    assert all(claim.calculation_id for claim in first.claim_graph.numeric_claims)
+    assert first.evidence_audit is not None and first.evidence_audit.approved
 
 
 def test_bull_bear_and_base_rate_openings_are_independent() -> None:
@@ -178,8 +184,29 @@ def test_replay_graph_rejects_unsealed_model_provider() -> None:
 
 
 def test_graph_context_retrieves_only_governed_point_in_time_memory(tmp_path: Path) -> None:
-    _, case, _, _ = components()
-    backend = LocalMemoryBackend(tmp_path / "memory.sqlite")
+    _, case, _, preflight = components()
+    prior_bundle = preflight.evidence.model_copy(update={"case_id": "prior-case"})
+    claim = Claim(
+        claim_id="memory-lineage-claim",
+        case_id="prior-case",
+        statement="NVDA evidence is approved for memory lineage.",
+        claim_type="factual",
+        material=True,
+        evidence_ids=["demo-nvda-20240223-price"],
+    )
+    edge = ClaimEdge(
+        edge_id="memory-lineage-support",
+        source_kind="evidence",
+        source_id="demo-nvda-20240223-price",
+        relation="SUPPORTS",
+        target_kind="claim",
+        target_id=claim.claim_id,
+    )
+    graph = build_claim_graph("prior-case", [claim], [], [edge])
+    audit = audit_evidence(prior_bundle, graph, EvidenceAuditPolicy())
+    evidence_ledger = EvidenceLedger(tmp_path / "evidence.sqlite")
+    evidence_ledger.append(prior_bundle, graph, audit)
+    backend = LocalMemoryBackend(tmp_path / "memory.sqlite", evidence_ledger=evidence_ledger)
     candidate_payload = {
         "candidate_id": "graph-memory-candidate",
         "memory_id": "graph-memory",
@@ -193,9 +220,9 @@ def test_graph_context_retrieves_only_governed_point_in_time_memory(tmp_path: Pa
         "scope": "entity",
         "confidence": 0.7,
         "utility_score": 0.8,
-        "created_at": case.as_of - timedelta(days=3),
+        "created_at": case.as_of - timedelta(days=1),
         "expires_at": case.as_of + timedelta(days=30),
-        "review_by": case.as_of - timedelta(days=1),
+        "review_by": case.as_of + timedelta(days=1),
     }
     candidate = build_memory_candidate(**candidate_payload)
     backend.stage(candidate)
@@ -206,7 +233,7 @@ def test_graph_context_retrieves_only_governed_point_in_time_memory(tmp_path: Pa
         "evaluator_id": "human-reviewer",
         "decision": "approve",
         "reason": "Approved for bounded replay context.",
-        "decided_at": case.as_of - timedelta(days=2),
+        "decided_at": case.as_of,
     }
     backend.decide(build_memory_decision(**decision_payload))
     case, snapshot, provider = make_provider(memory=backend)

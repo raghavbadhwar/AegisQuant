@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
 from collections.abc import Callable
 from datetime import datetime
+from pathlib import Path
 from typing import Any, ClassVar
 from urllib.parse import urlparse
 
@@ -90,8 +92,11 @@ class AgentReachConnector:
     ) -> FetchedDocument:
         if request.mode != "live_research":
             raise ValueError("Agent Reach is live-research only")
+        executable = shutil.which("agent-reach-search")
+        if executable is None:
+            raise ConnectorUnavailable("agent-reach-search executable is unavailable")
         argv = [
-            "agent-reach-search",
+            executable,
             f"{self.operation}: {request.query}",
             "--limit",
             str(min(request.max_sources, 10)),
@@ -102,7 +107,7 @@ class AgentReachConnector:
             check=True,
             capture_output=True,
             timeout=30,
-            env={"PATH": "/usr/bin:/bin:/opt/homebrew/bin"},
+            env={"PATH": f"{Path(executable).parent}:/usr/bin:/bin"},
         )
         body = completed.stdout[:1_000_000]
         return FetchedDocument(
@@ -120,9 +125,25 @@ class AgentReachConnector:
 
 
 class ScraplingWorkerBoundary:
-    """Typed JSON boundary for an isolated Scrapling worker implementation."""
+    """Manifest-bound JSON boundary for an isolated live-research worker."""
 
-    def build_payload(self, job: ScrapeJob) -> bytes:
+    def build_payload(self, job: ScrapeJob, manifest: SourceManifest) -> bytes:
+        if (
+            job.product_mode != "live_research"
+            or not manifest.live_safe
+            or not manifest.obey_robots
+        ):
+            raise ValueError("Scrapling job is not authorized for live research")
+        if job.source_id != manifest.source_id:
+            raise ValueError("Scrapling job source does not match its manifest")
+        if not set(job.domain_allowlist).issubset(manifest.domains):
+            raise ValueError("Scrapling allowlist exceeds manifest domains")
+        if job.maximum_pages > manifest.max_pages_per_job:
+            raise ValueError("Scrapling page limit exceeds source manifest")
+        if job.maximum_depth > manifest.max_depth:
+            raise ValueError("Scrapling depth exceeds source manifest")
+        if job.timeout_seconds > 60:
+            raise ValueError("Scrapling timeout exceeds worker policy")
         return json.dumps(job.model_dump(mode="json"), sort_keys=True).encode()
 
     def parse_result(self, payload: bytes) -> dict[str, Any]:

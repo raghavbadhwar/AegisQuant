@@ -5,7 +5,16 @@ from pathlib import Path
 
 import pytest
 
-from aegis.contracts import MemoryQuery, TypedRelation
+from aegis.contracts import (
+    Claim,
+    ClaimEdge,
+    EvidenceAuditPolicy,
+    EvidenceBundle,
+    EvidenceRecord,
+    MemoryQuery,
+    TypedRelation,
+)
+from aegis.evidence import EvidenceLedger, audit_evidence, build_claim_graph
 from aegis.memory import (
     LocalMemoryBackend,
     MemoryGovernanceError,
@@ -17,6 +26,48 @@ from aegis.memory.gbrain_adapter import GBrainMemoryAdapter
 from aegis.memory.relations import RelationStore
 
 BASE = datetime(2024, 2, 20, 12, 0, tzinfo=UTC)
+
+
+def governed_backend(path: Path) -> LocalMemoryBackend:
+    evidence = EvidenceRecord(
+        evidence_id="demo-nvda-20240223-price",
+        source_id="approved-fixture",
+        content_hash="1" * 64,
+        raw_uri="fixture://approved",
+        entity_ids=["NVDA"],
+        document_type="price",
+        coordinates="ticker=NVDA;field=close",
+        available_at=BASE - timedelta(days=1),
+        retrieved_at=BASE,
+        source_quality=1.0,
+        extraction_confidence=1.0,
+        historical_safe=True,
+        parser_version="fixture-v1",
+        extractor_version="fixture-v1",
+        source_manifest_version="fixture@1.0.0",
+    )
+    bundle = EvidenceBundle(case_id="prior-case", as_of=BASE, records=[evidence], mode="historical")
+    claim = Claim(
+        claim_id="approved-claim",
+        case_id="prior-case",
+        statement="Approved prior-case evidence.",
+        claim_type="factual",
+        material=True,
+        evidence_ids=[evidence.evidence_id],
+    )
+    edge = ClaimEdge(
+        edge_id="approved-support",
+        source_kind="evidence",
+        source_id=evidence.evidence_id,
+        relation="SUPPORTS",
+        target_kind="claim",
+        target_id=claim.claim_id,
+    )
+    graph = build_claim_graph("prior-case", [claim], [], [edge])
+    audit = audit_evidence(bundle, graph, EvidenceAuditPolicy())
+    ledger = EvidenceLedger(path.with_name(f"{path.stem}-evidence.sqlite"))
+    ledger.append(bundle, graph, audit)
+    return LocalMemoryBackend(path, evidence_ledger=ledger)
 
 
 def candidate(**updates):  # type: ignore[no-untyped-def]
@@ -60,7 +111,7 @@ def decision(item, **updates):  # type: ignore[no-untyped-def]
 
 
 def test_stage_approve_retrieve_and_snapshot_are_point_in_time(tmp_path: Path) -> None:
-    backend = LocalMemoryBackend(tmp_path / "memory.sqlite")
+    backend = governed_backend(tmp_path / "memory.sqlite")
     staged = candidate()
     backend.stage(staged)
     approved = backend.decide(decision(staged))
@@ -87,7 +138,7 @@ def test_stage_approve_retrieve_and_snapshot_are_point_in_time(tmp_path: Path) -
 
 
 def test_governance_separation_quarantine_and_expiry(tmp_path: Path) -> None:
-    backend = LocalMemoryBackend(tmp_path / "memory.sqlite")
+    backend = governed_backend(tmp_path / "memory.sqlite")
     own = candidate(candidate_id="own")
     backend.stage(own)
     with pytest.raises(MemoryGovernanceError, match="cannot approve"):
@@ -119,7 +170,7 @@ class FutureIdGBrain(BrokenGBrain):
 
 
 def test_gbrain_outage_and_future_ids_cannot_bypass_local_filters(tmp_path: Path) -> None:
-    backend = LocalMemoryBackend(tmp_path / "memory.sqlite")
+    backend = governed_backend(tmp_path / "memory.sqlite")
     staged = candidate()
     backend.stage(staged)
     backend.decide(decision(staged))
@@ -135,7 +186,7 @@ def test_gbrain_outage_and_future_ids_cannot_bypass_local_filters(tmp_path: Path
 
 
 def test_relation_store_and_dream_cycle_remain_pit_candidate_only(tmp_path: Path) -> None:
-    backend = LocalMemoryBackend(tmp_path / "memory.sqlite")
+    backend = governed_backend(tmp_path / "memory.sqlite")
     first_candidate = candidate()
     backend.stage(first_candidate)
     first = backend.decide(decision(first_candidate))
@@ -164,3 +215,30 @@ def test_relation_store_and_dream_cycle_remain_pit_candidate_only(tmp_path: Path
     relation_store.append(relation)
     assert relation_store.search("NVDA", BASE + timedelta(days=1)) == ()
     assert relation_store.search("NVDA", BASE + timedelta(days=3)) == (relation,)
+
+
+def test_memory_approval_fails_for_overdue_or_unverified_lineage(tmp_path: Path) -> None:
+    unverified = governed_backend(tmp_path / "unverified.sqlite")
+    proposed = candidate(evidence_ids=["unverified-id"])
+    unverified.stage(proposed)
+    with pytest.raises(MemoryGovernanceError, match="unapproved evidence"):
+        unverified.decide(decision(proposed))
+    governed = governed_backend(tmp_path / "overdue.sqlite")
+    governed.stage(proposed)
+    overdue = build_memory_decision(
+        decision_id="overdue-decision",
+        candidate_id=proposed.candidate_id,
+        candidate_hash=proposed.content_hash,
+        decision="approve",
+        evaluator_id="human-reviewer",
+        reason="Too late.",
+        decided_at=proposed.review_by + timedelta(seconds=1),
+    )
+    with pytest.raises(MemoryGovernanceError, match="overdue"):
+        governed.decide(overdue)
+
+
+def test_memory_candidate_requires_expiry() -> None:
+    payload = candidate().model_dump(exclude={"content_hash", "expires_at"})
+    with pytest.raises(ValueError, match="expires_at"):
+        build_memory_candidate(**payload)

@@ -53,6 +53,8 @@ class SourceGateway:
             plan = self.planner.plan(request)
         except SourcePlanningError as exc:
             raise SourcePolicyDenied(str(exc)) from exc
+        if plan.estimated_cost_usd > request.max_cost_usd:
+            raise SourcePolicyDenied("source plan exceeds the request cost ceiling")
         receipts = []
         documents = []
         evidence: list[EvidenceRecord] = []

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Callable
+from decimal import Decimal
 from typing import Any, cast
 
 from langgraph.graph import END, START, StateGraph
@@ -17,6 +18,7 @@ from aegis.contracts import (
     EvidenceBundle,
     MemoryHit,
     MemoryQuery,
+    NumericClaim,
     ResearchArtifact,
     ResearchCase,
     canonical_sha256,
@@ -243,6 +245,7 @@ class LangGraphForecastProvider:
         forecasts: tuple[AlphaForecast, ...] = (),
     ) -> tuple[ClaimGraphSnapshot, tuple[ResearchArtifact, ...]]:
         claims: list[Claim] = []
+        numeric_claims: list[NumericClaim] = []
         edges: list[ClaimEdge] = []
         updated_artifacts: list[ResearchArtifact] = []
         for artifact in artifacts:
@@ -318,6 +321,54 @@ class LangGraphForecastProvider:
                         target_id=claim_id,
                     )
                 )
+            numeric_values = {
+                "expected_excess_return": forecast.expected_excess_return,
+                "expected_volatility": forecast.expected_volatility,
+                "probability_positive": forecast.probability_positive,
+                "confidence": forecast.confidence,
+                "uncertainty": forecast.uncertainty,
+                "downside_case": forecast.downside_case,
+                "base_case": forecast.base_case,
+                "upside_case": forecast.upside_case,
+                **{f"component_{key}": value for key, value in forecast.components.items()},
+            }
+            for field_name, value in numeric_values.items():
+                if value is None:
+                    continue
+                numeric_id = f"{forecast.forecast_id}:numeric:{field_name}"
+                claims.append(
+                    Claim(
+                        claim_id=numeric_id,
+                        case_id=case.case_id,
+                        statement=f"{forecast.ticker} {field_name} is {value}",
+                        claim_type="numeric",
+                        material=True,
+                        evidence_ids=forecast.evidence_ids,
+                        status="verified",
+                    )
+                )
+                numeric_claims.append(
+                    NumericClaim(
+                        claim_id=numeric_id,
+                        name=field_name,
+                        value=Decimal(str(value)),
+                        unit="ratio",
+                        evidence_id=forecast.evidence_ids[0],
+                        coordinates=(f"forecast_id={forecast.forecast_id};field={field_name}"),
+                        calculation_id=f"{forecast.model_name}:structured-output-v1",
+                    )
+                )
+                for evidence_id in forecast.evidence_ids:
+                    edges.append(
+                        ClaimEdge(
+                            edge_id=f"{evidence_id}:supports:{numeric_id}",
+                            source_kind="evidence",
+                            source_id=evidence_id,
+                            relation="SUPPORTS",
+                            target_kind="claim",
+                            target_id=numeric_id,
+                        )
+                    )
             if cio_ids:
                 edges.append(
                     ClaimEdge(
@@ -329,7 +380,9 @@ class LangGraphForecastProvider:
                         target_id=forecast.forecast_id,
                     )
                 )
-        return build_claim_graph(case.case_id, claims, [], edges), tuple(updated_artifacts)
+        return build_claim_graph(case.case_id, claims, numeric_claims, edges), tuple(
+            updated_artifacts
+        )
 
     def _audit(self, state: DeskState) -> DeskState:
         specialist_ids = [

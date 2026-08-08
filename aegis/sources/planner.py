@@ -72,4 +72,5 @@ class SourcePlanner:
             mode="live_research",
             as_of=request.as_of,
             planner_version=self.version,
+            estimated_cost_usd=0.0,
         )

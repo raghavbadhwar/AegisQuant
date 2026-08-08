@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from decimal import Decimal
 from pathlib import Path
 
 import pytest
 
-from aegis.contracts import Claim, ClaimEdge, SourceAttempt, SourceRequest
+from aegis.contracts import Claim, ClaimEdge, NumericClaim, SourceAttempt, SourceRequest
 from aegis.evidence import build_claim_graph
 from aegis.sources import SourcePlanner, SourceRegistry
 from aegis.sources.health import source_health
@@ -113,3 +114,37 @@ def test_source_health_and_watchers_are_point_in_time_and_event_only() -> None:
         )
         is None
     )
+
+
+def test_claim_graph_rejects_support_edge_for_different_evidence() -> None:
+    claim = Claim(
+        claim_id="claim-mismatch",
+        case_id="case",
+        statement="Material statement",
+        claim_type="factual",
+        material=True,
+        evidence_ids=["declared-evidence"],
+    )
+    edge = ClaimEdge(
+        edge_id="mismatched-edge",
+        source_kind="evidence",
+        source_id="different-evidence",
+        relation="SUPPORTS",
+        target_kind="claim",
+        target_id=claim.claim_id,
+    )
+    with pytest.raises(ValueError, match="disagrees with claim evidence"):
+        build_claim_graph("case", [claim], [], [edge])
+
+
+def test_numeric_claim_rejects_nonsense_coordinates() -> None:
+    with pytest.raises(ValueError, match="structured key=value"):
+        NumericClaim(
+            claim_id="numeric",
+            name="revenue",
+            value=Decimal("10"),
+            unit="USD",
+            evidence_id="evidence",
+            coordinates="nonsense-not-a-coordinate",
+            calculation_id="calculation-v1",
+        )

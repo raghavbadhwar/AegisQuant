@@ -150,6 +150,7 @@ def main() -> None:
                 "extraction_confidence": 1.0,
                 "injection_flags": [],
                 "parser_version": "parquet-v1",
+                "source_manifest_version": "synthetic-demo@1.0.0",
                 "extractor_version": "fixture-generator-v2",
             }
         )

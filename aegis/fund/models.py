@@ -74,6 +74,7 @@ class ResearchDossier(BaseModel):
     evidence_audit: EvidenceAuditResult | None = None
     memory_hits: tuple[MemoryHit, ...] = ()
     memory_snapshot_hash: str = canonical_sha256([])
+    relation_snapshot_hash: str = canonical_sha256([])
     content_hash: str
 
     def hash_payload(self) -> dict[str, object]:
@@ -88,6 +89,7 @@ class ResearchDossier(BaseModel):
             "evidence_audit": self.evidence_audit,
             "memory_hits": self.memory_hits,
             "memory_snapshot_hash": self.memory_snapshot_hash,
+            "relation_snapshot_hash": self.relation_snapshot_hash,
         }
 
     @model_validator(mode="after")
@@ -126,6 +128,7 @@ def build_dossier(
     evidence_audit: EvidenceAuditResult | None = None,
     memory_hits: tuple[MemoryHit, ...] = (),
     memory_snapshot_hash: str = canonical_sha256([]),
+    relation_snapshot_hash: str = canonical_sha256([]),
 ) -> ResearchDossier:
     payload = {
         "case_id": case.case_id,
@@ -138,6 +141,7 @@ def build_dossier(
         "evidence_audit": evidence_audit,
         "memory_hits": memory_hits,
         "memory_snapshot_hash": memory_snapshot_hash,
+        "relation_snapshot_hash": relation_snapshot_hash,
     }
     return ResearchDossier(
         case_id=case.case_id,
@@ -150,6 +154,7 @@ def build_dossier(
         evidence_audit=evidence_audit,
         memory_hits=memory_hits,
         memory_snapshot_hash=memory_snapshot_hash,
+        relation_snapshot_hash=relation_snapshot_hash,
         content_hash=canonical_sha256(payload),
     )
 
@@ -213,7 +218,10 @@ class FixtureForecastProvider:
         if {forecast.ticker for forecast in forecasts} != requested:
             raise ForecastIntegrityError("replay forecasts do not cover the requested universe")
         evidence = EvidenceBundle(
-            case_id=case.case_id, as_of=case.as_of, records=list(self._evidence)
+            case_id=case.case_id,
+            as_of=case.as_of,
+            records=list(self._evidence),
+            mode=case.mode,
         )
         evidence_ids = {record.evidence_id for record in self._evidence}
         for forecast in forecasts:

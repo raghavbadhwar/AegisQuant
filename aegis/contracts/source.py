@@ -8,6 +8,7 @@ from typing import Annotated, Literal
 from pydantic import AwareDatetime, Field, model_validator
 
 from ._base import ContractModel
+from .artifacts import canonical_sha256
 
 SourceType = Literal[
     "local_snapshot",
@@ -81,10 +82,19 @@ class SourcePlan(ContractModel):
     mode: Literal["live_research"]
     as_of: AwareDatetime
     planner_version: Annotated[str, Field(min_length=1)]
+    estimated_cost_usd: float = Field(ge=0, allow_inf_nan=False)
+
+    @model_validator(mode="after")
+    def plan_vectors_align(self) -> SourcePlan:
+        if len(self.source_ids) != len(self.acquisition_methods):
+            raise ValueError("source plan methods do not align with source IDs")
+        return self
 
 
 class ScrapeJob(ContractModel):
     job_id: Annotated[str, Field(min_length=1)]
+    request_id: Annotated[str, Field(min_length=1)]
+    product_mode: Literal["live_research"]
     source_id: Annotated[str, Field(min_length=1)]
     url: Annotated[str, Field(min_length=1)]
     purpose: Annotated[str, Field(min_length=1)]
@@ -92,21 +102,34 @@ class ScrapeJob(ContractModel):
     mode: Literal["static", "dynamic"]
     as_of: AwareDatetime
     domain_allowlist: list[str] = Field(min_length=1)
-    maximum_pages: int = Field(gt=0)
-    maximum_depth: int = Field(ge=0)
-    timeout_seconds: int = Field(gt=0)
+    maximum_pages: int = Field(gt=0, le=100)
+    maximum_depth: int = Field(ge=0, le=10)
+    timeout_seconds: int = Field(gt=0, le=120)
 
     @model_validator(mode="after")
     def url_must_be_allowlisted(self) -> ScrapeJob:
+        import ipaddress
         from urllib.parse import urlparse
 
         parsed = urlparse(self.url)
         host = (parsed.hostname or "").lower()
         allowed = {domain.lower().lstrip(".") for domain in self.domain_allowlist}
-        if parsed.scheme not in {"http", "https"} or not any(
+        try:
+            address = ipaddress.ip_address(host)
+        except ValueError:
+            address = None
+        if address is not None and (
+            address.is_private
+            or address.is_link_local
+            or address.is_loopback
+            or address.is_reserved
+            or address.is_unspecified
+        ):
+            raise ValueError("scrape URL targets a forbidden network address")
+        if parsed.scheme != "https" or not any(
             host == domain or host.endswith(f".{domain}") for domain in allowed
         ):
-            raise ValueError("scrape URL is outside the domain allowlist")
+            raise ValueError("scrape URL is outside the HTTPS domain allowlist")
         return self
 
 
@@ -142,6 +165,34 @@ class SourceAcquisitionResult(ContractModel):
     documents: list[NormalizedDocument] = Field(min_length=1)
     evidence_ids: list[str] = Field(min_length=1)
     result_hash: Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
+
+    @model_validator(mode="after")
+    def result_hash_matches(self) -> SourceAcquisitionResult:
+        if not (
+            len(self.plan.source_ids)
+            == len(self.raw_receipts)
+            == len(self.documents)
+            == len(self.evidence_ids)
+        ):
+            raise ValueError("source acquisition vectors do not align")
+        for source_id, receipt, document in zip(
+            self.plan.source_ids, self.raw_receipts, self.documents, strict=True
+        ):
+            if (
+                receipt.source_id != source_id
+                or document.source_id != source_id
+                or document.raw_receipt != receipt
+            ):
+                raise ValueError("normalized document is not bound to its raw receipt")
+        payload = {
+            "plan": self.plan,
+            "raw_receipts": self.raw_receipts,
+            "documents": self.documents,
+            "evidence_ids": self.evidence_ids,
+        }
+        if self.result_hash != canonical_sha256(payload):
+            raise ValueError("source acquisition result hash mismatch")
+        return self
 
 
 class EventCandidate(ContractModel):

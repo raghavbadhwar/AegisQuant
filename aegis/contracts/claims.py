@@ -36,6 +36,15 @@ class NumericClaim(ContractModel):
     coordinates: Annotated[str, Field(min_length=1)]
     calculation_id: str | None = None
 
+    @model_validator(mode="after")
+    def exact_number_has_structured_provenance(self) -> NumericClaim:
+        if not self.value.is_finite():
+            raise ValueError("numeric claim value must be finite")
+        parts = self.coordinates.split(";")
+        if len(parts) < 2 or any("=" not in part for part in parts):
+            raise ValueError("numeric coordinates require structured key=value fields")
+        return self
+
 
 GraphNodeKind = Literal[
     "evidence", "claim", "calculation", "artifact", "forecast", "portfolio_decision", "outcome"
@@ -89,6 +98,25 @@ class ClaimGraphSnapshot(ContractModel):
             for edge in self.edges
         ):
             raise ValueError("claim graph contains an unknown claim endpoint")
+        claim_by_id = {claim.claim_id: claim for claim in self.claims}
+        supported_sources: dict[str, set[str]] = {claim_id: set() for claim_id in claim_ids}
+        for edge in self.edges:
+            if edge.source_kind == "evidence" and edge.relation == "SUPPORTS":
+                claim = claim_by_id[edge.target_id]
+                if edge.source_id not in claim.evidence_ids:
+                    raise ValueError("SUPPORTS edge disagrees with claim evidence IDs")
+                supported_sources[claim.claim_id].add(edge.source_id)
+        if any(
+            claim.material and supported_sources[claim.claim_id] != set(claim.evidence_ids)
+            for claim in self.claims
+        ):
+            raise ValueError("material claim evidence IDs require matching SUPPORTS edges")
+        if any(
+            numeric.claim_id not in claim_by_id
+            or numeric.evidence_id not in claim_by_id[numeric.claim_id].evidence_ids
+            for numeric in self.numeric_claims
+        ):
+            raise ValueError("numeric claim provenance disagrees with its claim")
         payload = {
             "case_id": self.case_id,
             "claims": self.claims,

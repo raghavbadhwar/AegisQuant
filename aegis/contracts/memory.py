@@ -71,7 +71,7 @@ class MemoryCandidate(ContractModel):
     confidence: float = Field(ge=0, le=1, allow_inf_nan=False)
     utility_score: float = Field(ge=0, le=1, allow_inf_nan=False)
     created_at: AwareDatetime
-    expires_at: AwareDatetime | None = None
+    expires_at: AwareDatetime
     review_by: AwareDatetime
     supersedes: list[str] = Field(default_factory=list)
     contradicted_by: list[str] = Field(default_factory=list)

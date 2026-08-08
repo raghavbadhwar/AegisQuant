@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import sqlite3
+from datetime import datetime
 from pathlib import Path
 
 from aegis.contracts import (
     ClaimGraphSnapshot,
+    EvidenceAuditPolicy,
     EvidenceAuditResult,
     EvidenceBundle,
     canonical_json,
@@ -41,6 +43,11 @@ class EvidenceLedger:
     ) -> str:
         if bundle.case_id != graph.case_id or bundle.case_id != audit.case_id:
             raise EvidenceLedgerError("evidence case IDs do not match")
+        from .audit import audit_evidence
+
+        recomputed = audit_evidence(bundle, graph, EvidenceAuditPolicy())
+        if audit != recomputed:
+            raise EvidenceLedgerError("evidence audit does not match deterministic recomputation")
         payload = {"bundle": bundle, "graph": graph, "audit": audit}
         digest = canonical_sha256(payload)
         row = (
@@ -80,3 +87,15 @@ class EvidenceLedger:
         if canonical_sha256({"bundle": bundle, "graph": graph, "audit": audit}) != row[3]:
             raise EvidenceLedgerError("evidence ledger integrity failure")
         return bundle, graph, audit
+
+    def approved_ids_for_cases(self, case_ids: list[str], *, as_of: datetime) -> set[str]:
+        approved: set[str] = set()
+        for case_id in case_ids:
+            bundle, _, audit = self.get(case_id)
+            if not audit.approved:
+                continue
+            bundle_ids = {
+                record.evidence_id for record in bundle.records if record.available_at <= as_of
+            }
+            approved.update(bundle_ids.intersection(audit.approved_evidence_ids))
+        return approved

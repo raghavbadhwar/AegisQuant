@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import hashlib
-from functools import lru_cache
 from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -45,7 +44,6 @@ def _git_revision(root: Path) -> str:
     return ref_path.read_text(encoding="utf-8").strip() if ref_path.is_file() else "unknown"
 
 
-@lru_cache(maxsize=4)
 def local_build_fingerprint(root: Path) -> tuple[str, str, str]:
     """Hash deterministic source/config inputs without shelling out."""
     digest = hashlib.sha256()

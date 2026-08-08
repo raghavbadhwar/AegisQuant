@@ -1,14 +1,18 @@
 from __future__ import annotations
 
 import sqlite3
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
 
 from aegis.contracts import (
+    CandidatePatchMetadata,
+    HoldoutUnlock,
     HypothesisDeclaration,
     LearningCandidate,
+    OutcomeRecord,
+    ShadowResult,
     canonical_sha256,
 )
 from aegis.research_lab.boundaries import CandidateBoundaryError, validate_candidate_target
@@ -18,6 +22,7 @@ from aegis.research_lab.builders import (
     build_validation_report,
 )
 from aegis.research_lab.experiments import ExperimentIntegrityError, ExperimentLedger
+from aegis.research_lab.outcomes import OutcomeIntegrityError, OutcomeLedger, build_postmortem
 from aegis.research_lab.promotion import PromotionDenied, authorize_promotion
 from aegis.research_lab.purgedcv_adapter import PurgedCVAdapter
 from aegis.research_lab.static_checks import BuiltInQuantChecker, QTypeAdapter
@@ -48,6 +53,7 @@ def learning_candidate() -> LearningCandidate:
         evaluation_suite_id="suite-v1",
         proposer_model="replay-model",
         proposer_id="postmortem-agent",
+        status="shadow",
     )
 
 
@@ -132,7 +138,9 @@ def test_experiment_ledger_is_append_only_and_tamper_detecting(tmp_path: Path) -
         ledger.get(record.experiment_id)
 
 
-def test_promotion_requires_independent_validation_and_human_hash_binding() -> None:
+def test_promotion_requires_independent_validation_and_human_hash_binding(
+    tmp_path: Path,
+) -> None:
     candidate = learning_candidate()
     candidate_hash = canonical_sha256(candidate)
     report = build_validation_report(
@@ -179,19 +187,58 @@ def test_promotion_requires_independent_validation_and_human_hash_binding() -> N
         passed=True,
         evaluated_at=NOW,
     )
+    patch = CandidatePatchMetadata(
+        candidate_id=candidate.candidate_id,
+        target_path="skills/candidates/quant-signal.md",
+        base_revision="abc123",
+        base_tree_hash="1" * 64,
+        patch_hash=canonical_sha256(candidate.proposed_patch),
+        candidate_tree_hash="2" * 64,
+    )
+    unlock_values = dict(
+        unlock_id="human-holdout-unlock-1",
+        suite_id=candidate.evaluation_suite_id,
+        human_approver_id="holdout-owner",
+        reason="Independent unlock after candidate declaration.",
+        unlocked_at=NOW,
+    )
+    holdout_unlock = HoldoutUnlock(**unlock_values, content_hash=canonical_sha256(unlock_values))
+    shadow_values = dict(
+        shadow_id="shadow-1",
+        candidate_id=candidate.candidate_id,
+        baseline_run_ids=["baseline-run"],
+        candidate_run_ids=["candidate-run"],
+        metrics={"excess_return": 0.01},
+        passed=True,
+        completed_at=NOW,
+    )
+    shadow_result = ShadowResult(**shadow_values, content_hash=canonical_sha256(shadow_values))
     decision = build_promotion_decision(
         promotion_id="promotion-1",
         candidate_id=candidate.candidate_id,
         candidate_hash=candidate_hash,
         validation_report_id=report.report_id,
         validation_report_hash=report.content_hash,
+        patch_metadata_hash=canonical_sha256(patch),
+        holdout_unlock_id=holdout_unlock.unlock_id,
+        holdout_unlock_hash=holdout_unlock.content_hash,
+        shadow_result_id=shadow_result.shadow_id,
+        shadow_result_hash=shadow_result.content_hash,
         evaluator_id=report.evaluator_id,
         human_approver_id="human-owner",
         decision="promote",
         reason="All locked gates passed.",
-        decided_at=NOW,
+        decided_at=NOW.replace(minute=1),
     )
-    assert authorize_promotion(candidate, report, decision)
+    assert authorize_promotion(
+        candidate,
+        report,
+        decision,
+        patch=patch,
+        holdout_unlock=holdout_unlock,
+        shadow_result=shadow_result,
+        project_root=tmp_path,
+    )
     self_approved = build_promotion_decision(
         **{
             **decision.model_dump(exclude={"content_hash"}),
@@ -199,8 +246,73 @@ def test_promotion_requires_independent_validation_and_human_hash_binding() -> N
             "human_approver_id": candidate.proposer_id,
         }
     )
-    with pytest.raises(PromotionDenied, match="cannot approve"):
-        authorize_promotion(candidate, report, self_approved)
+    with pytest.raises(PromotionDenied, match="independent"):
+        authorize_promotion(
+            candidate,
+            report,
+            self_approved,
+            patch=patch,
+            holdout_unlock=holdout_unlock,
+            shadow_result=shadow_result,
+            project_root=tmp_path,
+        )
+
+    rejected = candidate.model_copy(update={"status": "rejected"})
+    with pytest.raises(PromotionDenied, match="shadow status"):
+        authorize_promotion(
+            rejected,
+            report,
+            decision,
+            patch=patch,
+            holdout_unlock=holdout_unlock,
+            shadow_result=shadow_result,
+            project_root=tmp_path,
+        )
+    same_evaluator = build_promotion_decision(
+        **{
+            **decision.model_dump(exclude={"content_hash"}),
+            "promotion_id": "promotion-evaluator-self",
+            "human_approver_id": report.evaluator_id,
+        }
+    )
+    with pytest.raises(PromotionDenied, match="independent"):
+        authorize_promotion(
+            candidate,
+            report,
+            same_evaluator,
+            patch=patch,
+            holdout_unlock=holdout_unlock,
+            shadow_result=shadow_result,
+            project_root=tmp_path,
+        )
+    early_decision = build_promotion_decision(
+        **{
+            **decision.model_dump(exclude={"content_hash"}),
+            "promotion_id": "promotion-too-early",
+            "decided_at": NOW - timedelta(days=1),
+        }
+    )
+    with pytest.raises(PromotionDenied, match="follow completed evaluation"):
+        authorize_promotion(
+            candidate,
+            report,
+            early_decision,
+            patch=patch,
+            holdout_unlock=holdout_unlock,
+            shadow_result=shadow_result,
+            project_root=tmp_path,
+        )
+    disconnected_patch = patch.model_copy(update={"patch_hash": "3" * 64})
+    with pytest.raises(PromotionDenied, match="patch metadata"):
+        authorize_promotion(
+            candidate,
+            report,
+            decision,
+            patch=disconnected_patch,
+            holdout_unlock=holdout_unlock,
+            shadow_result=shadow_result,
+            project_root=tmp_path,
+        )
 
 
 def test_pinned_qtype_and_purgedcv_optional_adapters(tmp_path: Path) -> None:
@@ -210,6 +322,43 @@ def test_pinned_qtype_and_purgedcv_optional_adapters(tmp_path: Path) -> None:
     assert any(item.rule_id == "QT001" for item in diagnostics)
     adapter = PurgedCVAdapter()
     assert adapter.available()
+    library_splits = adapter.build_library_splits(40, n_splits=4, purge_days=1, embargo_days=1)
+    assert len(library_splits) == 4
+    assert all(not set(train).intersection(test) for train, test in library_splits)
     adapter.validate_indices([((0, 1), (3, 4))], locked_holdout={5, 6})
     with pytest.raises(ValueError, match="locked final holdout"):
         adapter.validate_indices([((0, 5), (3, 4))], locked_holdout={5, 6})
+
+
+def test_matured_outcome_postmortem_is_append_only_and_candidate_only(tmp_path: Path) -> None:
+    outcome = OutcomeRecord(
+        outcome_id="outcome-1",
+        case_id="case-1",
+        forecast_id="forecast-1",
+        ticker="NVDA",
+        horizon_end=NOW,
+        realized_excess_return=0.02,
+        forecast_error=-0.01,
+        costs=2.5,
+        available_at=NOW + timedelta(hours=1),
+    )
+    ledger = OutcomeLedger(tmp_path / "outcomes.sqlite")
+    ledger.append_outcome(outcome)
+    report = build_postmortem(
+        "postmortem-1",
+        [outcome],
+        NOW + timedelta(hours=2),
+        candidate_ids=["candidate-skill-1"],
+    )
+    ledger.append_postmortem(report)
+    assert ledger.outcomes() == (outcome,)
+    assert report.candidate_ids == ["candidate-skill-1"]
+    with sqlite3.connect(ledger.path) as connection:
+        connection.execute("UPDATE outcomes SET payload = replace(payload, '0.02', '0.20')")
+    with pytest.raises(OutcomeIntegrityError, match="tampering"):
+        ledger.outcomes()
+    immature = outcome.model_copy(
+        update={"outcome_id": "immature", "available_at": NOW - timedelta(seconds=1)}
+    )
+    with pytest.raises(OutcomeIntegrityError, match="not mature"):
+        ledger.append_outcome(immature)

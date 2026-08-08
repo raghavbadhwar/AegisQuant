@@ -18,6 +18,7 @@ from aegis.contracts import (
     canonical_json,
     canonical_sha256,
 )
+from aegis.evidence.ledger import EvidenceLedger
 
 
 class MemoryGovernanceError(RuntimeError):
@@ -28,8 +29,14 @@ _TOKEN = re.compile(r"[A-Za-z0-9_.-]+")
 
 
 class LocalMemoryBackend:
-    def __init__(self, path: str | Path) -> None:
+    def __init__(
+        self,
+        path: str | Path,
+        *,
+        evidence_ledger: EvidenceLedger | None = None,
+    ) -> None:
         self.path = Path(path).resolve()
+        self.evidence_ledger = evidence_ledger
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with sqlite3.connect(self.path) as connection:
             connection.executescript(
@@ -93,8 +100,23 @@ class LocalMemoryBackend:
             raise MemoryGovernanceError("memory proposer cannot approve its own candidate")
         if decision.decided_at < candidate.created_at:
             raise MemoryGovernanceError("decision cannot predate the candidate")
-        if candidate.expires_at is not None and decision.decided_at >= candidate.expires_at:
+        if decision.decided_at >= candidate.expires_at:
             raise MemoryGovernanceError("expired memory candidate cannot be approved")
+        if decision.decision == "approve":
+            if decision.decided_at > candidate.review_by:
+                raise MemoryGovernanceError("overdue memory candidate cannot be approved")
+            if self.evidence_ledger is None:
+                raise MemoryGovernanceError("memory approval requires an evidence ledger")
+            try:
+                approved_ids = self.evidence_ledger.approved_ids_for_cases(
+                    candidate.source_case_ids, as_of=decision.decided_at
+                )
+            except KeyError as exc:
+                raise MemoryGovernanceError(
+                    "memory candidate cites an unknown source case"
+                ) from exc
+            if not set(candidate.evidence_ids).issubset(approved_ids):
+                raise MemoryGovernanceError("memory candidate cites unapproved evidence")
         with sqlite3.connect(self.path) as connection:
             if connection.execute(
                 "SELECT 1 FROM memory_decisions WHERE candidate_id = ?",

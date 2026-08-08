@@ -7,7 +7,7 @@ import pytest
 
 from aegis.contracts import FetchedDocument, ScrapeJob, SourceRequest
 from aegis.sources import RawStore, SourceGateway, SourcePlanner, SourcePolicyDenied, SourceRegistry
-from aegis.sources.adapters import AgentReachConnector
+from aegis.sources.adapters import AgentReachConnector, ScraplingWorkerBoundary
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -56,6 +56,8 @@ def test_historical_source_request_is_denied_before_connector(tmp_path: Path) ->
 def test_scrape_job_rejects_ssrf_and_non_allowlisted_urls() -> None:
     common = dict(
         job_id="job",
+        request_id="request",
+        product_mode="live_research",
         source_id="source",
         purpose="test",
         extraction_schema="article-v1",
@@ -66,14 +68,14 @@ def test_scrape_job_rejects_ssrf_and_non_allowlisted_urls() -> None:
         maximum_depth=0,
         timeout_seconds=10,
     )
-    with pytest.raises(ValueError, match="outside the domain allowlist"):
+    with pytest.raises(ValueError, match=r"forbidden network|HTTPS domain allowlist"):
         ScrapeJob(url="http://169.254.169.254/latest/meta-data", **common)
-    with pytest.raises(ValueError, match="outside the domain allowlist"):
+    with pytest.raises(ValueError, match=r"forbidden network|HTTPS domain allowlist"):
         ScrapeJob(url="file:///etc/passwd", **common)
 
 
 def test_agent_reach_wrapper_uses_fixed_argv_no_shell_or_secret_env(monkeypatch) -> None:  # type: ignore[no-untyped-def]
-    registry = SourceRegistry.load(ROOT / "configs/sources")
+    registry = SourceRegistry.load(ROOT / "configs/sources/deferred")
     manifest = registry.get("agent-reach-github")
     request = SourceRequest(
         case_id="reach",
@@ -95,11 +97,15 @@ def test_agent_reach_wrapper_uses_fixed_argv_no_shell_or_secret_env(monkeypatch)
         captured.update(kwargs)
         return Result()
 
+    monkeypatch.setattr(
+        "aegis.sources.adapters.shutil.which",
+        lambda _: "/Users/test/.local/bin/agent-reach-search",
+    )
     monkeypatch.setattr("aegis.sources.adapters.subprocess.run", fake_run)
     fetched = AgentReachConnector("github").fetch(request, manifest, "request-id")
     assert fetched.body == b"typed result"
     assert captured["shell"] is False
-    assert captured["argv"][0] == "agent-reach-search"
+    assert captured["argv"][0].endswith("/agent-reach-search")
     assert captured["argv"][1].startswith("search_github_activity:")
     assert set(captured["env"]) == {"PATH"}
 
@@ -141,3 +147,26 @@ def test_raw_store_failure_prevents_normalization(tmp_path: Path, monkeypatch) -
         gateway.acquire(request)
     assert connector.calls == 1
     assert not parsed
+
+
+def test_scrapling_boundary_binds_job_limits_to_source_manifest() -> None:
+    registry = SourceRegistry.load(ROOT / "configs/sources/deferred")
+    manifest = registry.get("scrapling-approved-web")
+    common = dict(
+        job_id="job",
+        request_id="request",
+        product_mode="live_research",
+        source_id=manifest.source_id,
+        url="https://investor.apple.com/news",
+        purpose="extract announcement",
+        extraction_schema="article-v1",
+        mode="dynamic",
+        as_of=datetime(2026, 8, 8, tzinfo=UTC),
+        domain_allowlist=["investor.apple.com"],
+        maximum_depth=1,
+        timeout_seconds=30,
+    )
+    valid = ScrapeJob(maximum_pages=2, **common)
+    assert ScraplingWorkerBoundary().build_payload(valid, manifest)
+    with pytest.raises(ValueError, match="page limit"):
+        ScraplingWorkerBoundary().build_payload(ScrapeJob(maximum_pages=3, **common), manifest)

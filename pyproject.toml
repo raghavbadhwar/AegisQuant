@@ -7,33 +7,24 @@ requires-python = ">=3.12,<3.13"
 license = { text = "MIT" }
 authors = [{ name = "AegisQuant contributors" }]
 dependencies = [
-  "duckdb>=1.1,<2",
   "langgraph>=0.3,<2",
   "numpy>=2.0,<3",
   "pandas>=2.2,<3",
   "pyarrow>=18,<24",
   "pydantic>=2.10,<3",
   "PyYAML>=6.0,<7",
-  "rich>=13.9,<15",
   "typer>=0.15,<1",
 ]
 
 [project.optional-dependencies]
-agents = []
 sources = [
   "httpx>=0.28,<1",
-]
-live = [
-  "httpx>=0.28,<1",
-  "litellm>=1.60,<1.80",
-  "yfinance>=0.2.54,<2",
 ]
 lab = [
   "purgedcv>=0.1.2,<0.2",
   "qtype @ git+https://github.com/VernonOY/qtype.git@5277e433a524742c80889af8982377f2bbf8d8f3",
 ]
 dashboard = [
-  "plotly>=6,<7",
   "streamlit>=1.42,<2",
 ]
 
@@ -76,7 +67,6 @@ select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
 python_version = "3.12"
 strict = true
 packages = ["aegis", "apps"]
-exclude = ["hedge_fund"]
 
 [tool.coverage.run]
 branch = true

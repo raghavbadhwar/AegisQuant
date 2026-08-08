@@ -62,28 +62,37 @@ def audit_evidence(
                         evidence_ids=[record.evidence_id],
                     )
                 )
-    supported = {
-        edge.target_id
-        for edge in graph.edges
-        if edge.source_kind == "evidence" and edge.relation == "SUPPORTS"
-    }
+    supported: dict[str, set[str]] = {}
+    for edge in graph.edges:
+        if edge.source_kind == "evidence" and edge.relation == "SUPPORTS":
+            supported.setdefault(edge.target_id, set()).add(edge.source_id)
     for claim in graph.claims:
-        if claim.material and claim.claim_id not in supported:
+        if claim.material and supported.get(claim.claim_id, set()) != set(claim.evidence_ids):
             findings.append(
                 AuditFinding(
-                    code="material-claim-without-support-edge",
+                    code="material-claim-support-mismatch",
                     severity="blocker",
-                    message="material claim has no SUPPORTS edge",
+                    message="material claim evidence and SUPPORTS edges do not match",
                     claim_ids=[claim.claim_id],
                 )
             )
+    claim_by_id = {claim.claim_id: claim for claim in graph.claims}
     for numeric in graph.numeric_claims:
-        if numeric.evidence_id not in evidence_by_id or not numeric.coordinates:
+        numeric_parent = claim_by_id.get(numeric.claim_id)
+        if (
+            numeric.evidence_id not in evidence_by_id
+            or numeric_parent is None
+            or numeric.evidence_id not in numeric_parent.evidence_ids
+            or not numeric.coordinates
+            or not numeric.calculation_id
+        ):
             findings.append(
                 AuditFinding(
                     code="numeric-provenance",
                     severity="blocker",
-                    message="exact numeric claim lacks source coordinates",
+                    message=(
+                        "exact numeric claim lacks linked evidence, coordinates, or calculation"
+                    ),
                     evidence_ids=[numeric.evidence_id],
                     claim_ids=[numeric.claim_id],
                 )

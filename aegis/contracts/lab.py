@@ -160,6 +160,16 @@ class ShadowResult(ContractModel):
     completed_at: AwareDatetime
     content_hash: Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
 
+    @model_validator(mode="after")
+    def shadow_hash_matches(self) -> ShadowResult:
+        if set(self.baseline_run_ids).intersection(self.candidate_run_ids):
+            raise ValueError("baseline and candidate shadow runs must be independent")
+        if len(self.baseline_run_ids) != len(self.candidate_run_ids):
+            raise ValueError("shadow comparison run counts must align")
+        if self.content_hash != canonical_sha256(self.model_dump(exclude={"content_hash"})):
+            raise ValueError("shadow result hash mismatch")
+        return self
+
 
 class PromotionDecision(ContractModel):
     promotion_id: Annotated[str, Field(min_length=1)]
@@ -167,6 +177,11 @@ class PromotionDecision(ContractModel):
     candidate_hash: Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
     validation_report_id: Annotated[str, Field(min_length=1)]
     validation_report_hash: Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
+    patch_metadata_hash: Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
+    holdout_unlock_id: Annotated[str, Field(min_length=1)]
+    holdout_unlock_hash: Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
+    shadow_result_id: Annotated[str, Field(min_length=1)]
+    shadow_result_hash: Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
     evaluator_id: Annotated[str, Field(min_length=1)]
     human_approver_id: Annotated[str, Field(min_length=1)]
     decision: Literal["promote", "reject"]
