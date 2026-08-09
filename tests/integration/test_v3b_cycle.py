@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from datetime import timedelta
 from decimal import Decimal
 from pathlib import Path
 
@@ -32,6 +33,7 @@ from aegis.fund.models import (
 )
 from aegis.fund.run_cycle import run_cycle
 from aegis.quant_research.hashing import build_hashed
+from aegis.research_lab.receipt_series import derive_receipt_observations, receipt_series_hash
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -233,6 +235,19 @@ def test_historical_mandate_cycle_uses_exact_sealed_artifact_triplet(tmp_path: P
     assert record.evidence.mode == "historical"
     assert record.dossier.evidence.mode == "historical"
     assert record.quant_research_bundle is not None
+    entry_cost = sum(fill.fee + fill.slippage for fill in record.fills)
+    label = record.model_copy(
+        update={
+            "case": case.model_copy(update={"as_of": case.as_of + timedelta(days=1)}),
+            "equity_before": record.nav_after + entry_cost,
+        }
+    )
+    observations = derive_receipt_observations(
+        (record, label), expected_mandate_hash=fund.content_hash
+    )
+    assert observations[0].gross_return == pytest.approx(0.0)
+    assert observations[0].turnover >= 0.0
+    assert receipt_series_hash(observations, fund.content_hash)
 
 
 def test_sealed_provider_rejects_non_abstained_forecast_without_bundle_hash(tmp_path: Path) -> None:
