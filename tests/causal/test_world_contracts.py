@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 
 import pytest
 
-from aegis.world_model import ScenarioIntervention, WorldSnapshot, WorldVariable
+from aegis.world_model import ScenarioIntervention, WorldSnapshot, WorldVariable, apply_intervention
 from aegis.world_model.contracts import VariableProvenance
 
 NOW = datetime(2024, 1, 1, tzinfo=UTC)
@@ -46,6 +46,19 @@ def test_world_snapshot_is_hash_sealed_and_interventions_are_nonambiguous() -> N
         code_revision="abc",
     ).sealed()
     assert world.content_hash
+    result = apply_intervention(
+        world,
+        ScenarioIntervention(
+            intervention_id="shock-ok",
+            target_variable_id="ai-capex",
+            starts_at=NOW,
+            rationale="stress",
+            assumption_ids=("assumption-1",),
+            relative_change=-0.2,
+        ),
+    )
+    assert result.variables[0].value == pytest.approx(0.16)
+    assert result.variables[0].evidence_ids == ()
     with pytest.raises(ValueError, match="exactly"):
         ScenarioIntervention(
             intervention_id="shock-1",
