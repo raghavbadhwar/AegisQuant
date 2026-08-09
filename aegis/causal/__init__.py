@@ -9,6 +9,7 @@ from .contracts import (
     EdgeStatus,
     IdentificationRecord,
 )
+from .mechanisms import MechanismDefinition
 
 __all__ = [
     "BeliefState",
@@ -18,4 +19,5 @@ __all__ = [
     "CausalSupportLevel",
     "EdgeStatus",
     "IdentificationRecord",
+    "MechanismDefinition",
 ]
