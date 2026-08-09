@@ -257,6 +257,31 @@ class FixtureForecastProvider:
         return build_dossier(case, evidence, (artifact,), forecasts, (event,))
 
 
+class MultiStrategyFixtureProvider(FixtureForecastProvider):
+    """Sealed replay provider allowing one forecast per declared model and ticker."""
+
+    def _load_forecasts(self) -> tuple[AlphaForecast, ...]:
+        if not self.forecast_path.is_file():
+            raise ForecastIntegrityError(f"missing replay forecasts: {self.forecast_path}")
+        try:
+            forecasts = TypeAdapter(list[AlphaForecast]).validate_json(
+                self.forecast_path.read_bytes()
+            )
+        except Exception as exc:
+            raise ForecastIntegrityError("invalid multi-strategy forecast fixture") from exc
+        identities = [(forecast.model_name, forecast.ticker) for forecast in forecasts]
+        if len(identities) != len(set(identities)):
+            raise ForecastIntegrityError("duplicate model/ticker forecasts in strategy fixture")
+        if any(
+            not isinstance(forecast.metadata.get("calibration_score"), (int, float))
+            or not isinstance(forecast.metadata.get("regime_score"), (int, float))
+            or not isinstance(forecast.metadata.get("evidence_quality"), (int, float))
+            for forecast in forecasts
+        ):
+            raise ForecastIntegrityError("strategy forecasts require typed numeric batch metadata")
+        return tuple(sorted(forecasts, key=lambda forecast: (forecast.model_name, forecast.ticker)))
+
+
 def load_replay_manifest(path: str | Path) -> ReplayManifest:
     try:
         payload = json.loads(Path(path).read_text(encoding="utf-8"))

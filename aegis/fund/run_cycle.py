@@ -7,12 +7,19 @@ from decimal import Decimal
 from pathlib import Path
 
 from aegis.brokers import BrokerError, SimBroker
-from aegis.contracts import Fill, Order, ResearchCase, SimulationMode, canonical_sha256
+from aegis.contracts import (
+    Fill,
+    FundMandate,
+    Order,
+    ResearchCase,
+    SimulationMode,
+    canonical_sha256,
+)
 from aegis.data import DataClient, DataIntegrityError, PointInTimeViolation
 from aegis.fund.execution import build_orders
 from aegis.fund.ledger import CycleRecord, SQLiteRunLedger
 from aegis.fund.models import ForecastProvider
-from aegis.fund.spec import FundSpec
+from aegis.fund.spec import FundConfiguration
 from aegis.observability import ReproducibilityManifest, local_build_fingerprint
 from aegis.quant import construct_portfolio
 from aegis.risk import evaluate_risk
@@ -33,7 +40,7 @@ def _execution_mode(case: ResearchCase) -> SimulationMode:
 
 
 def run_cycle(
-    fund: FundSpec,
+    fund: FundConfiguration,
     case: ResearchCase,
     broker: SimBroker,
     data_client: DataClient,
@@ -41,6 +48,7 @@ def run_cycle(
     ledger: SQLiteRunLedger | None = None,
 ) -> CycleRecord:
     """Run the sole deterministic portfolio/risk/simulated-execution path."""
+    risk_policy = fund.master_risk if isinstance(fund, FundMandate) else fund.risk
     if broker.is_live_broker:
         raise RuntimeError("live brokers are forbidden")
     if case.mode in {"replay", "historical"} and (
@@ -49,7 +57,7 @@ def run_cycle(
         raise RuntimeError(f"network-capable provider forbidden in {case.mode} mode")
     if case.mode in {"replay", "historical"}:
         from aegis.data import FixtureDataClient
-        from aegis.fund.models import FixtureForecastProvider
+        from aegis.fund.models import FixtureForecastProvider, MultiStrategyFixtureProvider
         from aegis.harness.graph import LangGraphForecastProvider
         from aegis.quant.models import DeterministicCompositeProvider
 
@@ -57,6 +65,7 @@ def run_cycle(
             raise RuntimeError(f"unsealed data provider forbidden in {case.mode} mode")
         sealed_provider_types = {
             FixtureForecastProvider,
+            MultiStrategyFixtureProvider,
             LangGraphForecastProvider,
             DeterministicCompositeProvider,
         }
@@ -76,7 +85,7 @@ def run_cycle(
     stale_held = sorted(
         ticker
         for ticker in held
-        if _age_minutes(case.as_of, bars[ticker].available_at) > fund.risk.stale_price_minutes
+        if _age_minutes(case.as_of, bars[ticker].available_at) > risk_policy.stale_price_minutes
     )
     if stale_held:
         raise DataIntegrityError(f"stale held-position marks: {stale_held}")
@@ -88,17 +97,30 @@ def run_cycle(
     dossier = forecast_provider.research(case, snapshot)
     evidence = dossier.evidence
     forecasts = dossier.forecasts
-    proposal = construct_portfolio(
-        forecasts, fund.portfolio, fund.risk.minimum_confidence, current_weights
-    )
+    master_portfolio = None
+    if isinstance(fund, FundMandate):
+        from aegis.fund.strategy_inputs import build_model_batches, build_pod_contexts
+        from aegis.strategy import build_master_portfolio
+
+        model_batches = build_model_batches(fund, case, forecasts, evidence)
+        pod_contexts = build_pod_contexts(fund, case, model_batches, data_client)
+        master_portfolio = build_master_portfolio(
+            fund, model_batches, pod_contexts, current_weights
+        )
+        proposal = master_portfolio.to_portfolio_proposal(current_weights)
+        strategy_allocations = master_portfolio.allocator_weights
+    else:
+        proposal = construct_portfolio(
+            forecasts, fund.portfolio, risk_policy.minimum_confidence, current_weights
+        )
+        total_strategy_weight = sum(strategy.weight for strategy in fund.strategies)
+        strategy_allocations = {
+            strategy.name: strategy.weight / total_strategy_weight for strategy in fund.strategies
+        }
     sector_by_ticker = data_client.sector_map(case.tickers, case.as_of)
-    total_strategy_weight = sum(strategy.weight for strategy in fund.strategies)
-    strategy_allocations = {
-        strategy.name: strategy.weight / total_strategy_weight for strategy in fund.strategies
-    }
     risk = evaluate_risk(
         proposal,
-        fund.risk,
+        risk_policy,
         current_weights,
         sector_by_ticker=sector_by_ticker,
         strategy_allocations=strategy_allocations,
@@ -118,14 +140,14 @@ def run_cycle(
             created_at=case.created_at,
             execution_mode=_execution_mode(case),
         )
-        fills = broker.execute_batch(orders, fund.risk, case.created_at)
+        fills = broker.execute_batch(orders, risk_policy, case.created_at)
 
     positions = broker.positions(marks, case.created_at)
     nav_after_decimal = broker.equity(marks)
     if broker.cash < 0:
         broker.restore(before_execution)
         raise BrokerError("cycle reconciliation found negative cash")
-    if not fund.risk.allow_shorting and any(position.quantity < 0 for position in positions):
+    if not risk_policy.allow_shorting and any(position.quantity < 0 for position in positions):
         broker.restore(before_execution)
         raise BrokerError("cycle reconciliation found a forbidden short position")
     calculated_nav = broker.cash + sum(
@@ -164,8 +186,8 @@ def run_cycle(
         embedding_versions=[],
         reranker_versions=[],
         cost_assumptions={
-            "commission_bps": fund.risk.commission_bps,
-            "slippage_bps": fund.risk.slippage_bps,
+            "commission_bps": risk_policy.commission_bps,
+            "slippage_bps": risk_policy.slippage_bps,
         },
         random_seeds={"deterministic": 0},
     )
@@ -179,6 +201,9 @@ def run_cycle(
             "dossier_hash": dossier.content_hash,
             "evidence": evidence.model_dump(mode="json"),
             "forecasts": [item.model_dump(mode="json") for item in forecasts],
+            "master_portfolio": master_portfolio.model_dump(mode="json")
+            if master_portfolio is not None
+            else None,
             "broker_before": {
                 "cash": str(before_execution.cash),
                 "shares": before_execution.shares,
@@ -189,6 +214,7 @@ def run_cycle(
         }
     )[:32]
     record = CycleRecord(
+        schema_version="aegis-cycle-v2" if master_portfolio is not None else "aegis-cycle-v1",
         run_id=run_id,
         case=case,
         fund=fund,
@@ -207,6 +233,7 @@ def run_cycle(
         positions=positions,
         cash_after=float(broker.cash),
         nav_after=float(nav_after_decimal),
+        master_portfolio=master_portfolio,
     )
     if ledger is not None:
         try:

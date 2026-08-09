@@ -53,4 +53,4 @@ Exact demo pod weights are illustrative. Robust CVaR and adaptive allocators are
 
 ## Status
 
-**IN PROGRESS.** No v3B implementation or combined strategy is accepted until the committed clean-tree release audit passes.
+**IMPLEMENTATION CANDIDATE — NOT YET ACCEPTED.** The complete deterministic v3B slice and frozen CLI evidence are implemented locally with full static and test gates green. No v3B implementation or combined strategy is accepted until the committed clean-tree release audit, adversarial review, and Ponytail review pass. A quantitatively eligible combined row means only eligible for later human review; it is not selected or promoted.

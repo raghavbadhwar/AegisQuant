@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any, Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from aegis.contracts import RiskPolicy
+from aegis.contracts import FundMandate, RiskPolicy
 
 
 class AlphaModelSpec(BaseModel):
@@ -71,4 +72,27 @@ def load_fund_spec(path: str | Path) -> FundSpec:
         payload = yaml.safe_load(stream)
     if not isinstance(payload, dict):
         raise ValueError("fund mandate must be a YAML mapping")
+    return FundSpec.model_validate(payload)
+
+
+FundConfiguration = FundSpec | FundMandate
+
+
+def load_fund_mandate(path: str | Path) -> FundMandate:
+    """Load a fully hash-bound v3B mandate without changing legacy FundSpec defaults."""
+    with Path(path).open(encoding="utf-8") as stream:
+        payload = yaml.safe_load(stream)
+    if not isinstance(payload, dict) or "mandate_id" not in payload:
+        raise ValueError("institutional fund mandate must contain mandate_id")
+    return FundMandate.model_validate_json(json.dumps(payload, separators=(",", ":")))
+
+
+def load_fund_configuration(path: str | Path) -> FundConfiguration:
+    """Dispatch an explicit v3B mandate or the untouched legacy fund schema."""
+    with Path(path).open(encoding="utf-8") as stream:
+        payload = yaml.safe_load(stream)
+    if not isinstance(payload, dict):
+        raise ValueError("fund mandate must be a YAML mapping")
+    if "mandate_id" in payload:
+        return FundMandate.model_validate_json(json.dumps(payload, separators=(",", ":")))
     return FundSpec.model_validate(payload)

@@ -5,12 +5,14 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, model_validator
 
 from aegis.contracts import (
     AlphaForecast,
     EvidenceBundle,
     Fill,
+    FundMandate,
+    MasterPortfolio,
     Order,
     PortfolioProposal,
     Position,
@@ -35,7 +37,7 @@ class CycleRecord(BaseModel):
     schema_version: str = "aegis-cycle-v1"
     run_id: str
     case: ResearchCase
-    fund: FundSpec
+    fund: FundSpec | FundMandate
     reproducibility: ReproducibilityManifest
     snapshot: MarketSnapshot
     dossier: ResearchDossier
@@ -51,12 +53,36 @@ class CycleRecord(BaseModel):
     positions: tuple[Position, ...]
     cash_after: float
     nav_after: float
+    master_portfolio: MasterPortfolio | None = None
+
+    @model_validator(mode="after")
+    def schema_matches_fund_generation(self) -> CycleRecord:
+        if isinstance(self.fund, FundMandate):
+            if self.schema_version != "aegis-cycle-v2" or self.master_portfolio is None:
+                raise ValueError("institutional cycles require a v2 master portfolio trace")
+            if (
+                self.master_portfolio.mandate_id != self.fund.mandate_id
+                or self.master_portfolio.as_of != self.case.as_of
+                or self.master_portfolio.target_weights != self.portfolio.target_weights
+                or abs(self.master_portfolio.cash_weight - self.portfolio.cash_weight) > 1e-12
+                or abs(self.master_portfolio.gross_exposure - self.portfolio.gross_exposure) > 1e-12
+            ):
+                raise ValueError("cycle master portfolio is not bound to the fund/case/proposal")
+        elif self.schema_version != "aegis-cycle-v1" or self.master_portfolio is not None:
+            raise ValueError("legacy cycles must retain the v1 schema without a master trace")
+        return self
+
+    def canonical_payload(self) -> dict[str, object]:
+        payload = self.model_dump(mode="python")
+        if self.master_portfolio is None:
+            payload.pop("master_portfolio")
+        return payload
 
     def canonical(self) -> str:
-        return canonical_json(self)
+        return canonical_json(self.canonical_payload())
 
     def digest(self) -> str:
-        return canonical_sha256(self)
+        return canonical_sha256(self.canonical_payload())
 
 
 class SQLiteRunLedger:

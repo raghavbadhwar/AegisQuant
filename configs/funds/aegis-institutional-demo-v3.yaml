@@ -1,0 +1,190 @@
+content_hash: e3e85f38d521652d155cedef48c57332cc4bb70b630dc5125a12ef2e131f57aa
+mandate_id: mandate-aegis-institutional-demo-v1
+display_name: Aegis Institutional Demo
+capital: '100000'
+pods:
+- content_hash: 390e9e9e08e4533b4654925cd359d7bbd8954fecb1caf06e8e1477ca525c1aa2
+  pod_id: pod-fundamental-expectations-v1
+  display_name: Pod Fundamental Expectations
+  capital_weight: 0.45
+  models:
+  - content_hash: bf648f464daf949a8cfdf5f3e94c1e0f516ef0106e41252c0608afcbdb09cb09
+    model_id: fundamental-scorecard-v1
+    feature_ids: []
+    horizon_days: 20
+    weight: 1.0
+    provider: sealed-fixture
+  - content_hash: 9a21db802a985222f1d2d3092617a802efc2c35e3e1307ccd6f47c54b584c1f0
+    model_id: expectations-gap-v1
+    feature_ids: []
+    horizon_days: 20
+    weight: 1.0
+    provider: sealed-fixture
+  - content_hash: e8f11ce40f30410b6364d45f405a160fa3536a6a545cf51535ca6c95e7be942d
+    model_id: management-credibility-v1
+    feature_ids: []
+    horizon_days: 20
+    weight: 1.0
+    provider: sealed-fixture
+  blend_policy:
+    content_hash: fe364676d137b73d0970d05bcacd860507100b4222e864a8139f5b4993d48673
+    policy_id: pod-fundamental-expectations-blend-v1
+    maximum_horizon_gap_days: 0
+    overlap_penalty: 0.4
+    minimum_evidence_quality: 0.5
+    minimum_calibration: 0.5
+  portfolio_policy:
+    content_hash: ddec480560e295eaa3178effa09d111fc2f591a837d74c66d4985028fcd9b7a3
+    policy_id: pod-fundamental-expectations-portfolio-v1
+    method: forecast_weighted
+    gross_target: 0.8
+    market_neutral: false
+  risk_budget:
+    content_hash: 2ece62a6342a3de5f22d98a152c647211de6ae84c3b3cec48070cdccb2c78d7e
+    budget_id: pod-fundamental-expectations-budget-v1
+    maximum_gross: 0.8
+    maximum_position: 0.1
+    maximum_drawdown: 0.2
+- content_hash: e85506313869d5db922d38645df8557ce114a17c52e0706b2f4adec3f819d08e
+  pod_id: pod-earnings-events-v1
+  display_name: Pod Earnings Events
+  capital_weight: 0.25
+  models:
+  - content_hash: b79d4f0cc45992973fe4312ac3185287525693b4ddbfc2f7b8780de12021e08e
+    model_id: pead-v1
+    feature_ids: []
+    horizon_days: 20
+    weight: 1.0
+    provider: sealed-fixture
+  - content_hash: 85d50c1086520a194c86fa657f03b90ceafa95155719a1c0419e8b30418444dd
+    model_id: event-surprise-v1
+    feature_ids: []
+    horizon_days: 20
+    weight: 1.0
+    provider: sealed-fixture
+  - content_hash: 57d397312876b8b65e8ea65dde04ce6e45e3ccbed576daaba2343eae01cdc626
+    model_id: behavioral-reaction-v1
+    feature_ids: []
+    horizon_days: 20
+    weight: 1.0
+    provider: sealed-fixture
+  blend_policy:
+    content_hash: 05a45333ea01e45bf0989ed32d3745c5871f6fa79f5a40529c192a4d1f2ab462
+    policy_id: pod-earnings-events-blend-v1
+    maximum_horizon_gap_days: 0
+    overlap_penalty: 0.4
+    minimum_evidence_quality: 0.5
+    minimum_calibration: 0.5
+  portfolio_policy:
+    content_hash: 772e5ca709c54c88666d276fa76e27d9b0fdbbdd79625097b4481b1ede9647d4
+    policy_id: pod-earnings-events-portfolio-v1
+    method: forecast_weighted
+    gross_target: 0.8
+    market_neutral: false
+  risk_budget:
+    content_hash: adef1a0e7f1a2e60a4b3d91e67f21025f006b313d286cce08ef9d575add04ebf
+    budget_id: pod-earnings-events-budget-v1
+    maximum_gross: 0.8
+    maximum_position: 0.1
+    maximum_drawdown: 0.2
+- content_hash: a5b04a4e0f7197e07ee97b81929badf7d857af37ab3ccd4e142218805e028ecc
+  pod_id: pod-systematic-quality-momentum-v1
+  display_name: Pod Systematic Quality Momentum
+  capital_weight: 0.2
+  models:
+  - content_hash: 4ae44fea14eb10df40e8f49a7f96fc41a089716f3909e13e054aff076f91d33b
+    model_id: quality-v1
+    feature_ids: []
+    horizon_days: 20
+    weight: 1.0
+    provider: sealed-fixture
+  - content_hash: bb5f2b9971564915bf7caf6d2c6ea9765ac070dcbfcab15b2e5b54a6c49e743f
+    model_id: momentum-v1
+    feature_ids: []
+    horizon_days: 20
+    weight: 1.0
+    provider: sealed-fixture
+  - content_hash: 1203759ed090e762f17a29c2224b242e50006ababa04a25a9dc05095f8501cd6
+    model_id: low-volatility-v1
+    feature_ids: []
+    horizon_days: 20
+    weight: 1.0
+    provider: sealed-fixture
+  blend_policy:
+    content_hash: bbba36b6e15f880552050c63172e57074153025bb36f22a6528bc6cf411fe455
+    policy_id: pod-systematic-quality-momentum-blend-v1
+    maximum_horizon_gap_days: 0
+    overlap_penalty: 0.4
+    minimum_evidence_quality: 0.5
+    minimum_calibration: 0.5
+  portfolio_policy:
+    content_hash: 9e1afbbfbffa2a4e18104c54dd99f4475fb7aaab55f5abdb9da4537dcf38c29a
+    policy_id: pod-systematic-quality-momentum-portfolio-v1
+    method: risk_budgeting
+    gross_target: 0.8
+    market_neutral: false
+  risk_budget:
+    content_hash: 27dfe79e22eebb8c9eba6b2789d9f22fe72a0a8b17a87b81684b287a30750979
+    budget_id: pod-systematic-quality-momentum-budget-v1
+    maximum_gross: 0.8
+    maximum_position: 0.1
+    maximum_drawdown: 0.2
+- content_hash: 11c0003050a622d8acf5490748d5af3c7b4b054b70ce942127742dc54dd6b8a8
+  pod_id: pod-defensive-overlay-v1
+  display_name: Pod Defensive Overlay
+  capital_weight: 0.1
+  models:
+  - content_hash: 4ab3f89d7faa88916d43e506e672381282034303334cc284ac17a56ab1231995
+    model_id: regime-v1
+    feature_ids: []
+    horizon_days: 20
+    weight: 1.0
+    provider: sealed-fixture
+  - content_hash: 9a126bbb6260000f92ef138c7795df01cae1f6d0baf3a7a929ccb366decab9db
+    model_id: drawdown-control-v1
+    feature_ids: []
+    horizon_days: 20
+    weight: 1.0
+    provider: sealed-fixture
+  blend_policy:
+    content_hash: 210100277a92132bf4928eadd4e402159f496e19caec46e2c2aac18934c8a2c2
+    policy_id: pod-defensive-overlay-blend-v1
+    maximum_horizon_gap_days: 0
+    overlap_penalty: 0.4
+    minimum_evidence_quality: 0.5
+    minimum_calibration: 0.5
+  portfolio_policy:
+    content_hash: 56bb14c208597c04d2d8038e5e3b2bc9f7a3834923bbb75c0eaa023c68ebc174
+    policy_id: pod-defensive-overlay-portfolio-v1
+    method: benchmark_tracking
+    gross_target: 0.8
+    market_neutral: false
+  risk_budget:
+    content_hash: 05a82fddfbeac2be7461cd9743b5ec5eef166c159100dd01df53f1f9b65002a2
+    budget_id: pod-defensive-overlay-budget-v1
+    maximum_gross: 0.8
+    maximum_position: 0.1
+    maximum_drawdown: 0.2
+allocator_policy:
+  content_hash: f36d5cfba941384ec12cf59ce7369effd34201b41865a340bc80866c0ca0aedd
+  policy_id: allocator-static-v1
+  method: static
+  maximum_pod_weight: 0.6
+  preserve_unallocated_cash: true
+master_risk:
+  max_position_pct: 0.1
+  max_gross_exposure: 0.9
+  max_net_exposure: 0.9
+  max_turnover_pct: 0.25
+  minimum_cash_pct: 0.1
+  minimum_confidence: 0.55
+  maximum_sector_pct: 0.3
+  maximum_single_strategy_pct: 0.6
+  stale_price_minutes: 10080
+  allow_shorting: false
+  allow_leverage: false
+  commission_bps: 5.0
+  slippage_bps: 5.0
+  version: institutional-risk-v1
+rebalance: weekly
+benchmark: SPY
