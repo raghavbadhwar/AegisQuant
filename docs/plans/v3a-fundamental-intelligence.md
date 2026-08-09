@@ -17,4 +17,4 @@ PIT/restatement/lineage; statement identities; reversible adjustments; metrics i
 
 ## Implementation result
 
-Status: **IN PROGRESS / RELEASE BLOCKED** pending a frozen-tree independent audit. Local implementation gates are green; unsupported archetypes and SOTP limitations remain explicit abstentions. The current local full-suite baseline is Ruff, strict mypy, and 119 pytest cases, but local gates do not override an independent finding.
+Status: **PASS** at capability commit `24eabc9d6cd6690334eba8572115b46f7703e546` (tree `02e97672a412f12e87dbf9baeea1d364b9557d2b`), independently verified with P0=0, P1=0, P2=0 and a clean committed worktree. The accepted baseline is Ruff format/check, strict mypy over 97 source files, 130 tests, deterministic replay/company outputs, and explicit unsupported-archetype/SOTP abstentions. v3B may begin only from this boundary without weakening v2/v3A invariants.

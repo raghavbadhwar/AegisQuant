@@ -35,7 +35,7 @@ uv run aegisquant research company CMPD \
   --format markdown
 ```
 
-This mode does not load a fund, portfolio policy, broker, or cycle ledger. It produces a point-in-time, calculation-backed dossier and standard `AlphaForecast` from a frozen no-network fixture. The current v3A release candidate supports profitable general operating companies; unsupported archetypes explicitly abstain. It remains blocked pending frozen-tree independent audit.
+This mode does not load a fund, portfolio policy, broker, or cycle ledger. It produces a point-in-time, calculation-backed dossier and standard `AlphaForecast` from a frozen no-network fixture. The independently verified v3A release supports profitable general operating companies; unsupported archetypes explicitly abstain. v3B-v3D and the final whole-program release remain planned.
 
 ### No-key deterministic replay
 
