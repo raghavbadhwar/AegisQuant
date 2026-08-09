@@ -25,7 +25,7 @@ from aegis.fund import (
     load_fund_mandate,
 )
 from aegis.fund.ledger import SQLiteRunLedger
-from aegis.fund.models import load_replay_manifest
+from aegis.fund.models import HistoricalMultiStrategyFixtureProvider, load_replay_manifest
 from aegis.fund.run_cycle import run_cycle
 from aegis.quant_research.hashing import build_hashed
 
@@ -199,3 +199,28 @@ def test_replay_rejects_multi_strategy_provider_subclasses(tmp_path: Path) -> No
             provider,
             SQLiteRunLedger(tmp_path / "denied.sqlite"),
         )
+
+
+def test_historical_mandate_cycle_uses_exact_sealed_artifact_triplet(tmp_path: Path) -> None:
+    manifest = load_replay_manifest(ROOT / "data/fixtures/cases/nvda_earnings_case.json")
+    case = manifest.research_case().model_copy(update={"mode": "historical"})
+    provider = HistoricalMultiStrategyFixtureProvider(
+        {
+            case.as_of.isoformat(): (
+                ROOT / "data/fixtures/v3b/multi_strategy_forecasts.json",
+                ROOT / manifest.evidence_fixture,
+                ROOT / "data/fixtures/v3b/quant_research_bundle.json",
+            )
+        }
+    )
+    fund = load_fund_mandate(ROOT / "configs/funds/aegis-institutional-demo-v3.yaml")
+    record = run_cycle(
+        fund,
+        case,
+        SimBroker(fund.capital),
+        FixtureDataClient(ROOT / "data/fixtures"),
+        provider,
+        SQLiteRunLedger(tmp_path / "historical.sqlite"),
+    )
+    assert record.schema_version == "aegis-cycle-v2"
+    assert record.quant_research_bundle is not None

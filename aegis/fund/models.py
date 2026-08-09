@@ -374,7 +374,25 @@ class HistoricalMultiStrategyFixtureProvider:
             raise ForecastIntegrityError(
                 "missing sealed historical institutional artifacts for exact case cutoff"
             )
-        return provider.research(case, snapshot)
+        # The immutable artifact loader is deliberately replay-only, so use a
+        # mode-only clone for file parsing and reconstruct the dossier against
+        # the original historical case.  No market, evidence, or forecast data
+        # is synthesized or altered by this adaptation.
+        replay_case = case.model_copy(update={"mode": "replay"})
+        base = provider.research(replay_case, snapshot)
+        return build_dossier(
+            case,
+            base.evidence,
+            base.artifacts,
+            base.forecasts,
+            base.graph_events,
+            base.claim_graph,
+            base.evidence_audit,
+            base.memory_hits,
+            base.memory_snapshot_hash,
+            base.relation_snapshot_hash,
+            provider._quant_bundle,
+        )
 
 
 def load_replay_manifest(path: str | Path) -> ReplayManifest:
