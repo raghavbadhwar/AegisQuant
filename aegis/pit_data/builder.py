@@ -84,6 +84,7 @@ def ingest_sec(
                 source_version="company-tickers",
             )
         )
+        captured_accessions: set[str] = set()
         for filing in filings:
             if (
                 filing.form not in allowed_forms
@@ -92,6 +93,7 @@ def ingest_sec(
             ):
                 continue
             receipt = client.filing_document(filing)
+            captured_accessions.add(filing.accession_number)
             built.append(
                 PITArtifact(
                     artifact_id=f"sec:{cik}:{filing.accession_number}",
@@ -112,7 +114,16 @@ def ingest_sec(
                     metadata={"primary_document": filing.primary_document, "cik": cik},
                 )
             )
-        normalized_facts.extend(normalize_sec_facts(ticker, client.company_facts(cik)))
+        # Company Facts is a current cumulative API response.  Do not emit a
+        # normalized value unless its accession was captured as an allowed
+        # filing artifact in this run; otherwise the fact's claimed raw lineage
+        # would point to an absent or disallowed document.
+        sourced_facts = tuple(
+            item
+            for item in client.company_facts(cik)
+            if item.form in allowed_forms and item.accession_number in captured_accessions
+        )
+        normalized_facts.extend(normalize_sec_facts(ticker, sourced_facts))
     _append_immutable(lake / "normalized" / "artifact_ledger.jsonl", tuple(built))
     facts_path = lake / "normalized" / "fundamental_fact_versions.jsonl"
     known_fact_versions = set(facts_path.read_text().splitlines()) if facts_path.exists() else set()

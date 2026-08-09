@@ -74,9 +74,13 @@ def _nport_date(value: str) -> date:
             raise SecPITError("N-PORT date is not a supported SEC encoding") from exc
 
 
+def _date_at_utc_day(value: str) -> datetime:
+    return datetime.combine(_nport_date(value), time.min, tzinfo=UTC)
+
+
 def _date_at_next_utc_day(value: str) -> datetime:
     """Use next UTC midnight when the archive lacks accepted/public timestamp."""
-    return datetime.combine(_nport_date(value) + timedelta(days=1), time.min, tzinfo=UTC)
+    return _date_at_utc_day(value) + timedelta(days=1)
 
 
 def normalize_nport_holdings(
@@ -138,7 +142,9 @@ def normalize_nport_holdings(
                             if row.get("CURRENCY_VALUE")
                             else None,
                             report_at=report_at,
-                            filed_at=_date_at_next_utc_day(submission["FILING_DATE"]),
+                            # FILING_DATE is date-only.  Preserve that stated date
+                            # separately and expose it only at the following UTC day.
+                            filed_at=_date_at_utc_day(submission["FILING_DATE"]),
                             public_available_at=_date_at_next_utc_day(submission["FILING_DATE"]),
                             accession=accession,
                             raw_artifact_id=raw_artifact_id,

@@ -86,6 +86,8 @@ class PITSnapshotManifest(BaseModel):
             raise ValueError("snapshot artifact count mismatch")
         if len(self.artifact_ids) != len(set(self.artifact_ids)):
             raise ValueError("snapshot artifact IDs must be unique")
+        if len(self.artifact_hashes) != self.artifact_count:
+            raise ValueError("snapshot artifact hash count mismatch")
         if any(item != item.lower() or len(item) != 64 for item in self.artifact_hashes):
             raise ValueError("snapshot artifact hashes must be sha256 values")
         expected = canonical_sha256(

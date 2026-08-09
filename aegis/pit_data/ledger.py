@@ -128,4 +128,6 @@ def load_snapshot(path: str | Path) -> tuple[PITSnapshotManifest, tuple[PITArtif
         raise PITLedgerError("snapshot contains future artifact")
     if tuple(item.artifact_id for item in rows) != manifest.artifact_ids:
         raise PITLedgerError("snapshot artifact lineage mismatch")
+    if tuple(item.sha256 for item in rows) != manifest.artifact_hashes:
+        raise PITLedgerError("snapshot artifact hash mismatch")
     return manifest, rows

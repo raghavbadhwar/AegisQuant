@@ -103,3 +103,77 @@ def test_submission_skips_rows_without_primary_document_but_preserves_raw_index(
     )
     assert client.submissions("320193") == ()
     assert list((tmp_path / "raw").glob("**/*.json"))
+
+
+def test_date_only_sec_fields_are_not_visible_at_start_of_filing_day(tmp_path: Path) -> None:
+    payload = {
+        "tickers": ["AAPL"],
+        "filings": {
+            "recent": {
+                "accessionNumber": ["0000320193-24-000069"],
+                "filingDate": ["2024-05-03"],
+                "reportDate": ["2024-03-30"],
+                "form": ["10-Q"],
+                "primaryDocument": ["aapl.htm"],
+            }
+        },
+    }
+    client = SecPITClient(
+        "AegisQuant test@example.com",
+        RawStore(tmp_path / "raw"),
+        fetch=lambda _url, _type: json.dumps(payload).encode(),
+    )
+    filing = client.submissions("320193")[0]
+    assert filing.filed_at == datetime(2024, 5, 3, tzinfo=UTC)
+    assert filing.available_at == datetime(2024, 5, 4, tzinfo=UTC)
+    assert not select_available_filings((filing,), datetime(2024, 5, 3, 23, 59, tzinfo=UTC))
+
+
+def test_company_facts_retains_duration_start_dates(tmp_path: Path) -> None:
+    payload = {
+        "facts": {
+            "us-gaap": {
+                "Revenue": {
+                    "units": {
+                        "USD": [
+                            {
+                                "val": 10,
+                                "form": "10-Q",
+                                "accn": "0000320193-24-000001",
+                                "filed": "2024-05-03",
+                                "start": "2024-01-01",
+                                "end": "2024-03-30",
+                            },
+                            {
+                                "val": 30,
+                                "form": "10-Q",
+                                "accn": "0000320193-24-000001",
+                                "filed": "2024-08-02",
+                                "start": "2024-01-01",
+                                "end": "2024-06-29",
+                            },
+                            {
+                                "val": 20,
+                                "form": "10-Q",
+                                "accn": "0000320193-24-000001",
+                                "filed": "2024-08-02",
+                                "start": "2024-03-31",
+                                "end": "2024-06-29",
+                            },
+                        ]
+                    }
+                }
+            }
+        }
+    }
+    client = SecPITClient(
+        "AegisQuant test@example.com",
+        RawStore(tmp_path / "raw"),
+        fetch=lambda _url, _type: json.dumps(payload).encode(),
+    )
+    facts = client.company_facts("320193")
+    assert facts[-1].available_at == datetime(2024, 8, 3, tzinfo=UTC)
+    assert {item.period_start for item in facts} == {
+        datetime(2024, 1, 1, tzinfo=UTC),
+        datetime(2024, 3, 31, tzinfo=UTC),
+    }

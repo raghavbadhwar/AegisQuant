@@ -5,7 +5,13 @@ from pathlib import Path
 
 import pytest
 
-from aegis.pit_data import PITArtifact, PITAvailabilityLedger, PITLedgerError, load_snapshot
+from aegis.pit_data import (
+    PITArtifact,
+    PITAvailabilityLedger,
+    PITLedgerError,
+    SecurityMasterRecord,
+    load_snapshot,
+)
 from aegis.pit_data.nport import NPortHolding
 
 
@@ -95,3 +101,27 @@ def test_snapshot_excludes_nport_holdings_not_yet_public(tmp_path: Path) -> None
         fund_holdings=(holding,),
     )
     assert (snapshot / "fund_holdings.jsonl").read_text() == ""
+
+
+def test_load_snapshot_rejects_artifact_hash_drift(tmp_path: Path) -> None:
+    security = SecurityMasterRecord(
+        canonical_security_id="sec:0000320193",
+        ticker="AAPL",
+        cik="0000320193",
+        issuer="Apple",
+        valid_from=datetime(1900, 1, 1, tzinfo=UTC),
+        source="SEC_EDGAR",
+        source_version="v1",
+    )
+    ledger = PITAvailabilityLedger(
+        (artifact("old", datetime(2021, 8, 1, tzinfo=UTC), "a" * 64),), (security,)
+    )
+    snapshot = ledger.write_snapshot(
+        tmp_path, datetime(2021, 9, 15, tzinfo=UTC), ("AAPL",), dataset_version="sec-v1"
+    )
+    artifacts = snapshot / "artifacts.jsonl"
+    artifacts.write_text(
+        artifacts.read_text().replace('"sha256":"' + "a" * 64, '"sha256":"' + "b" * 64)
+    )
+    with pytest.raises(PITLedgerError, match="hash mismatch"):
+        load_snapshot(snapshot)

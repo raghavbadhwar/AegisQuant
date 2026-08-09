@@ -19,6 +19,7 @@ class PITFundamentalFact(BaseModel):
     concept: str = Field(min_length=1)
     unit: str = Field(min_length=1)
     value: float
+    period_start: AwareDatetime | None = None
     period_end: AwareDatetime
     filed_at: AwareDatetime
     available_at: AwareDatetime
@@ -40,6 +41,7 @@ def normalize_sec_facts(
                     concept=item.tag,
                     unit=item.unit,
                     value=item.value,
+                    period_start=item.period_start,
                     period_end=item.period_end,
                     filed_at=item.filed_at,
                     available_at=item.available_at,
@@ -60,11 +62,20 @@ def fundamentals_as_of(
     """Return the newest public version for each concept/unit/reporting period at cutoff."""
     if at.tzinfo is None or at.utcoffset() is None:
         raise ValueError("fundamental as-of cutoff must be timezone-aware")
-    versions: dict[tuple[str, str, str, str, datetime], PITFundamentalFact] = {}
+    versions: dict[tuple[str, str, str, str, datetime | None, datetime], PITFundamentalFact] = {}
     for item in facts:
         if item.available_at > at:
             continue
-        key = (item.entity_id, item.taxonomy, item.concept, item.unit, item.period_end)
+        # Same concept/end/unit may represent a quarterly and a year-to-date
+        # duration.  Retain the reported start date so they are never collapsed.
+        key = (
+            item.entity_id,
+            item.taxonomy,
+            item.concept,
+            item.unit,
+            item.period_start,
+            item.period_end,
+        )
         previous = versions.get(key)
         if previous is None or (item.available_at, item.accession) > (
             previous.available_at,

@@ -11,7 +11,7 @@ import json
 import re
 import time
 from collections.abc import Callable
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from urllib.parse import quote
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -23,6 +23,22 @@ _SEC_DATA_HOST = "https://data.sec.gov"
 _SEC_ARCHIVES_HOST = "https://www.sec.gov"
 _ACCESSION = re.compile(r"^\d{10}-\d{2}-\d{6}$")
 _SUBMISSION_FILE = re.compile(r"^[A-Za-z0-9_.-]+\.json$")
+
+
+def _date_only_available_at(value: str) -> datetime:
+    """Return a conservative availability time for SEC date-only fields.
+
+    EDGAR submissions and Company Facts expose ``filingDate``/``filed`` as a
+    calendar date, not the acceptance timestamp.  Midnight on that date would
+    make a filing visible before it could have been accepted.  The next UTC
+    day is a deliberately conservative cutoff until an acceptance-time source
+    is captured.
+    """
+    try:
+        filed_day = datetime.fromisoformat(value).replace(tzinfo=UTC)
+    except ValueError as exc:
+        raise SecPITError("invalid SEC date-only timestamp") from exc
+    return filed_day + timedelta(days=1)
 
 
 class SecPITError(RuntimeError):
@@ -71,6 +87,7 @@ class SecFactObservation(BaseModel):
     value: float
     form: str = Field(min_length=1)
     accession_number: str
+    period_start: datetime | None = None
     period_end: datetime
     filed_at: datetime
     available_at: datetime
@@ -244,7 +261,7 @@ class SecPITClient:
                             if report
                             else None,
                             filed_at=filed,
-                            available_at=filed,
+                            available_at=_date_only_available_at(recent["filingDate"][index]),
                         )
                     )
             except (KeyError, IndexError, TypeError, ValueError) as exc:
@@ -302,6 +319,11 @@ class SecPITClient:
                         try:
                             filed = datetime.fromisoformat(row["filed"]).replace(tzinfo=UTC)
                             period_end = datetime.fromisoformat(row["end"]).replace(tzinfo=UTC)
+                            period_start = (
+                                datetime.fromisoformat(row["start"]).replace(tzinfo=UTC)
+                                if row.get("start")
+                                else None
+                            )
                             observations.append(
                                 SecFactObservation(
                                     cik=normalized,
@@ -311,9 +333,10 @@ class SecPITClient:
                                     value=float(row["val"]),
                                     form=row["form"],
                                     accession_number=row["accn"],
+                                    period_start=period_start,
                                     period_end=period_end,
                                     filed_at=filed,
-                                    available_at=filed,
+                                    available_at=_date_only_available_at(row["filed"]),
                                 )
                             )
                         except (KeyError, TypeError, ValueError) as exc:
