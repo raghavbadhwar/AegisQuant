@@ -25,7 +25,11 @@ from aegis.fund import (
     load_fund_mandate,
 )
 from aegis.fund.ledger import SQLiteRunLedger
-from aegis.fund.models import HistoricalMultiStrategyFixtureProvider, load_replay_manifest
+from aegis.fund.models import (
+    ForecastIntegrityError,
+    HistoricalMultiStrategyFixtureProvider,
+    load_replay_manifest,
+)
 from aegis.fund.run_cycle import run_cycle
 from aegis.quant_research.hashing import build_hashed
 
@@ -114,6 +118,9 @@ def strategy_forecasts(path: Path) -> None:
                 "regime_score": 0.75,
                 "evidence_quality": 0.9,
                 "feature_ids": [f"feature-{model_id.removeprefix('model-')}"],
+                "quant_bundle_hash": (
+                    "f9d2a5275e59c0bbbd644291eb89503cde597105ce6a29e9204036969195fc48"
+                ),
             }
             rows.append(copied)
     path.write_text(json.dumps(rows, sort_keys=True))
@@ -224,3 +231,23 @@ def test_historical_mandate_cycle_uses_exact_sealed_artifact_triplet(tmp_path: P
     )
     assert record.schema_version == "aegis-cycle-v2"
     assert record.quant_research_bundle is not None
+
+
+def test_sealed_provider_rejects_non_abstained_forecast_without_bundle_hash(tmp_path: Path) -> None:
+    rows = json.loads((ROOT / "data/fixtures/v3b/multi_strategy_forecasts.json").read_text())
+    rows[0]["metadata"].pop("quant_bundle_hash")
+    forecasts = tmp_path / "unbound.json"
+    forecasts.write_text(json.dumps(rows))
+    manifest = load_replay_manifest(ROOT / "data/fixtures/cases/nvda_earnings_case.json")
+    provider = MultiStrategyFixtureProvider(
+        forecasts,
+        ROOT / manifest.evidence_fixture,
+        ROOT / "data/fixtures/v3b/quant_research_bundle.json",
+    )
+    with pytest.raises(ForecastIntegrityError, match="bind the sealed quant bundle"):
+        provider.research(
+            manifest.research_case(),
+            FixtureDataClient(ROOT / "data/fixtures").latest_snapshot(
+                manifest.research_case().tickers, manifest.research_case().as_of
+            ),
+        )

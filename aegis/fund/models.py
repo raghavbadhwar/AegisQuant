@@ -319,6 +319,14 @@ class MultiStrategyFixtureProvider(FixtureForecastProvider):
         if not set(case.tickers).issubset(eligible):
             raise ForecastIntegrityError("quant research bundle does not cover replay universe")
         base = super().research(case, snapshot)
+        if any(
+            not forecast.abstained
+            and forecast.metadata.get("quant_bundle_hash") != self._quant_bundle.content_hash
+            for forecast in base.forecasts
+        ):
+            raise ForecastIntegrityError(
+                "non-abstained forecasts must bind the sealed quant bundle"
+            )
         return build_dossier(
             case,
             base.evidence,

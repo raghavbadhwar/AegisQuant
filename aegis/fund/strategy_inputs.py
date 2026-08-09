@@ -65,6 +65,9 @@ def build_model_batches(
     }
     evidence_by_id = {item.evidence_id: item for item in evidence.records}
     declared = {model.model_id: pod.pod_id for pod in mandate.pods for model in pod.models}
+    declared_features = {
+        model.model_id: set(model.feature_ids) for pod in mandate.pods for model in pod.models
+    }
     if len(declared) != sum(len(pod.models) for pod in mandate.pods):
         raise DataIntegrityError("alpha model IDs must be unique across strategy pods")
     unknown = sorted({item.model_name for item in forecasts}.difference(declared))
@@ -78,6 +81,17 @@ def build_model_batches(
             raise DataIntegrityError(
                 "non-abstained forecast is outside the sealed eligible universe"
             )
+        if (
+            not forecast.abstained
+            and forecast.metadata.get("quant_bundle_hash") != quant_bundle.content_hash
+        ):
+            raise DataIntegrityError(
+                "non-abstained forecast is not bound to the sealed quant bundle"
+            )
+        feature_ids = set(_features(forecast.metadata))
+        required_features = declared_features[forecast.model_name]
+        if required_features and feature_ids != required_features:
+            raise DataIntegrityError("forecast features do not match the declared alpha model")
         by_model[forecast.model_name].append(forecast)
     missing = sorted(model_id for model_id, values in by_model.items() if not values)
     if missing:
