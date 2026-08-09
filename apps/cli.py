@@ -36,6 +36,8 @@ from aegis.pit_data.builder import bootstrap as bootstrap_pit
 from aegis.pit_data.builder import ingest_sec
 from aegis.pit_data.ledger import PITAvailabilityLedger
 from aegis.pit_data.models import PITArtifact
+from aegis.pit_data.nport import acquire_nport_archive
+from aegis.pit_data.sec import SecPITClient
 from aegis.quant_research.demo import (
     demo_event_study,
     demo_factor_diagnostics,
@@ -103,6 +105,22 @@ def pit_ingest_sec(
             }
         )
     )
+
+
+@pit_app.command("ingest-nport")
+def pit_ingest_nport(
+    period: Annotated[str, typer.Option("--period", help="Official SEC quarterly period, YYYYQ#")],
+    user_agent: Annotated[
+        str, typer.Option("--sec-user-agent", help="SEC-compliant contact-bearing User-Agent")
+    ],
+    root: Annotated[Path, typer.Option("--root", help="Local PIT lake directory")] = Path(
+        "data/pit"
+    ),
+) -> None:
+    """Raw-capture one official N-PORT quarterly archive before any normalization."""
+    lake = bootstrap_pit(_project_path(root))
+    receipt = acquire_nport_archive(SecPITClient(user_agent, RawStore(lake / "raw")), period)
+    typer.echo(canonical_json(receipt))
 
 
 @pit_app.command("build-snapshot")
