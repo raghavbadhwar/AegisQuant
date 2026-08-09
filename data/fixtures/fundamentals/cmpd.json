@@ -1,0 +1,2614 @@
+{
+  "calibration": {
+    "available_at": "2025-06-29T19:59:00Z",
+    "brier_score": 0.2,
+    "calibration_id": "fundamental-alpha-v1-calibration-cmpd",
+    "content_hash": "8702149456cf5ede48fb35fa7be50a2ca5966e5f8aac3b4e32d3c9f29ed9815f",
+    "contract_version": "3.0.0",
+    "horizon_days_max": 1825,
+    "horizon_days_min": 1,
+    "model_name": "fundamental-alpha-v1",
+    "outcome_ids": [
+      "sealed-calibration-outcomes-cmpd"
+    ],
+    "probability_intercept": 0.05,
+    "probability_slope": 0.9,
+    "return_intercept": 0.0,
+    "return_slope": 0.8,
+    "root_mean_squared_error": 0.2,
+    "sample_size": 120
+  },
+  "case_id": "cmpd",
+  "catalysts": [
+    "execution against the base operating case"
+  ],
+  "competitors": [
+    "PEER1",
+    "PEER2",
+    "PEER3"
+  ],
+  "discount_rate": 0.1,
+  "drivers": [
+    {
+      "driver_id": "CMPD-bear-2025-revenue_growth",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": -0.02,
+      "year": 2025
+    },
+    {
+      "driver_id": "CMPD-bear-2025-operating_margin",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.18,
+      "year": 2025
+    },
+    {
+      "driver_id": "CMPD-bear-2025-tax_rate",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2025
+    },
+    {
+      "driver_id": "CMPD-bear-2025-reinvestment_rate",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.35,
+      "year": 2025
+    },
+    {
+      "driver_id": "CMPD-bear-2025-share_dilution",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2025
+    },
+    {
+      "driver_id": "CMPD-bear-2026-revenue_growth",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0,
+      "year": 2026
+    },
+    {
+      "driver_id": "CMPD-bear-2026-operating_margin",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.18,
+      "year": 2026
+    },
+    {
+      "driver_id": "CMPD-bear-2026-tax_rate",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2026
+    },
+    {
+      "driver_id": "CMPD-bear-2026-reinvestment_rate",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.35,
+      "year": 2026
+    },
+    {
+      "driver_id": "CMPD-bear-2026-share_dilution",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2026
+    },
+    {
+      "driver_id": "CMPD-bear-2027-revenue_growth",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.01,
+      "year": 2027
+    },
+    {
+      "driver_id": "CMPD-bear-2027-operating_margin",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.18,
+      "year": 2027
+    },
+    {
+      "driver_id": "CMPD-bear-2027-tax_rate",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2027
+    },
+    {
+      "driver_id": "CMPD-bear-2027-reinvestment_rate",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.35,
+      "year": 2027
+    },
+    {
+      "driver_id": "CMPD-bear-2027-share_dilution",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2027
+    },
+    {
+      "driver_id": "CMPD-bear-2028-revenue_growth",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.01,
+      "year": 2028
+    },
+    {
+      "driver_id": "CMPD-bear-2028-operating_margin",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.18,
+      "year": 2028
+    },
+    {
+      "driver_id": "CMPD-bear-2028-tax_rate",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2028
+    },
+    {
+      "driver_id": "CMPD-bear-2028-reinvestment_rate",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.35,
+      "year": 2028
+    },
+    {
+      "driver_id": "CMPD-bear-2028-share_dilution",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2028
+    },
+    {
+      "driver_id": "CMPD-bear-2029-revenue_growth",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.01,
+      "year": 2029
+    },
+    {
+      "driver_id": "CMPD-bear-2029-operating_margin",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.18,
+      "year": 2029
+    },
+    {
+      "driver_id": "CMPD-bear-2029-tax_rate",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2029
+    },
+    {
+      "driver_id": "CMPD-bear-2029-reinvestment_rate",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.35,
+      "year": 2029
+    },
+    {
+      "driver_id": "CMPD-bear-2029-share_dilution",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2029
+    },
+    {
+      "driver_id": "CMPD-base-2025-revenue_growth",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.05,
+      "year": 2025
+    },
+    {
+      "driver_id": "CMPD-base-2025-operating_margin",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.24,
+      "year": 2025
+    },
+    {
+      "driver_id": "CMPD-base-2025-tax_rate",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2025
+    },
+    {
+      "driver_id": "CMPD-base-2025-reinvestment_rate",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.35,
+      "year": 2025
+    },
+    {
+      "driver_id": "CMPD-base-2025-share_dilution",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2025
+    },
+    {
+      "driver_id": "CMPD-base-2026-revenue_growth",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.05,
+      "year": 2026
+    },
+    {
+      "driver_id": "CMPD-base-2026-operating_margin",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.245,
+      "year": 2026
+    },
+    {
+      "driver_id": "CMPD-base-2026-tax_rate",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2026
+    },
+    {
+      "driver_id": "CMPD-base-2026-reinvestment_rate",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.35,
+      "year": 2026
+    },
+    {
+      "driver_id": "CMPD-base-2026-share_dilution",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2026
+    },
+    {
+      "driver_id": "CMPD-base-2027-revenue_growth",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.045,
+      "year": 2027
+    },
+    {
+      "driver_id": "CMPD-base-2027-operating_margin",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.25,
+      "year": 2027
+    },
+    {
+      "driver_id": "CMPD-base-2027-tax_rate",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2027
+    },
+    {
+      "driver_id": "CMPD-base-2027-reinvestment_rate",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.35,
+      "year": 2027
+    },
+    {
+      "driver_id": "CMPD-base-2027-share_dilution",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2027
+    },
+    {
+      "driver_id": "CMPD-base-2028-revenue_growth",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.04,
+      "year": 2028
+    },
+    {
+      "driver_id": "CMPD-base-2028-operating_margin",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.255,
+      "year": 2028
+    },
+    {
+      "driver_id": "CMPD-base-2028-tax_rate",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2028
+    },
+    {
+      "driver_id": "CMPD-base-2028-reinvestment_rate",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.35,
+      "year": 2028
+    },
+    {
+      "driver_id": "CMPD-base-2028-share_dilution",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2028
+    },
+    {
+      "driver_id": "CMPD-base-2029-revenue_growth",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.035,
+      "year": 2029
+    },
+    {
+      "driver_id": "CMPD-base-2029-operating_margin",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.26,
+      "year": 2029
+    },
+    {
+      "driver_id": "CMPD-base-2029-tax_rate",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2029
+    },
+    {
+      "driver_id": "CMPD-base-2029-reinvestment_rate",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.35,
+      "year": 2029
+    },
+    {
+      "driver_id": "CMPD-base-2029-share_dilution",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2029
+    },
+    {
+      "driver_id": "CMPD-bull-2025-revenue_growth",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.1,
+      "year": 2025
+    },
+    {
+      "driver_id": "CMPD-bull-2025-operating_margin",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.29,
+      "year": 2025
+    },
+    {
+      "driver_id": "CMPD-bull-2025-tax_rate",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2025
+    },
+    {
+      "driver_id": "CMPD-bull-2025-reinvestment_rate",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.4,
+      "year": 2025
+    },
+    {
+      "driver_id": "CMPD-bull-2025-share_dilution",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2025
+    },
+    {
+      "driver_id": "CMPD-bull-2026-revenue_growth",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.09,
+      "year": 2026
+    },
+    {
+      "driver_id": "CMPD-bull-2026-operating_margin",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.3,
+      "year": 2026
+    },
+    {
+      "driver_id": "CMPD-bull-2026-tax_rate",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2026
+    },
+    {
+      "driver_id": "CMPD-bull-2026-reinvestment_rate",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.4,
+      "year": 2026
+    },
+    {
+      "driver_id": "CMPD-bull-2026-share_dilution",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2026
+    },
+    {
+      "driver_id": "CMPD-bull-2027-revenue_growth",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.08,
+      "year": 2027
+    },
+    {
+      "driver_id": "CMPD-bull-2027-operating_margin",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.305,
+      "year": 2027
+    },
+    {
+      "driver_id": "CMPD-bull-2027-tax_rate",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2027
+    },
+    {
+      "driver_id": "CMPD-bull-2027-reinvestment_rate",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.4,
+      "year": 2027
+    },
+    {
+      "driver_id": "CMPD-bull-2027-share_dilution",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2027
+    },
+    {
+      "driver_id": "CMPD-bull-2028-revenue_growth",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.07,
+      "year": 2028
+    },
+    {
+      "driver_id": "CMPD-bull-2028-operating_margin",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.31,
+      "year": 2028
+    },
+    {
+      "driver_id": "CMPD-bull-2028-tax_rate",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2028
+    },
+    {
+      "driver_id": "CMPD-bull-2028-reinvestment_rate",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.4,
+      "year": 2028
+    },
+    {
+      "driver_id": "CMPD-bull-2028-share_dilution",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2028
+    },
+    {
+      "driver_id": "CMPD-bull-2029-revenue_growth",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.06,
+      "year": 2029
+    },
+    {
+      "driver_id": "CMPD-bull-2029-operating_margin",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.315,
+      "year": 2029
+    },
+    {
+      "driver_id": "CMPD-bull-2029-tax_rate",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2029
+    },
+    {
+      "driver_id": "CMPD-bull-2029-reinvestment_rate",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.4,
+      "year": 2029
+    },
+    {
+      "driver_id": "CMPD-bull-2029-share_dilution",
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2029
+    }
+  ],
+  "evidence": {
+    "as_of": "2025-06-30T20:00:00+00:00",
+    "case_id": "cmpd-research-20250630",
+    "mode": "replay",
+    "records": [
+      {
+        "available_at": "2025-06-30T19:59:00+00:00",
+        "content_hash": "cc5b914a7056727f7690d22a9545e9754a90771ddfc609588765d3a76b624d2c",
+        "coordinates": "case=cmpd",
+        "document_type": "frozen_fundamental_evidence_pack",
+        "entity_ids": [
+          "CMPD",
+          "PEER1",
+          "PEER2",
+          "PEER3"
+        ],
+        "event_time": null,
+        "evidence_id": "cmpd-10k-evidence",
+        "extraction_confidence": 1.0,
+        "extractor_version": "fundamental-fixture-v1",
+        "historical_safe": true,
+        "injection_flags": [],
+        "normalized_content_hash": null,
+        "page": null,
+        "parser_version": "sealed-json-v1",
+        "published_at": "2025-06-30T19:59:00+00:00",
+        "raw_uri": "fixture://fundamentals/cmpd.json",
+        "retrieved_at": "2025-06-30T19:59:00+00:00",
+        "section": "full_pack",
+        "source_id": "sealed-fundamental-fixture",
+        "source_manifest_version": "1.0.0",
+        "source_quality": 1.0,
+        "source_url": null
+      }
+    ]
+  },
+  "expected_volatility": 0.25,
+  "facts": [
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "revenue",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2022-revenue",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "23f885be576189eb987dbe65c77c2086734e21089ba1a2f9fcae369d6dc1a668",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2022;concept=revenue;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 800
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "cost_of_revenue",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2022-cost_of_revenue",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "23f885be576189eb987dbe65c77c2086734e21089ba1a2f9fcae369d6dc1a668",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2022;concept=cost_of_revenue;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 336.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "operating_expenses",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2022-operating_expenses",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "23f885be576189eb987dbe65c77c2086734e21089ba1a2f9fcae369d6dc1a668",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2022;concept=operating_expenses;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 224.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "interest_expense",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2022-interest_expense",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "23f885be576189eb987dbe65c77c2086734e21089ba1a2f9fcae369d6dc1a668",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2022;concept=interest_expense;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 8.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "tax_expense",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2022-tax_expense",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "23f885be576189eb987dbe65c77c2086734e21089ba1a2f9fcae369d6dc1a668",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2022;concept=tax_expense;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 46.4
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "net_income",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2022-net_income",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "23f885be576189eb987dbe65c77c2086734e21089ba1a2f9fcae369d6dc1a668",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2022;concept=net_income;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 185.6
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "diluted_shares",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2022-diluted_shares",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "23f885be576189eb987dbe65c77c2086734e21089ba1a2f9fcae369d6dc1a668",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2022;concept=diluted_shares;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "shares",
+      "value": 10.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "cash",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2022-cash",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": null,
+      "raw_content_hash": "23f885be576189eb987dbe65c77c2086734e21089ba1a2f9fcae369d6dc1a668",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2022;concept=cash;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 144.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "current_assets",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2022-current_assets",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": null,
+      "raw_content_hash": "23f885be576189eb987dbe65c77c2086734e21089ba1a2f9fcae369d6dc1a668",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2022;concept=current_assets;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 360.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "current_liabilities",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2022-current_liabilities",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": null,
+      "raw_content_hash": "23f885be576189eb987dbe65c77c2086734e21089ba1a2f9fcae369d6dc1a668",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2022;concept=current_liabilities;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 176.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "total_assets",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2022-total_assets",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": null,
+      "raw_content_hash": "23f885be576189eb987dbe65c77c2086734e21089ba1a2f9fcae369d6dc1a668",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2022;concept=total_assets;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 1040.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "total_debt",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2022-total_debt",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": null,
+      "raw_content_hash": "23f885be576189eb987dbe65c77c2086734e21089ba1a2f9fcae369d6dc1a668",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2022;concept=total_debt;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 120.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "total_equity",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2022-total_equity",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": null,
+      "raw_content_hash": "23f885be576189eb987dbe65c77c2086734e21089ba1a2f9fcae369d6dc1a668",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2022;concept=total_equity;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 720.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "cash_from_operations",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2022-cash_from_operations",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "23f885be576189eb987dbe65c77c2086734e21089ba1a2f9fcae369d6dc1a668",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2022;concept=cash_from_operations;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 237.6
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "capital_expenditure",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2022-capital_expenditure",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "23f885be576189eb987dbe65c77c2086734e21089ba1a2f9fcae369d6dc1a668",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2022;concept=capital_expenditure;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 48.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "depreciation_amortization",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2022-depreciation_amortization",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "23f885be576189eb987dbe65c77c2086734e21089ba1a2f9fcae369d6dc1a668",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2022;concept=depreciation_amortization;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 32.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "stock_based_compensation",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2022-stock_based_compensation",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "23f885be576189eb987dbe65c77c2086734e21089ba1a2f9fcae369d6dc1a668",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2022;concept=stock_based_compensation;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 20.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "acquisitions",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2022-acquisitions",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "23f885be576189eb987dbe65c77c2086734e21089ba1a2f9fcae369d6dc1a668",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2022;concept=acquisitions;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 12.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "dividends",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2022-dividends",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "23f885be576189eb987dbe65c77c2086734e21089ba1a2f9fcae369d6dc1a668",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2022;concept=dividends;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 18.56
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "share_repurchases",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2022-share_repurchases",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "23f885be576189eb987dbe65c77c2086734e21089ba1a2f9fcae369d6dc1a668",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2022;concept=share_repurchases;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 20.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "share_issuance",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2022-share_issuance",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "23f885be576189eb987dbe65c77c2086734e21089ba1a2f9fcae369d6dc1a668",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2022;concept=share_issuance;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 1.6
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "revenue",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2023-revenue",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "224f8b436bedb9abb4dec6cf6e6102871fe6cdf757bff1417274bddad693689f",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2023;concept=revenue;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 900
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "cost_of_revenue",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2023-cost_of_revenue",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "224f8b436bedb9abb4dec6cf6e6102871fe6cdf757bff1417274bddad693689f",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2023;concept=cost_of_revenue;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 378.0
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "operating_expenses",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2023-operating_expenses",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "224f8b436bedb9abb4dec6cf6e6102871fe6cdf757bff1417274bddad693689f",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2023;concept=operating_expenses;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 252.0
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "interest_expense",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2023-interest_expense",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "224f8b436bedb9abb4dec6cf6e6102871fe6cdf757bff1417274bddad693689f",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2023;concept=interest_expense;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 9.0
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "tax_expense",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2023-tax_expense",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "224f8b436bedb9abb4dec6cf6e6102871fe6cdf757bff1417274bddad693689f",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2023;concept=tax_expense;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 52.2
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "net_income",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2023-net_income",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "224f8b436bedb9abb4dec6cf6e6102871fe6cdf757bff1417274bddad693689f",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2023;concept=net_income;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 208.8
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "diluted_shares",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2023-diluted_shares",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "224f8b436bedb9abb4dec6cf6e6102871fe6cdf757bff1417274bddad693689f",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2023;concept=diluted_shares;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "shares",
+      "value": 10.03
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "cash",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2023-cash",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": null,
+      "raw_content_hash": "224f8b436bedb9abb4dec6cf6e6102871fe6cdf757bff1417274bddad693689f",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2023;concept=cash;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 162.0
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "current_assets",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2023-current_assets",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": null,
+      "raw_content_hash": "224f8b436bedb9abb4dec6cf6e6102871fe6cdf757bff1417274bddad693689f",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2023;concept=current_assets;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 405.0
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "current_liabilities",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2023-current_liabilities",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": null,
+      "raw_content_hash": "224f8b436bedb9abb4dec6cf6e6102871fe6cdf757bff1417274bddad693689f",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2023;concept=current_liabilities;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 198.0
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "total_assets",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2023-total_assets",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": null,
+      "raw_content_hash": "224f8b436bedb9abb4dec6cf6e6102871fe6cdf757bff1417274bddad693689f",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2023;concept=total_assets;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 1170.0
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "total_debt",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2023-total_debt",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": null,
+      "raw_content_hash": "224f8b436bedb9abb4dec6cf6e6102871fe6cdf757bff1417274bddad693689f",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2023;concept=total_debt;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 135.0
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "total_equity",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2023-total_equity",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": null,
+      "raw_content_hash": "224f8b436bedb9abb4dec6cf6e6102871fe6cdf757bff1417274bddad693689f",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2023;concept=total_equity;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 810.0
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "cash_from_operations",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2023-cash_from_operations",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "224f8b436bedb9abb4dec6cf6e6102871fe6cdf757bff1417274bddad693689f",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2023;concept=cash_from_operations;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 267.3
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "capital_expenditure",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2023-capital_expenditure",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "224f8b436bedb9abb4dec6cf6e6102871fe6cdf757bff1417274bddad693689f",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2023;concept=capital_expenditure;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 54.0
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "depreciation_amortization",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2023-depreciation_amortization",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "224f8b436bedb9abb4dec6cf6e6102871fe6cdf757bff1417274bddad693689f",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2023;concept=depreciation_amortization;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 36.0
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "stock_based_compensation",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2023-stock_based_compensation",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "224f8b436bedb9abb4dec6cf6e6102871fe6cdf757bff1417274bddad693689f",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2023;concept=stock_based_compensation;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 22.5
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "acquisitions",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2023-acquisitions",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "224f8b436bedb9abb4dec6cf6e6102871fe6cdf757bff1417274bddad693689f",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2023;concept=acquisitions;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 13.5
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "dividends",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2023-dividends",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "224f8b436bedb9abb4dec6cf6e6102871fe6cdf757bff1417274bddad693689f",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2023;concept=dividends;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 20.88
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "share_repurchases",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2023-share_repurchases",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "224f8b436bedb9abb4dec6cf6e6102871fe6cdf757bff1417274bddad693689f",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2023;concept=share_repurchases;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 22.5
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "share_issuance",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2023-share_issuance",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "224f8b436bedb9abb4dec6cf6e6102871fe6cdf757bff1417274bddad693689f",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2023;concept=share_issuance;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 1.8
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "revenue",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2024-revenue",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "c657d7b6504c347c43b81588c825952688f43b5e9bdbff9d5273ed25caa38586",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2024;concept=revenue;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 1035
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "cost_of_revenue",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2024-cost_of_revenue",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "c657d7b6504c347c43b81588c825952688f43b5e9bdbff9d5273ed25caa38586",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2024;concept=cost_of_revenue;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 434.7
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "operating_expenses",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2024-operating_expenses",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "c657d7b6504c347c43b81588c825952688f43b5e9bdbff9d5273ed25caa38586",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2024;concept=operating_expenses;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 289.8
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "interest_expense",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2024-interest_expense",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "c657d7b6504c347c43b81588c825952688f43b5e9bdbff9d5273ed25caa38586",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2024;concept=interest_expense;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 10.35
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "tax_expense",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2024-tax_expense",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "c657d7b6504c347c43b81588c825952688f43b5e9bdbff9d5273ed25caa38586",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2024;concept=tax_expense;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 60.03
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "net_income",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2024-net_income",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "c657d7b6504c347c43b81588c825952688f43b5e9bdbff9d5273ed25caa38586",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2024;concept=net_income;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 240.12
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "diluted_shares",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2024-diluted_shares",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "c657d7b6504c347c43b81588c825952688f43b5e9bdbff9d5273ed25caa38586",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2024;concept=diluted_shares;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "shares",
+      "value": 10.06
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "cash",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2024-cash",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": null,
+      "raw_content_hash": "c657d7b6504c347c43b81588c825952688f43b5e9bdbff9d5273ed25caa38586",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2024;concept=cash;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 186.3
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "current_assets",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2024-current_assets",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": null,
+      "raw_content_hash": "c657d7b6504c347c43b81588c825952688f43b5e9bdbff9d5273ed25caa38586",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2024;concept=current_assets;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 465.75
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "current_liabilities",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2024-current_liabilities",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": null,
+      "raw_content_hash": "c657d7b6504c347c43b81588c825952688f43b5e9bdbff9d5273ed25caa38586",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2024;concept=current_liabilities;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 227.7
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "total_assets",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2024-total_assets",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": null,
+      "raw_content_hash": "c657d7b6504c347c43b81588c825952688f43b5e9bdbff9d5273ed25caa38586",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2024;concept=total_assets;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 1345.5
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "total_debt",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2024-total_debt",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": null,
+      "raw_content_hash": "c657d7b6504c347c43b81588c825952688f43b5e9bdbff9d5273ed25caa38586",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2024;concept=total_debt;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 155.25
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "total_equity",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2024-total_equity",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": null,
+      "raw_content_hash": "c657d7b6504c347c43b81588c825952688f43b5e9bdbff9d5273ed25caa38586",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2024;concept=total_equity;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 931.5
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "cash_from_operations",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2024-cash_from_operations",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "c657d7b6504c347c43b81588c825952688f43b5e9bdbff9d5273ed25caa38586",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2024;concept=cash_from_operations;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 307.395
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "capital_expenditure",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2024-capital_expenditure",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "c657d7b6504c347c43b81588c825952688f43b5e9bdbff9d5273ed25caa38586",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2024;concept=capital_expenditure;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 62.1
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "depreciation_amortization",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2024-depreciation_amortization",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "c657d7b6504c347c43b81588c825952688f43b5e9bdbff9d5273ed25caa38586",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2024;concept=depreciation_amortization;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 41.4
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "stock_based_compensation",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2024-stock_based_compensation",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "c657d7b6504c347c43b81588c825952688f43b5e9bdbff9d5273ed25caa38586",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2024;concept=stock_based_compensation;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 25.875
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "acquisitions",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2024-acquisitions",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "c657d7b6504c347c43b81588c825952688f43b5e9bdbff9d5273ed25caa38586",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2024;concept=acquisitions;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 15.525
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "dividends",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2024-dividends",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "c657d7b6504c347c43b81588c825952688f43b5e9bdbff9d5273ed25caa38586",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2024;concept=dividends;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 24.012
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "share_repurchases",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2024-share_repurchases",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "c657d7b6504c347c43b81588c825952688f43b5e9bdbff9d5273ed25caa38586",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2024;concept=share_repurchases;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 25.875
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "share_issuance",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2024-share_issuance",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "c657d7b6504c347c43b81588c825952688f43b5e9bdbff9d5273ed25caa38586",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2024;concept=share_issuance;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 2.07
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "total_liabilities",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2022-total_liabilities",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": null,
+      "raw_content_hash": "23f885be576189eb987dbe65c77c2086734e21089ba1a2f9fcae369d6dc1a668",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2022;concept=total_liabilities;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 320.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "cash_flow_working_capital_change",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2022-cash_flow_working_capital_change",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "23f885be576189eb987dbe65c77c2086734e21089ba1a2f9fcae369d6dc1a668",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2022;concept=cash_flow_working_capital_change;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": -8.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "other_operating_cash_adjustments",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2022-other_operating_cash_adjustments",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "23f885be576189eb987dbe65c77c2086734e21089ba1a2f9fcae369d6dc1a668",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2022;concept=other_operating_cash_adjustments;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 8.0
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "total_liabilities",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2023-total_liabilities",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": null,
+      "raw_content_hash": "224f8b436bedb9abb4dec6cf6e6102871fe6cdf757bff1417274bddad693689f",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2023;concept=total_liabilities;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 360.0
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "cash_flow_working_capital_change",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2023-cash_flow_working_capital_change",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "224f8b436bedb9abb4dec6cf6e6102871fe6cdf757bff1417274bddad693689f",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2023;concept=cash_flow_working_capital_change;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": -9.0
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "other_operating_cash_adjustments",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2023-other_operating_cash_adjustments",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "224f8b436bedb9abb4dec6cf6e6102871fe6cdf757bff1417274bddad693689f",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2023;concept=other_operating_cash_adjustments;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 9.0
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "total_liabilities",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2024-total_liabilities",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": null,
+      "raw_content_hash": "c657d7b6504c347c43b81588c825952688f43b5e9bdbff9d5273ed25caa38586",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2024;concept=total_liabilities;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 414.0
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "cash_flow_working_capital_change",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2024-cash_flow_working_capital_change",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "c657d7b6504c347c43b81588c825952688f43b5e9bdbff9d5273ed25caa38586",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2024;concept=cash_flow_working_capital_change;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": -10.35
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-CMPD-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "other_operating_cash_adjustments",
+      "contract_version": "3.0.0",
+      "fact_id": "CMPD-2024-other_operating_cash_adjustments",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "c657d7b6504c347c43b81588c825952688f43b5e9bdbff9d5273ed25caa38586",
+      "revision": 0,
+      "source_coordinate": "accession=000-CMPD-2024;concept=other_operating_cash_adjustments;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "CMPD",
+      "unit": "USD",
+      "value": 10.35
+    }
+  ],
+  "field_evidence": {
+    "business_industry": [
+      "cmpd-10k-evidence"
+    ],
+    "calibration": [
+      "cmpd-10k-evidence"
+    ],
+    "catalysts_risks": [
+      "cmpd-10k-evidence"
+    ],
+    "discount_rate": [
+      "cmpd-10k-evidence"
+    ],
+    "drivers": [
+      "cmpd-10k-evidence"
+    ],
+    "expected_volatility": [
+      "cmpd-10k-evidence"
+    ],
+    "guidance": [
+      "cmpd-10k-evidence"
+    ],
+    "management_actions": [
+      "cmpd-10k-evidence"
+    ],
+    "market_price": [
+      "cmpd-10k-evidence"
+    ],
+    "peers": [
+      "cmpd-10k-evidence"
+    ],
+    "scenario_probabilities": [
+      "cmpd-10k-evidence"
+    ],
+    "terminal_assumptions": [
+      "cmpd-10k-evidence"
+    ]
+  },
+  "guidance": [],
+  "industry": "Industrial Software",
+  "inputs_available_at": "2025-06-30T19:59:00+00:00",
+  "market_price": 80,
+  "peers": [
+    {
+      "ev_ebit": 12,
+      "ev_ebitda": 9.6,
+      "ev_revenue": 3.0,
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "operating_margin": 0.2,
+      "price_earnings": 14.4,
+      "price_fcf": 12,
+      "revenue_growth": 0.05,
+      "roic": 0.15,
+      "ticker": "PEER1"
+    },
+    {
+      "ev_ebit": 15,
+      "ev_ebitda": 12.0,
+      "ev_revenue": 3.75,
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "operating_margin": 0.24,
+      "price_earnings": 18.0,
+      "price_fcf": 15,
+      "revenue_growth": 0.08,
+      "roic": 0.15,
+      "ticker": "PEER2"
+    },
+    {
+      "ev_ebit": 18,
+      "ev_ebitda": 14.4,
+      "ev_revenue": 4.5,
+      "evidence_ids": [
+        "cmpd-10k-evidence"
+      ],
+      "operating_margin": 0.28,
+      "price_earnings": 21.6,
+      "price_fcf": 18,
+      "revenue_growth": 0.1,
+      "roic": 0.15,
+      "ticker": "PEER3"
+    }
+  ],
+  "profitable": true,
+  "raw_receipt_ids": [
+    "raw-CMPD-10k"
+  ],
+  "request": {
+    "as_of": "2025-06-30T20:00:00+00:00",
+    "company_name": "Compounder Corp",
+    "contract_version": "3.0.0",
+    "horizon_days": 365,
+    "mode": "replay",
+    "question": "Produce a calculation-backed institutional research dossier.",
+    "request_id": "cmpd-research-20250630",
+    "ticker": "CMPD"
+  },
+  "revenue_driver_descriptions": [
+    "volume, price and retained customer demand"
+  ],
+  "risks": [
+    "margin compression",
+    "slower demand"
+  ],
+  "scenario_probabilities": {
+    "base": 0.5,
+    "bear": 0.25,
+    "bull": 0.25
+  },
+  "sector": "Technology",
+  "source_manifest_versions": {
+    "sec-fixture": "1.0.0"
+  },
+  "source_receipt_ids": [
+    "raw-cmpd-fundamental-inputs"
+  ],
+  "subscription_revenue_share": 0.0,
+  "terminal_growth_by_scenario": {
+    "base": 0.025,
+    "bear": 0.015,
+    "bull": 0.035
+  },
+  "terminal_roic_by_scenario": {
+    "base": 0.15,
+    "bear": 0.11,
+    "bull": 0.2
+  }
+}

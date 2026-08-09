@@ -16,10 +16,16 @@ from aegis.fund.ledger import SQLiteRunLedger
 from aegis.fund.models import FixtureForecastProvider, ForecastProvider, load_replay_manifest
 from aegis.fund.run_cycle import run_cycle
 from aegis.fund.spec import load_fund_spec
+from aegis.fundamentals import (
+    FixtureFundamentalProvider,
+    load_fundamental_fixture,
+    run_fundamental_graph,
+)
 from aegis.harness.agent_loader import load_agent_tree
 from aegis.harness.graph import LangGraphForecastProvider
 from aegis.harness.model_router import ReplayModelProvider
 from aegis.harness.skill_loader import load_skill_tree
+from aegis.reporting import dossier_html, dossier_json, dossier_markdown
 from aegis.sources import RawStore, SourceGateway, SourcePlanner, SourceRegistry
 from aegis.sources.adapters import DirectHTTPConnector
 
@@ -29,7 +35,9 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 source_app = typer.Typer(help="Governed live-research source intelligence.")
+research_app = typer.Typer(help="Standalone institutional research workflows.")
 app.add_typer(source_app, name="sources")
+app.add_typer(research_app, name="research")
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -78,6 +86,42 @@ def source_acquire(
     )
     result, evidence = gateway.acquire(request)
     typer.echo(canonical_json({"result": result, "evidence": evidence}))
+
+
+@research_app.command("company")
+def research_company_command(
+    ticker: Annotated[str, typer.Argument(help="Company ticker")],
+    as_of: Annotated[str, typer.Option(help="Point-in-time date (YYYY-MM-DD)")],
+    fixture: Annotated[
+        Path | None,
+        typer.Option(help="Frozen fundamental fixture; defaults to the ticker fixture"),
+    ] = None,
+    output_format: Annotated[
+        str,
+        typer.Option("--format", help="Output format: json, markdown, or html"),
+    ] = "markdown",
+    output: Annotated[Path | None, typer.Option(help="Optional local output path")] = None,
+) -> None:
+    """Generate a PIT, calculation-backed company dossier without running a fund."""
+    fixture_path = _project_path(
+        fixture or Path(f"data/fixtures/fundamentals/{ticker.lower()}.json")
+    )
+    request, _, _ = load_fundamental_fixture(fixture_path)
+    if request.ticker != ticker.upper() or request.as_of.date().isoformat() != as_of:
+        raise typer.BadParameter("ticker/as-of must match the frozen point-in-time fixture")
+    dossier = run_fundamental_graph(request, FixtureFundamentalProvider(fixture_path))
+    if output_format == "json":
+        rendered = dossier_json(dossier)
+    elif output_format == "markdown":
+        rendered = dossier_markdown(dossier)
+    elif output_format == "html":
+        rendered = dossier_html(dossier)
+    else:
+        raise typer.BadParameter("format must be json, markdown, or html")
+    if output is not None:
+        _project_path(output).write_text(rendered)
+    else:
+        typer.echo(rendered, nl=False)
 
 
 @app.command()

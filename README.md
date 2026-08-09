@@ -26,6 +26,17 @@ uv run ruff check aegis apps tests
 uv run mypy aegis apps
 ```
 
+### Standalone institutional company research (v3A)
+
+```bash
+uv run aegisquant research company CMPD \
+  --as-of 2025-06-30 \
+  --fixture data/fixtures/fundamentals/cmpd.json \
+  --format markdown
+```
+
+This mode does not load a fund, portfolio policy, broker, or cycle ledger. It produces a point-in-time, calculation-backed dossier and standard `AlphaForecast` from a frozen no-network fixture. The current v3A release candidate supports profitable general operating companies; unsupported archetypes explicitly abstain. It remains blocked pending frozen-tree independent audit.
+
 ### No-key deterministic replay
 
 ```bash
@@ -48,7 +59,8 @@ Replay and backtest share `aegis.fund.run_cycle.run_cycle`, deterministic portfo
 
 ## Implemented deterministic spine
 
-- strict Pydantic v2 case, evidence, forecast, source, memory, claim, portfolio, risk, execution, and learning contracts;
+- strict Pydantic v2/v3 case, evidence, filing, statement, valuation, forecast, source, memory, claim, portfolio, risk, execution, and learning contracts;
+- standalone v3A company research with exact raw/statement amounts, reversible normalization, institutional metrics, operating scenarios, DCF/reverse DCF/comparables, management history, living theses, closed calculation lineage, and deterministic dossier rendering;
 - point-in-time, network-denied Parquet fixture client;
 - batch fixture and deterministic historical forecast providers;
 - confidence/probability/volatility portfolio construction;
@@ -104,6 +116,9 @@ The agent graph is a forecast provider. It never crosses the portfolio/risk/exec
 - Authoritative build specification: [`docs/BUILD_SPEC.md`](docs/BUILD_SPEC.md)
 - v2 compatibility pointer: [`docs/AegisQuant_MVP_Capability_Upgrade_v2.md`](docs/AegisQuant_MVP_Capability_Upgrade_v2.md)
 - Historical v1: [`docs/AegisQuant_MVP_Build_Spec.md`](docs/AegisQuant_MVP_Build_Spec.md)
+- Authoritative v3 specification: [`docs/specs/AegisQuant_v3_Institutional_Investment_OS_Spec.md`](docs/specs/AegisQuant_v3_Institutional_Investment_OS_Spec.md)
+- Authoritative v3 master prompt: [`docs/specs/AegisQuant_v3_Institutional_Codex_Master_Prompt.md`](docs/specs/AegisQuant_v3_Institutional_Codex_Master_Prompt.md)
+- v3 acceptance traceability: [`docs/V3_TRACEABILITY.md`](docs/V3_TRACEABILITY.md)
 
 ## Provenance and license
 

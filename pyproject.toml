@@ -30,6 +30,7 @@ dashboard = [
 
 [project.scripts]
 aegis = "apps.cli:main"
+aegisquant = "apps.cli:main"
 
 [dependency-groups]
 dev = [

@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def test_all_release1_skills_load_with_stable_versions() -> None:
     skills = load_skill_tree(ROOT / "skills")
-    assert len(skills) == 11
+    assert len(skills) == 20
     assert all(skill.metadata.version == "1.0.0" for skill in skills.values())
     assert all(len(skill.content_hash) == 64 for skill in skills.values())
 

@@ -14,3 +14,7 @@
 
 ## Gate tests
 PIT/restatement/lineage; statement identities; reversible adjustments; metrics identities; forecast reconciliation/order; DCF golden/cross-check/round-trip/monotonicity; reverse-DCF recovery/feasibility; unsupported abstention; exact-number calculation linkage; graph authority/evidence confinement; byte-stable dossier and CLI.
+
+## Implementation result
+
+Status: **IN PROGRESS / RELEASE BLOCKED** pending a frozen-tree independent audit. Local implementation gates are green; unsupported archetypes and SOTP limitations remain explicit abstentions. The current local full-suite baseline is Ruff, strict mypy, and 119 pytest cases, but local gates do not override an independent finding.

@@ -6,6 +6,7 @@ import hashlib
 import json
 from collections.abc import Mapping, Sequence
 from datetime import date, datetime
+from decimal import Decimal
 from enum import Enum
 from typing import Annotated, Any
 
@@ -16,11 +17,13 @@ from ._base import ContractModel, validate_sha256
 
 def _json_ready(value: Any) -> Any:
     if isinstance(value, BaseModel):
-        return value.model_dump(mode="json")
+        return _json_ready(value.model_dump(mode="python"))
     if isinstance(value, (datetime, date)):
         return value.isoformat()
     if isinstance(value, Enum):
         return value.value
+    if isinstance(value, Decimal):
+        return format(value.normalize(), "f")
     if isinstance(value, Mapping):
         return {str(key): _json_ready(item) for key, item in value.items()}
     if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):

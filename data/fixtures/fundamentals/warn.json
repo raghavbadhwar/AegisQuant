@@ -1,0 +1,2614 @@
+{
+  "calibration": {
+    "available_at": "2025-06-29T19:59:00Z",
+    "brier_score": 0.2,
+    "calibration_id": "fundamental-alpha-v1-calibration-warn",
+    "content_hash": "9bbaf16758befe1f04f7bd2a0835bc06e92b1c80e651e827426ad094468ddfc0",
+    "contract_version": "3.0.0",
+    "horizon_days_max": 1825,
+    "horizon_days_min": 1,
+    "model_name": "fundamental-alpha-v1",
+    "outcome_ids": [
+      "sealed-calibration-outcomes-warn"
+    ],
+    "probability_intercept": 0.05,
+    "probability_slope": 0.9,
+    "return_intercept": 0.0,
+    "return_slope": 0.8,
+    "root_mean_squared_error": 0.2,
+    "sample_size": 120
+  },
+  "case_id": "warn",
+  "catalysts": [
+    "execution against the base operating case"
+  ],
+  "competitors": [
+    "PEER1",
+    "PEER2",
+    "PEER3"
+  ],
+  "discount_rate": 0.1,
+  "drivers": [
+    {
+      "driver_id": "WARN-bear-2025-revenue_growth",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": -0.1,
+      "year": 2025
+    },
+    {
+      "driver_id": "WARN-bear-2025-operating_margin",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.08,
+      "year": 2025
+    },
+    {
+      "driver_id": "WARN-bear-2025-tax_rate",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2025
+    },
+    {
+      "driver_id": "WARN-bear-2025-reinvestment_rate",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.35,
+      "year": 2025
+    },
+    {
+      "driver_id": "WARN-bear-2025-share_dilution",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2025
+    },
+    {
+      "driver_id": "WARN-bear-2026-revenue_growth",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": -0.08,
+      "year": 2026
+    },
+    {
+      "driver_id": "WARN-bear-2026-operating_margin",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.07,
+      "year": 2026
+    },
+    {
+      "driver_id": "WARN-bear-2026-tax_rate",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2026
+    },
+    {
+      "driver_id": "WARN-bear-2026-reinvestment_rate",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.35,
+      "year": 2026
+    },
+    {
+      "driver_id": "WARN-bear-2026-share_dilution",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2026
+    },
+    {
+      "driver_id": "WARN-bear-2027-revenue_growth",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": -0.05,
+      "year": 2027
+    },
+    {
+      "driver_id": "WARN-bear-2027-operating_margin",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.07,
+      "year": 2027
+    },
+    {
+      "driver_id": "WARN-bear-2027-tax_rate",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2027
+    },
+    {
+      "driver_id": "WARN-bear-2027-reinvestment_rate",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.35,
+      "year": 2027
+    },
+    {
+      "driver_id": "WARN-bear-2027-share_dilution",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2027
+    },
+    {
+      "driver_id": "WARN-bear-2028-revenue_growth",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": -0.03,
+      "year": 2028
+    },
+    {
+      "driver_id": "WARN-bear-2028-operating_margin",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.07,
+      "year": 2028
+    },
+    {
+      "driver_id": "WARN-bear-2028-tax_rate",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2028
+    },
+    {
+      "driver_id": "WARN-bear-2028-reinvestment_rate",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.35,
+      "year": 2028
+    },
+    {
+      "driver_id": "WARN-bear-2028-share_dilution",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2028
+    },
+    {
+      "driver_id": "WARN-bear-2029-revenue_growth",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": -0.02,
+      "year": 2029
+    },
+    {
+      "driver_id": "WARN-bear-2029-operating_margin",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.07,
+      "year": 2029
+    },
+    {
+      "driver_id": "WARN-bear-2029-tax_rate",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2029
+    },
+    {
+      "driver_id": "WARN-bear-2029-reinvestment_rate",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.35,
+      "year": 2029
+    },
+    {
+      "driver_id": "WARN-bear-2029-share_dilution",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2029
+    },
+    {
+      "driver_id": "WARN-base-2025-revenue_growth",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0,
+      "year": 2025
+    },
+    {
+      "driver_id": "WARN-base-2025-operating_margin",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.14,
+      "year": 2025
+    },
+    {
+      "driver_id": "WARN-base-2025-tax_rate",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2025
+    },
+    {
+      "driver_id": "WARN-base-2025-reinvestment_rate",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.35,
+      "year": 2025
+    },
+    {
+      "driver_id": "WARN-base-2025-share_dilution",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2025
+    },
+    {
+      "driver_id": "WARN-base-2026-revenue_growth",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0,
+      "year": 2026
+    },
+    {
+      "driver_id": "WARN-base-2026-operating_margin",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.14,
+      "year": 2026
+    },
+    {
+      "driver_id": "WARN-base-2026-tax_rate",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2026
+    },
+    {
+      "driver_id": "WARN-base-2026-reinvestment_rate",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.35,
+      "year": 2026
+    },
+    {
+      "driver_id": "WARN-base-2026-share_dilution",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2026
+    },
+    {
+      "driver_id": "WARN-base-2027-revenue_growth",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.01,
+      "year": 2027
+    },
+    {
+      "driver_id": "WARN-base-2027-operating_margin",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.14,
+      "year": 2027
+    },
+    {
+      "driver_id": "WARN-base-2027-tax_rate",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2027
+    },
+    {
+      "driver_id": "WARN-base-2027-reinvestment_rate",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.35,
+      "year": 2027
+    },
+    {
+      "driver_id": "WARN-base-2027-share_dilution",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2027
+    },
+    {
+      "driver_id": "WARN-base-2028-revenue_growth",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.01,
+      "year": 2028
+    },
+    {
+      "driver_id": "WARN-base-2028-operating_margin",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.14,
+      "year": 2028
+    },
+    {
+      "driver_id": "WARN-base-2028-tax_rate",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2028
+    },
+    {
+      "driver_id": "WARN-base-2028-reinvestment_rate",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.35,
+      "year": 2028
+    },
+    {
+      "driver_id": "WARN-base-2028-share_dilution",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2028
+    },
+    {
+      "driver_id": "WARN-base-2029-revenue_growth",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.01,
+      "year": 2029
+    },
+    {
+      "driver_id": "WARN-base-2029-operating_margin",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.14,
+      "year": 2029
+    },
+    {
+      "driver_id": "WARN-base-2029-tax_rate",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2029
+    },
+    {
+      "driver_id": "WARN-base-2029-reinvestment_rate",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.35,
+      "year": 2029
+    },
+    {
+      "driver_id": "WARN-base-2029-share_dilution",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2029
+    },
+    {
+      "driver_id": "WARN-bull-2025-revenue_growth",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.04,
+      "year": 2025
+    },
+    {
+      "driver_id": "WARN-bull-2025-operating_margin",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.18,
+      "year": 2025
+    },
+    {
+      "driver_id": "WARN-bull-2025-tax_rate",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2025
+    },
+    {
+      "driver_id": "WARN-bull-2025-reinvestment_rate",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.4,
+      "year": 2025
+    },
+    {
+      "driver_id": "WARN-bull-2025-share_dilution",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2025
+    },
+    {
+      "driver_id": "WARN-bull-2026-revenue_growth",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.04,
+      "year": 2026
+    },
+    {
+      "driver_id": "WARN-bull-2026-operating_margin",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.18,
+      "year": 2026
+    },
+    {
+      "driver_id": "WARN-bull-2026-tax_rate",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2026
+    },
+    {
+      "driver_id": "WARN-bull-2026-reinvestment_rate",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.4,
+      "year": 2026
+    },
+    {
+      "driver_id": "WARN-bull-2026-share_dilution",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2026
+    },
+    {
+      "driver_id": "WARN-bull-2027-revenue_growth",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.04,
+      "year": 2027
+    },
+    {
+      "driver_id": "WARN-bull-2027-operating_margin",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.19,
+      "year": 2027
+    },
+    {
+      "driver_id": "WARN-bull-2027-tax_rate",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2027
+    },
+    {
+      "driver_id": "WARN-bull-2027-reinvestment_rate",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.4,
+      "year": 2027
+    },
+    {
+      "driver_id": "WARN-bull-2027-share_dilution",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2027
+    },
+    {
+      "driver_id": "WARN-bull-2028-revenue_growth",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.03,
+      "year": 2028
+    },
+    {
+      "driver_id": "WARN-bull-2028-operating_margin",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.19,
+      "year": 2028
+    },
+    {
+      "driver_id": "WARN-bull-2028-tax_rate",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2028
+    },
+    {
+      "driver_id": "WARN-bull-2028-reinvestment_rate",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.4,
+      "year": 2028
+    },
+    {
+      "driver_id": "WARN-bull-2028-share_dilution",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2028
+    },
+    {
+      "driver_id": "WARN-bull-2029-revenue_growth",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.03,
+      "year": 2029
+    },
+    {
+      "driver_id": "WARN-bull-2029-operating_margin",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.2,
+      "year": 2029
+    },
+    {
+      "driver_id": "WARN-bull-2029-tax_rate",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2029
+    },
+    {
+      "driver_id": "WARN-bull-2029-reinvestment_rate",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.4,
+      "year": 2029
+    },
+    {
+      "driver_id": "WARN-bull-2029-share_dilution",
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2029
+    }
+  ],
+  "evidence": {
+    "as_of": "2025-06-30T20:00:00+00:00",
+    "case_id": "warn-research-20250630",
+    "mode": "replay",
+    "records": [
+      {
+        "available_at": "2025-06-30T19:59:00+00:00",
+        "content_hash": "af20651794216b464ee911cea611dcb6e54cbdb7c836ea2aa637e2c858c63ad3",
+        "coordinates": "case=warn",
+        "document_type": "frozen_fundamental_evidence_pack",
+        "entity_ids": [
+          "PEER1",
+          "PEER2",
+          "PEER3",
+          "WARN"
+        ],
+        "event_time": null,
+        "evidence_id": "warn-10k-evidence",
+        "extraction_confidence": 1.0,
+        "extractor_version": "fundamental-fixture-v1",
+        "historical_safe": true,
+        "injection_flags": [],
+        "normalized_content_hash": null,
+        "page": null,
+        "parser_version": "sealed-json-v1",
+        "published_at": "2025-06-30T19:59:00+00:00",
+        "raw_uri": "fixture://fundamentals/warn.json",
+        "retrieved_at": "2025-06-30T19:59:00+00:00",
+        "section": "full_pack",
+        "source_id": "sealed-fundamental-fixture",
+        "source_manifest_version": "1.0.0",
+        "source_quality": 1.0,
+        "source_url": null
+      }
+    ]
+  },
+  "expected_volatility": 0.25,
+  "facts": [
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "revenue",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2022-revenue",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "1454fa0c86a216b1fc0a4cb09ab809bc1e4a5df163c85747d487f926435b53b8",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2022;concept=revenue;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 700
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "cost_of_revenue",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2022-cost_of_revenue",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "1454fa0c86a216b1fc0a4cb09ab809bc1e4a5df163c85747d487f926435b53b8",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2022;concept=cost_of_revenue;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 350.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "operating_expenses",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2022-operating_expenses",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "1454fa0c86a216b1fc0a4cb09ab809bc1e4a5df163c85747d487f926435b53b8",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2022;concept=operating_expenses;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 252.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "interest_expense",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2022-interest_expense",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "1454fa0c86a216b1fc0a4cb09ab809bc1e4a5df163c85747d487f926435b53b8",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2022;concept=interest_expense;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 7.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "tax_expense",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2022-tax_expense",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "1454fa0c86a216b1fc0a4cb09ab809bc1e4a5df163c85747d487f926435b53b8",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2022;concept=tax_expense;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 18.2
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "net_income",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2022-net_income",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "1454fa0c86a216b1fc0a4cb09ab809bc1e4a5df163c85747d487f926435b53b8",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2022;concept=net_income;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 72.8
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "diluted_shares",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2022-diluted_shares",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "1454fa0c86a216b1fc0a4cb09ab809bc1e4a5df163c85747d487f926435b53b8",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2022;concept=diluted_shares;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "shares",
+      "value": 10.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "cash",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2022-cash",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": null,
+      "raw_content_hash": "1454fa0c86a216b1fc0a4cb09ab809bc1e4a5df163c85747d487f926435b53b8",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2022;concept=cash;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 126.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "current_assets",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2022-current_assets",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": null,
+      "raw_content_hash": "1454fa0c86a216b1fc0a4cb09ab809bc1e4a5df163c85747d487f926435b53b8",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2022;concept=current_assets;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 315.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "current_liabilities",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2022-current_liabilities",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": null,
+      "raw_content_hash": "1454fa0c86a216b1fc0a4cb09ab809bc1e4a5df163c85747d487f926435b53b8",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2022;concept=current_liabilities;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 154.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "total_assets",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2022-total_assets",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": null,
+      "raw_content_hash": "1454fa0c86a216b1fc0a4cb09ab809bc1e4a5df163c85747d487f926435b53b8",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2022;concept=total_assets;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 910.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "total_debt",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2022-total_debt",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": null,
+      "raw_content_hash": "1454fa0c86a216b1fc0a4cb09ab809bc1e4a5df163c85747d487f926435b53b8",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2022;concept=total_debt;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 105.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "total_equity",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2022-total_equity",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": null,
+      "raw_content_hash": "1454fa0c86a216b1fc0a4cb09ab809bc1e4a5df163c85747d487f926435b53b8",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2022;concept=total_equity;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 630.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "cash_from_operations",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2022-cash_from_operations",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "1454fa0c86a216b1fc0a4cb09ab809bc1e4a5df163c85747d487f926435b53b8",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2022;concept=cash_from_operations;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 32.76
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "capital_expenditure",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2022-capital_expenditure",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "1454fa0c86a216b1fc0a4cb09ab809bc1e4a5df163c85747d487f926435b53b8",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2022;concept=capital_expenditure;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 42.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "depreciation_amortization",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2022-depreciation_amortization",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "1454fa0c86a216b1fc0a4cb09ab809bc1e4a5df163c85747d487f926435b53b8",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2022;concept=depreciation_amortization;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 28.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "stock_based_compensation",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2022-stock_based_compensation",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "1454fa0c86a216b1fc0a4cb09ab809bc1e4a5df163c85747d487f926435b53b8",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2022;concept=stock_based_compensation;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 98.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "acquisitions",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2022-acquisitions",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "1454fa0c86a216b1fc0a4cb09ab809bc1e4a5df163c85747d487f926435b53b8",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2022;concept=acquisitions;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 10.5
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "dividends",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2022-dividends",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "1454fa0c86a216b1fc0a4cb09ab809bc1e4a5df163c85747d487f926435b53b8",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2022;concept=dividends;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 7.28
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "share_repurchases",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2022-share_repurchases",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "1454fa0c86a216b1fc0a4cb09ab809bc1e4a5df163c85747d487f926435b53b8",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2022;concept=share_repurchases;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 17.5
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "share_issuance",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2022-share_issuance",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "1454fa0c86a216b1fc0a4cb09ab809bc1e4a5df163c85747d487f926435b53b8",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2022;concept=share_issuance;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 10.5
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "revenue",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2023-revenue",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "ae536c03b33bf2c38cc3f57cb6ff704199bb56525772aa2592ce2b82fdae0b08",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2023;concept=revenue;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 740
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "cost_of_revenue",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2023-cost_of_revenue",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "ae536c03b33bf2c38cc3f57cb6ff704199bb56525772aa2592ce2b82fdae0b08",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2023;concept=cost_of_revenue;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 370.0
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "operating_expenses",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2023-operating_expenses",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "ae536c03b33bf2c38cc3f57cb6ff704199bb56525772aa2592ce2b82fdae0b08",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2023;concept=operating_expenses;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 266.4
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "interest_expense",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2023-interest_expense",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "ae536c03b33bf2c38cc3f57cb6ff704199bb56525772aa2592ce2b82fdae0b08",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2023;concept=interest_expense;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 7.4
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "tax_expense",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2023-tax_expense",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "ae536c03b33bf2c38cc3f57cb6ff704199bb56525772aa2592ce2b82fdae0b08",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2023;concept=tax_expense;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 19.24
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "net_income",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2023-net_income",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "ae536c03b33bf2c38cc3f57cb6ff704199bb56525772aa2592ce2b82fdae0b08",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2023;concept=net_income;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 76.96
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "diluted_shares",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2023-diluted_shares",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "ae536c03b33bf2c38cc3f57cb6ff704199bb56525772aa2592ce2b82fdae0b08",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2023;concept=diluted_shares;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "shares",
+      "value": 10.2
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "cash",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2023-cash",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": null,
+      "raw_content_hash": "ae536c03b33bf2c38cc3f57cb6ff704199bb56525772aa2592ce2b82fdae0b08",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2023;concept=cash;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 133.2
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "current_assets",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2023-current_assets",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": null,
+      "raw_content_hash": "ae536c03b33bf2c38cc3f57cb6ff704199bb56525772aa2592ce2b82fdae0b08",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2023;concept=current_assets;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 333.0
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "current_liabilities",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2023-current_liabilities",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": null,
+      "raw_content_hash": "ae536c03b33bf2c38cc3f57cb6ff704199bb56525772aa2592ce2b82fdae0b08",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2023;concept=current_liabilities;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 162.8
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "total_assets",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2023-total_assets",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": null,
+      "raw_content_hash": "ae536c03b33bf2c38cc3f57cb6ff704199bb56525772aa2592ce2b82fdae0b08",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2023;concept=total_assets;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 962.0
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "total_debt",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2023-total_debt",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": null,
+      "raw_content_hash": "ae536c03b33bf2c38cc3f57cb6ff704199bb56525772aa2592ce2b82fdae0b08",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2023;concept=total_debt;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 111.0
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "total_equity",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2023-total_equity",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": null,
+      "raw_content_hash": "ae536c03b33bf2c38cc3f57cb6ff704199bb56525772aa2592ce2b82fdae0b08",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2023;concept=total_equity;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 666.0
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "cash_from_operations",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2023-cash_from_operations",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "ae536c03b33bf2c38cc3f57cb6ff704199bb56525772aa2592ce2b82fdae0b08",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2023;concept=cash_from_operations;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 34.632
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "capital_expenditure",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2023-capital_expenditure",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "ae536c03b33bf2c38cc3f57cb6ff704199bb56525772aa2592ce2b82fdae0b08",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2023;concept=capital_expenditure;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 44.4
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "depreciation_amortization",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2023-depreciation_amortization",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "ae536c03b33bf2c38cc3f57cb6ff704199bb56525772aa2592ce2b82fdae0b08",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2023;concept=depreciation_amortization;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 29.6
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "stock_based_compensation",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2023-stock_based_compensation",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "ae536c03b33bf2c38cc3f57cb6ff704199bb56525772aa2592ce2b82fdae0b08",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2023;concept=stock_based_compensation;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 103.6
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "acquisitions",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2023-acquisitions",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "ae536c03b33bf2c38cc3f57cb6ff704199bb56525772aa2592ce2b82fdae0b08",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2023;concept=acquisitions;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 11.1
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "dividends",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2023-dividends",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "ae536c03b33bf2c38cc3f57cb6ff704199bb56525772aa2592ce2b82fdae0b08",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2023;concept=dividends;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 7.696
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "share_repurchases",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2023-share_repurchases",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "ae536c03b33bf2c38cc3f57cb6ff704199bb56525772aa2592ce2b82fdae0b08",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2023;concept=share_repurchases;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 18.5
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "share_issuance",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2023-share_issuance",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "ae536c03b33bf2c38cc3f57cb6ff704199bb56525772aa2592ce2b82fdae0b08",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2023;concept=share_issuance;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 11.1
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "revenue",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2024-revenue",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "07e56b30c22556ed5f732a9de1b03d77392ff1c33c7743888bbdd270bd627ab7",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2024;concept=revenue;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 755
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "cost_of_revenue",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2024-cost_of_revenue",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "07e56b30c22556ed5f732a9de1b03d77392ff1c33c7743888bbdd270bd627ab7",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2024;concept=cost_of_revenue;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 377.5
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "operating_expenses",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2024-operating_expenses",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "07e56b30c22556ed5f732a9de1b03d77392ff1c33c7743888bbdd270bd627ab7",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2024;concept=operating_expenses;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 271.8
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "interest_expense",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2024-interest_expense",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "07e56b30c22556ed5f732a9de1b03d77392ff1c33c7743888bbdd270bd627ab7",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2024;concept=interest_expense;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 7.55
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "tax_expense",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2024-tax_expense",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "07e56b30c22556ed5f732a9de1b03d77392ff1c33c7743888bbdd270bd627ab7",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2024;concept=tax_expense;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 19.63
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "net_income",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2024-net_income",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "07e56b30c22556ed5f732a9de1b03d77392ff1c33c7743888bbdd270bd627ab7",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2024;concept=net_income;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 78.52
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "diluted_shares",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2024-diluted_shares",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "07e56b30c22556ed5f732a9de1b03d77392ff1c33c7743888bbdd270bd627ab7",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2024;concept=diluted_shares;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "shares",
+      "value": 10.4
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "cash",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2024-cash",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": null,
+      "raw_content_hash": "07e56b30c22556ed5f732a9de1b03d77392ff1c33c7743888bbdd270bd627ab7",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2024;concept=cash;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 135.9
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "current_assets",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2024-current_assets",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": null,
+      "raw_content_hash": "07e56b30c22556ed5f732a9de1b03d77392ff1c33c7743888bbdd270bd627ab7",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2024;concept=current_assets;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 339.75
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "current_liabilities",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2024-current_liabilities",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": null,
+      "raw_content_hash": "07e56b30c22556ed5f732a9de1b03d77392ff1c33c7743888bbdd270bd627ab7",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2024;concept=current_liabilities;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 166.1
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "total_assets",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2024-total_assets",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": null,
+      "raw_content_hash": "07e56b30c22556ed5f732a9de1b03d77392ff1c33c7743888bbdd270bd627ab7",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2024;concept=total_assets;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 981.5
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "total_debt",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2024-total_debt",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": null,
+      "raw_content_hash": "07e56b30c22556ed5f732a9de1b03d77392ff1c33c7743888bbdd270bd627ab7",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2024;concept=total_debt;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 113.25
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "total_equity",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2024-total_equity",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": null,
+      "raw_content_hash": "07e56b30c22556ed5f732a9de1b03d77392ff1c33c7743888bbdd270bd627ab7",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2024;concept=total_equity;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 679.5
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "cash_from_operations",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2024-cash_from_operations",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "07e56b30c22556ed5f732a9de1b03d77392ff1c33c7743888bbdd270bd627ab7",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2024;concept=cash_from_operations;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 35.334
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "capital_expenditure",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2024-capital_expenditure",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "07e56b30c22556ed5f732a9de1b03d77392ff1c33c7743888bbdd270bd627ab7",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2024;concept=capital_expenditure;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 45.3
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "depreciation_amortization",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2024-depreciation_amortization",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "07e56b30c22556ed5f732a9de1b03d77392ff1c33c7743888bbdd270bd627ab7",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2024;concept=depreciation_amortization;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 30.2
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "stock_based_compensation",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2024-stock_based_compensation",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "07e56b30c22556ed5f732a9de1b03d77392ff1c33c7743888bbdd270bd627ab7",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2024;concept=stock_based_compensation;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 105.7
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "acquisitions",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2024-acquisitions",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "07e56b30c22556ed5f732a9de1b03d77392ff1c33c7743888bbdd270bd627ab7",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2024;concept=acquisitions;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 11.325
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "dividends",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2024-dividends",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "07e56b30c22556ed5f732a9de1b03d77392ff1c33c7743888bbdd270bd627ab7",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2024;concept=dividends;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 7.852
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "share_repurchases",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2024-share_repurchases",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "07e56b30c22556ed5f732a9de1b03d77392ff1c33c7743888bbdd270bd627ab7",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2024;concept=share_repurchases;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 18.875
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "share_issuance",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2024-share_issuance",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "07e56b30c22556ed5f732a9de1b03d77392ff1c33c7743888bbdd270bd627ab7",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2024;concept=share_issuance;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 11.325
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "total_liabilities",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2022-total_liabilities",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": null,
+      "raw_content_hash": "1454fa0c86a216b1fc0a4cb09ab809bc1e4a5df163c85747d487f926435b53b8",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2022;concept=total_liabilities;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 280.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "cash_flow_working_capital_change",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2022-cash_flow_working_capital_change",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "1454fa0c86a216b1fc0a4cb09ab809bc1e4a5df163c85747d487f926435b53b8",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2022;concept=cash_flow_working_capital_change;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": -7.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "other_operating_cash_adjustments",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2022-other_operating_cash_adjustments",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "1454fa0c86a216b1fc0a4cb09ab809bc1e4a5df163c85747d487f926435b53b8",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2022;concept=other_operating_cash_adjustments;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": -159.04
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "total_liabilities",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2023-total_liabilities",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": null,
+      "raw_content_hash": "ae536c03b33bf2c38cc3f57cb6ff704199bb56525772aa2592ce2b82fdae0b08",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2023;concept=total_liabilities;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 296.0
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "cash_flow_working_capital_change",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2023-cash_flow_working_capital_change",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "ae536c03b33bf2c38cc3f57cb6ff704199bb56525772aa2592ce2b82fdae0b08",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2023;concept=cash_flow_working_capital_change;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": -7.4
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "other_operating_cash_adjustments",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2023-other_operating_cash_adjustments",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "ae536c03b33bf2c38cc3f57cb6ff704199bb56525772aa2592ce2b82fdae0b08",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2023;concept=other_operating_cash_adjustments;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": -168.128
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "total_liabilities",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2024-total_liabilities",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": null,
+      "raw_content_hash": "07e56b30c22556ed5f732a9de1b03d77392ff1c33c7743888bbdd270bd627ab7",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2024;concept=total_liabilities;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": 302.0
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "cash_flow_working_capital_change",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2024-cash_flow_working_capital_change",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "07e56b30c22556ed5f732a9de1b03d77392ff1c33c7743888bbdd270bd627ab7",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2024;concept=cash_flow_working_capital_change;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": -7.55
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-WARN-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "other_operating_cash_adjustments",
+      "contract_version": "3.0.0",
+      "fact_id": "WARN-2024-other_operating_cash_adjustments",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "07e56b30c22556ed5f732a9de1b03d77392ff1c33c7743888bbdd270bd627ab7",
+      "revision": 0,
+      "source_coordinate": "accession=000-WARN-2024;concept=other_operating_cash_adjustments;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "WARN",
+      "unit": "USD",
+      "value": -171.536
+    }
+  ],
+  "field_evidence": {
+    "business_industry": [
+      "warn-10k-evidence"
+    ],
+    "calibration": [
+      "warn-10k-evidence"
+    ],
+    "catalysts_risks": [
+      "warn-10k-evidence"
+    ],
+    "discount_rate": [
+      "warn-10k-evidence"
+    ],
+    "drivers": [
+      "warn-10k-evidence"
+    ],
+    "expected_volatility": [
+      "warn-10k-evidence"
+    ],
+    "guidance": [
+      "warn-10k-evidence"
+    ],
+    "management_actions": [
+      "warn-10k-evidence"
+    ],
+    "market_price": [
+      "warn-10k-evidence"
+    ],
+    "peers": [
+      "warn-10k-evidence"
+    ],
+    "scenario_probabilities": [
+      "warn-10k-evidence"
+    ],
+    "terminal_assumptions": [
+      "warn-10k-evidence"
+    ]
+  },
+  "guidance": [],
+  "industry": "Consumer Products",
+  "inputs_available_at": "2025-06-30T19:59:00+00:00",
+  "market_price": 55,
+  "peers": [
+    {
+      "ev_ebit": 12,
+      "ev_ebitda": 9.6,
+      "ev_revenue": 3.0,
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "operating_margin": 0.2,
+      "price_earnings": 14.4,
+      "price_fcf": 12,
+      "revenue_growth": 0.05,
+      "roic": 0.15,
+      "ticker": "PEER1"
+    },
+    {
+      "ev_ebit": 15,
+      "ev_ebitda": 12.0,
+      "ev_revenue": 3.75,
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "operating_margin": 0.24,
+      "price_earnings": 18.0,
+      "price_fcf": 15,
+      "revenue_growth": 0.08,
+      "roic": 0.15,
+      "ticker": "PEER2"
+    },
+    {
+      "ev_ebit": 18,
+      "ev_ebitda": 14.4,
+      "ev_revenue": 4.5,
+      "evidence_ids": [
+        "warn-10k-evidence"
+      ],
+      "operating_margin": 0.28,
+      "price_earnings": 21.6,
+      "price_fcf": 18,
+      "revenue_growth": 0.1,
+      "roic": 0.15,
+      "ticker": "PEER3"
+    }
+  ],
+  "profitable": true,
+  "raw_receipt_ids": [
+    "raw-WARN-10k"
+  ],
+  "request": {
+    "as_of": "2025-06-30T20:00:00+00:00",
+    "company_name": "Warning Products",
+    "contract_version": "3.0.0",
+    "horizon_days": 365,
+    "mode": "replay",
+    "question": "Produce a calculation-backed institutional research dossier.",
+    "request_id": "warn-research-20250630",
+    "ticker": "WARN"
+  },
+  "revenue_driver_descriptions": [
+    "volume, price and retained customer demand"
+  ],
+  "risks": [
+    "margin compression",
+    "slower demand"
+  ],
+  "scenario_probabilities": {
+    "base": 0.5,
+    "bear": 0.25,
+    "bull": 0.25
+  },
+  "sector": "Consumer",
+  "source_manifest_versions": {
+    "sec-fixture": "1.0.0"
+  },
+  "source_receipt_ids": [
+    "raw-warn-fundamental-inputs"
+  ],
+  "subscription_revenue_share": 0.0,
+  "terminal_growth_by_scenario": {
+    "base": 0.025,
+    "bear": 0.015,
+    "bull": 0.035
+  },
+  "terminal_roic_by_scenario": {
+    "base": 0.15,
+    "bear": 0.11,
+    "bull": 0.2
+  }
+}

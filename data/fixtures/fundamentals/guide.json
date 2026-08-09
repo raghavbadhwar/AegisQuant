@@ -1,0 +1,2628 @@
+{
+  "calibration": {
+    "available_at": "2025-06-29T19:59:00Z",
+    "brier_score": 0.2,
+    "calibration_id": "fundamental-alpha-v1-calibration-guide",
+    "content_hash": "e2aa882d20c5591b086695f5fba2b9e6a2ed03623466a0e26c5b819600275eb3",
+    "contract_version": "3.0.0",
+    "horizon_days_max": 1825,
+    "horizon_days_min": 1,
+    "model_name": "fundamental-alpha-v1",
+    "outcome_ids": [
+      "sealed-calibration-outcomes-guide"
+    ],
+    "probability_intercept": 0.05,
+    "probability_slope": 0.9,
+    "return_intercept": 0.0,
+    "return_slope": 0.8,
+    "root_mean_squared_error": 0.2,
+    "sample_size": 120
+  },
+  "case_id": "guide",
+  "catalysts": [
+    "execution against the base operating case"
+  ],
+  "competitors": [
+    "PEER1",
+    "PEER2",
+    "PEER3"
+  ],
+  "discount_rate": 0.1,
+  "drivers": [
+    {
+      "driver_id": "GUIDE-bear-2025-revenue_growth",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": -0.02,
+      "year": 2025
+    },
+    {
+      "driver_id": "GUIDE-bear-2025-operating_margin",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.18,
+      "year": 2025
+    },
+    {
+      "driver_id": "GUIDE-bear-2025-tax_rate",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2025
+    },
+    {
+      "driver_id": "GUIDE-bear-2025-reinvestment_rate",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.35,
+      "year": 2025
+    },
+    {
+      "driver_id": "GUIDE-bear-2025-share_dilution",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2025
+    },
+    {
+      "driver_id": "GUIDE-bear-2026-revenue_growth",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0,
+      "year": 2026
+    },
+    {
+      "driver_id": "GUIDE-bear-2026-operating_margin",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.18,
+      "year": 2026
+    },
+    {
+      "driver_id": "GUIDE-bear-2026-tax_rate",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2026
+    },
+    {
+      "driver_id": "GUIDE-bear-2026-reinvestment_rate",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.35,
+      "year": 2026
+    },
+    {
+      "driver_id": "GUIDE-bear-2026-share_dilution",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2026
+    },
+    {
+      "driver_id": "GUIDE-bear-2027-revenue_growth",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.01,
+      "year": 2027
+    },
+    {
+      "driver_id": "GUIDE-bear-2027-operating_margin",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.18,
+      "year": 2027
+    },
+    {
+      "driver_id": "GUIDE-bear-2027-tax_rate",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2027
+    },
+    {
+      "driver_id": "GUIDE-bear-2027-reinvestment_rate",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.35,
+      "year": 2027
+    },
+    {
+      "driver_id": "GUIDE-bear-2027-share_dilution",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2027
+    },
+    {
+      "driver_id": "GUIDE-bear-2028-revenue_growth",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.01,
+      "year": 2028
+    },
+    {
+      "driver_id": "GUIDE-bear-2028-operating_margin",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.18,
+      "year": 2028
+    },
+    {
+      "driver_id": "GUIDE-bear-2028-tax_rate",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2028
+    },
+    {
+      "driver_id": "GUIDE-bear-2028-reinvestment_rate",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.35,
+      "year": 2028
+    },
+    {
+      "driver_id": "GUIDE-bear-2028-share_dilution",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2028
+    },
+    {
+      "driver_id": "GUIDE-bear-2029-revenue_growth",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.01,
+      "year": 2029
+    },
+    {
+      "driver_id": "GUIDE-bear-2029-operating_margin",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.18,
+      "year": 2029
+    },
+    {
+      "driver_id": "GUIDE-bear-2029-tax_rate",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2029
+    },
+    {
+      "driver_id": "GUIDE-bear-2029-reinvestment_rate",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.35,
+      "year": 2029
+    },
+    {
+      "driver_id": "GUIDE-bear-2029-share_dilution",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "bear",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2029
+    },
+    {
+      "driver_id": "GUIDE-base-2025-revenue_growth",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.05,
+      "year": 2025
+    },
+    {
+      "driver_id": "GUIDE-base-2025-operating_margin",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.24,
+      "year": 2025
+    },
+    {
+      "driver_id": "GUIDE-base-2025-tax_rate",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2025
+    },
+    {
+      "driver_id": "GUIDE-base-2025-reinvestment_rate",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.35,
+      "year": 2025
+    },
+    {
+      "driver_id": "GUIDE-base-2025-share_dilution",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2025
+    },
+    {
+      "driver_id": "GUIDE-base-2026-revenue_growth",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.05,
+      "year": 2026
+    },
+    {
+      "driver_id": "GUIDE-base-2026-operating_margin",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.245,
+      "year": 2026
+    },
+    {
+      "driver_id": "GUIDE-base-2026-tax_rate",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2026
+    },
+    {
+      "driver_id": "GUIDE-base-2026-reinvestment_rate",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.35,
+      "year": 2026
+    },
+    {
+      "driver_id": "GUIDE-base-2026-share_dilution",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2026
+    },
+    {
+      "driver_id": "GUIDE-base-2027-revenue_growth",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.045,
+      "year": 2027
+    },
+    {
+      "driver_id": "GUIDE-base-2027-operating_margin",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.25,
+      "year": 2027
+    },
+    {
+      "driver_id": "GUIDE-base-2027-tax_rate",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2027
+    },
+    {
+      "driver_id": "GUIDE-base-2027-reinvestment_rate",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.35,
+      "year": 2027
+    },
+    {
+      "driver_id": "GUIDE-base-2027-share_dilution",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2027
+    },
+    {
+      "driver_id": "GUIDE-base-2028-revenue_growth",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.04,
+      "year": 2028
+    },
+    {
+      "driver_id": "GUIDE-base-2028-operating_margin",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.255,
+      "year": 2028
+    },
+    {
+      "driver_id": "GUIDE-base-2028-tax_rate",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2028
+    },
+    {
+      "driver_id": "GUIDE-base-2028-reinvestment_rate",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.35,
+      "year": 2028
+    },
+    {
+      "driver_id": "GUIDE-base-2028-share_dilution",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2028
+    },
+    {
+      "driver_id": "GUIDE-base-2029-revenue_growth",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.035,
+      "year": 2029
+    },
+    {
+      "driver_id": "GUIDE-base-2029-operating_margin",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.26,
+      "year": 2029
+    },
+    {
+      "driver_id": "GUIDE-base-2029-tax_rate",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2029
+    },
+    {
+      "driver_id": "GUIDE-base-2029-reinvestment_rate",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.35,
+      "year": 2029
+    },
+    {
+      "driver_id": "GUIDE-base-2029-share_dilution",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "base",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2029
+    },
+    {
+      "driver_id": "GUIDE-bull-2025-revenue_growth",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.1,
+      "year": 2025
+    },
+    {
+      "driver_id": "GUIDE-bull-2025-operating_margin",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.29,
+      "year": 2025
+    },
+    {
+      "driver_id": "GUIDE-bull-2025-tax_rate",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2025
+    },
+    {
+      "driver_id": "GUIDE-bull-2025-reinvestment_rate",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.4,
+      "year": 2025
+    },
+    {
+      "driver_id": "GUIDE-bull-2025-share_dilution",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2025
+    },
+    {
+      "driver_id": "GUIDE-bull-2026-revenue_growth",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.09,
+      "year": 2026
+    },
+    {
+      "driver_id": "GUIDE-bull-2026-operating_margin",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.3,
+      "year": 2026
+    },
+    {
+      "driver_id": "GUIDE-bull-2026-tax_rate",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2026
+    },
+    {
+      "driver_id": "GUIDE-bull-2026-reinvestment_rate",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.4,
+      "year": 2026
+    },
+    {
+      "driver_id": "GUIDE-bull-2026-share_dilution",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2026
+    },
+    {
+      "driver_id": "GUIDE-bull-2027-revenue_growth",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.08,
+      "year": 2027
+    },
+    {
+      "driver_id": "GUIDE-bull-2027-operating_margin",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.305,
+      "year": 2027
+    },
+    {
+      "driver_id": "GUIDE-bull-2027-tax_rate",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2027
+    },
+    {
+      "driver_id": "GUIDE-bull-2027-reinvestment_rate",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.4,
+      "year": 2027
+    },
+    {
+      "driver_id": "GUIDE-bull-2027-share_dilution",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2027
+    },
+    {
+      "driver_id": "GUIDE-bull-2028-revenue_growth",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.07,
+      "year": 2028
+    },
+    {
+      "driver_id": "GUIDE-bull-2028-operating_margin",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.31,
+      "year": 2028
+    },
+    {
+      "driver_id": "GUIDE-bull-2028-tax_rate",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2028
+    },
+    {
+      "driver_id": "GUIDE-bull-2028-reinvestment_rate",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.4,
+      "year": 2028
+    },
+    {
+      "driver_id": "GUIDE-bull-2028-share_dilution",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2028
+    },
+    {
+      "driver_id": "GUIDE-bull-2029-revenue_growth",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "revenue_growth",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.06,
+      "year": 2029
+    },
+    {
+      "driver_id": "GUIDE-bull-2029-operating_margin",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "operating_margin",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.315,
+      "year": 2029
+    },
+    {
+      "driver_id": "GUIDE-bull-2029-tax_rate",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "tax_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.21,
+      "year": 2029
+    },
+    {
+      "driver_id": "GUIDE-bull-2029-reinvestment_rate",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "reinvestment_rate",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.4,
+      "year": 2029
+    },
+    {
+      "driver_id": "GUIDE-bull-2029-share_dilution",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "name": "share_dilution",
+      "proposer_artifact_id": null,
+      "scenario": "bull",
+      "unit": "ratio",
+      "value": 0.005,
+      "year": 2029
+    }
+  ],
+  "evidence": {
+    "as_of": "2025-06-30T20:00:00+00:00",
+    "case_id": "guide-research-20250630",
+    "mode": "replay",
+    "records": [
+      {
+        "available_at": "2025-06-30T19:59:00+00:00",
+        "content_hash": "2559fa28947d11c7c38385f478bc2436aba4a39855fb938871b0e4516a71233d",
+        "coordinates": "case=guide",
+        "document_type": "frozen_fundamental_evidence_pack",
+        "entity_ids": [
+          "GUIDE",
+          "PEER1",
+          "PEER2",
+          "PEER3"
+        ],
+        "event_time": null,
+        "evidence_id": "guide-10k-evidence",
+        "extraction_confidence": 1.0,
+        "extractor_version": "fundamental-fixture-v1",
+        "historical_safe": true,
+        "injection_flags": [],
+        "normalized_content_hash": null,
+        "page": null,
+        "parser_version": "sealed-json-v1",
+        "published_at": "2025-06-30T19:59:00+00:00",
+        "raw_uri": "fixture://fundamentals/guide.json",
+        "retrieved_at": "2025-06-30T19:59:00+00:00",
+        "section": "full_pack",
+        "source_id": "sealed-fundamental-fixture",
+        "source_manifest_version": "1.0.0",
+        "source_quality": 1.0,
+        "source_url": null
+      }
+    ]
+  },
+  "expected_volatility": 0.25,
+  "facts": [
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "revenue",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2022-revenue",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "34bcf72d69ab9a3b1859b31cd083b63869457dc17fe2037866b0b73b57513d47",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2022;concept=revenue;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 600
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "cost_of_revenue",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2022-cost_of_revenue",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "34bcf72d69ab9a3b1859b31cd083b63869457dc17fe2037866b0b73b57513d47",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2022;concept=cost_of_revenue;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 252.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "operating_expenses",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2022-operating_expenses",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "34bcf72d69ab9a3b1859b31cd083b63869457dc17fe2037866b0b73b57513d47",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2022;concept=operating_expenses;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 168.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "interest_expense",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2022-interest_expense",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "34bcf72d69ab9a3b1859b31cd083b63869457dc17fe2037866b0b73b57513d47",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2022;concept=interest_expense;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 6.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "tax_expense",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2022-tax_expense",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "34bcf72d69ab9a3b1859b31cd083b63869457dc17fe2037866b0b73b57513d47",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2022;concept=tax_expense;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 34.8
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "net_income",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2022-net_income",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "34bcf72d69ab9a3b1859b31cd083b63869457dc17fe2037866b0b73b57513d47",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2022;concept=net_income;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 139.2
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "diluted_shares",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2022-diluted_shares",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "34bcf72d69ab9a3b1859b31cd083b63869457dc17fe2037866b0b73b57513d47",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2022;concept=diluted_shares;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "shares",
+      "value": 10.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "cash",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2022-cash",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": null,
+      "raw_content_hash": "34bcf72d69ab9a3b1859b31cd083b63869457dc17fe2037866b0b73b57513d47",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2022;concept=cash;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 108.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "current_assets",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2022-current_assets",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": null,
+      "raw_content_hash": "34bcf72d69ab9a3b1859b31cd083b63869457dc17fe2037866b0b73b57513d47",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2022;concept=current_assets;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 270.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "current_liabilities",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2022-current_liabilities",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": null,
+      "raw_content_hash": "34bcf72d69ab9a3b1859b31cd083b63869457dc17fe2037866b0b73b57513d47",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2022;concept=current_liabilities;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 132.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "total_assets",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2022-total_assets",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": null,
+      "raw_content_hash": "34bcf72d69ab9a3b1859b31cd083b63869457dc17fe2037866b0b73b57513d47",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2022;concept=total_assets;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 780.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "total_debt",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2022-total_debt",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": null,
+      "raw_content_hash": "34bcf72d69ab9a3b1859b31cd083b63869457dc17fe2037866b0b73b57513d47",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2022;concept=total_debt;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 90.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "total_equity",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2022-total_equity",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": null,
+      "raw_content_hash": "34bcf72d69ab9a3b1859b31cd083b63869457dc17fe2037866b0b73b57513d47",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2022;concept=total_equity;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 540.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "cash_from_operations",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2022-cash_from_operations",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "34bcf72d69ab9a3b1859b31cd083b63869457dc17fe2037866b0b73b57513d47",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2022;concept=cash_from_operations;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 178.2
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "capital_expenditure",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2022-capital_expenditure",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "34bcf72d69ab9a3b1859b31cd083b63869457dc17fe2037866b0b73b57513d47",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2022;concept=capital_expenditure;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 36.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "depreciation_amortization",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2022-depreciation_amortization",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "34bcf72d69ab9a3b1859b31cd083b63869457dc17fe2037866b0b73b57513d47",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2022;concept=depreciation_amortization;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 24.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "stock_based_compensation",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2022-stock_based_compensation",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "34bcf72d69ab9a3b1859b31cd083b63869457dc17fe2037866b0b73b57513d47",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2022;concept=stock_based_compensation;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 15.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "acquisitions",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2022-acquisitions",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "34bcf72d69ab9a3b1859b31cd083b63869457dc17fe2037866b0b73b57513d47",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2022;concept=acquisitions;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 9.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "dividends",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2022-dividends",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "34bcf72d69ab9a3b1859b31cd083b63869457dc17fe2037866b0b73b57513d47",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2022;concept=dividends;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 13.92
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "share_repurchases",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2022-share_repurchases",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "34bcf72d69ab9a3b1859b31cd083b63869457dc17fe2037866b0b73b57513d47",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2022;concept=share_repurchases;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 15.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "share_issuance",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2022-share_issuance",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "34bcf72d69ab9a3b1859b31cd083b63869457dc17fe2037866b0b73b57513d47",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2022;concept=share_issuance;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 1.2
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "revenue",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2023-revenue",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "0dd06b13bc084df9df68183dabf9dc9662734ee2ccf2f123f8b3f5bf79b61f78",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2023;concept=revenue;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 660
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "cost_of_revenue",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2023-cost_of_revenue",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "0dd06b13bc084df9df68183dabf9dc9662734ee2ccf2f123f8b3f5bf79b61f78",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2023;concept=cost_of_revenue;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 277.2
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "operating_expenses",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2023-operating_expenses",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "0dd06b13bc084df9df68183dabf9dc9662734ee2ccf2f123f8b3f5bf79b61f78",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2023;concept=operating_expenses;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 184.8
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "interest_expense",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2023-interest_expense",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "0dd06b13bc084df9df68183dabf9dc9662734ee2ccf2f123f8b3f5bf79b61f78",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2023;concept=interest_expense;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 6.6
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "tax_expense",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2023-tax_expense",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "0dd06b13bc084df9df68183dabf9dc9662734ee2ccf2f123f8b3f5bf79b61f78",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2023;concept=tax_expense;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 38.28
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "net_income",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2023-net_income",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "0dd06b13bc084df9df68183dabf9dc9662734ee2ccf2f123f8b3f5bf79b61f78",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2023;concept=net_income;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 153.12
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "diluted_shares",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2023-diluted_shares",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "0dd06b13bc084df9df68183dabf9dc9662734ee2ccf2f123f8b3f5bf79b61f78",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2023;concept=diluted_shares;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "shares",
+      "value": 10.03
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "cash",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2023-cash",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": null,
+      "raw_content_hash": "0dd06b13bc084df9df68183dabf9dc9662734ee2ccf2f123f8b3f5bf79b61f78",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2023;concept=cash;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 118.8
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "current_assets",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2023-current_assets",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": null,
+      "raw_content_hash": "0dd06b13bc084df9df68183dabf9dc9662734ee2ccf2f123f8b3f5bf79b61f78",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2023;concept=current_assets;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 297.0
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "current_liabilities",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2023-current_liabilities",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": null,
+      "raw_content_hash": "0dd06b13bc084df9df68183dabf9dc9662734ee2ccf2f123f8b3f5bf79b61f78",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2023;concept=current_liabilities;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 145.2
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "total_assets",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2023-total_assets",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": null,
+      "raw_content_hash": "0dd06b13bc084df9df68183dabf9dc9662734ee2ccf2f123f8b3f5bf79b61f78",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2023;concept=total_assets;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 858.0
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "total_debt",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2023-total_debt",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": null,
+      "raw_content_hash": "0dd06b13bc084df9df68183dabf9dc9662734ee2ccf2f123f8b3f5bf79b61f78",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2023;concept=total_debt;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 99.0
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "total_equity",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2023-total_equity",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": null,
+      "raw_content_hash": "0dd06b13bc084df9df68183dabf9dc9662734ee2ccf2f123f8b3f5bf79b61f78",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2023;concept=total_equity;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 594.0
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "cash_from_operations",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2023-cash_from_operations",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "0dd06b13bc084df9df68183dabf9dc9662734ee2ccf2f123f8b3f5bf79b61f78",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2023;concept=cash_from_operations;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 196.02
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "capital_expenditure",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2023-capital_expenditure",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "0dd06b13bc084df9df68183dabf9dc9662734ee2ccf2f123f8b3f5bf79b61f78",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2023;concept=capital_expenditure;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 39.6
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "depreciation_amortization",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2023-depreciation_amortization",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "0dd06b13bc084df9df68183dabf9dc9662734ee2ccf2f123f8b3f5bf79b61f78",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2023;concept=depreciation_amortization;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 26.4
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "stock_based_compensation",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2023-stock_based_compensation",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "0dd06b13bc084df9df68183dabf9dc9662734ee2ccf2f123f8b3f5bf79b61f78",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2023;concept=stock_based_compensation;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 16.5
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "acquisitions",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2023-acquisitions",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "0dd06b13bc084df9df68183dabf9dc9662734ee2ccf2f123f8b3f5bf79b61f78",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2023;concept=acquisitions;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 9.9
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "dividends",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2023-dividends",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "0dd06b13bc084df9df68183dabf9dc9662734ee2ccf2f123f8b3f5bf79b61f78",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2023;concept=dividends;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 15.312
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "share_repurchases",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2023-share_repurchases",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "0dd06b13bc084df9df68183dabf9dc9662734ee2ccf2f123f8b3f5bf79b61f78",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2023;concept=share_repurchases;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 16.5
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "share_issuance",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2023-share_issuance",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "0dd06b13bc084df9df68183dabf9dc9662734ee2ccf2f123f8b3f5bf79b61f78",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2023;concept=share_issuance;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 1.32
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "revenue",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2024-revenue",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "0b417c244d842ce824291ab5d8a40fb997c9d6a2413e1de1a1c7ca6f21e30a70",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2024;concept=revenue;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 710
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "cost_of_revenue",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2024-cost_of_revenue",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "0b417c244d842ce824291ab5d8a40fb997c9d6a2413e1de1a1c7ca6f21e30a70",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2024;concept=cost_of_revenue;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 298.2
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "operating_expenses",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2024-operating_expenses",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "0b417c244d842ce824291ab5d8a40fb997c9d6a2413e1de1a1c7ca6f21e30a70",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2024;concept=operating_expenses;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 198.8
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "interest_expense",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2024-interest_expense",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "0b417c244d842ce824291ab5d8a40fb997c9d6a2413e1de1a1c7ca6f21e30a70",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2024;concept=interest_expense;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 7.1
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "tax_expense",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2024-tax_expense",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "0b417c244d842ce824291ab5d8a40fb997c9d6a2413e1de1a1c7ca6f21e30a70",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2024;concept=tax_expense;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 41.18
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "net_income",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2024-net_income",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "0b417c244d842ce824291ab5d8a40fb997c9d6a2413e1de1a1c7ca6f21e30a70",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2024;concept=net_income;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 164.72
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "diluted_shares",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2024-diluted_shares",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "0b417c244d842ce824291ab5d8a40fb997c9d6a2413e1de1a1c7ca6f21e30a70",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2024;concept=diluted_shares;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "shares",
+      "value": 10.06
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "cash",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2024-cash",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": null,
+      "raw_content_hash": "0b417c244d842ce824291ab5d8a40fb997c9d6a2413e1de1a1c7ca6f21e30a70",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2024;concept=cash;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 127.8
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "current_assets",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2024-current_assets",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": null,
+      "raw_content_hash": "0b417c244d842ce824291ab5d8a40fb997c9d6a2413e1de1a1c7ca6f21e30a70",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2024;concept=current_assets;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 319.5
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "current_liabilities",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2024-current_liabilities",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": null,
+      "raw_content_hash": "0b417c244d842ce824291ab5d8a40fb997c9d6a2413e1de1a1c7ca6f21e30a70",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2024;concept=current_liabilities;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 156.2
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "total_assets",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2024-total_assets",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": null,
+      "raw_content_hash": "0b417c244d842ce824291ab5d8a40fb997c9d6a2413e1de1a1c7ca6f21e30a70",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2024;concept=total_assets;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 923.0
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "total_debt",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2024-total_debt",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": null,
+      "raw_content_hash": "0b417c244d842ce824291ab5d8a40fb997c9d6a2413e1de1a1c7ca6f21e30a70",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2024;concept=total_debt;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 106.5
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "total_equity",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2024-total_equity",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": null,
+      "raw_content_hash": "0b417c244d842ce824291ab5d8a40fb997c9d6a2413e1de1a1c7ca6f21e30a70",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2024;concept=total_equity;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 639.0
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "cash_from_operations",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2024-cash_from_operations",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "0b417c244d842ce824291ab5d8a40fb997c9d6a2413e1de1a1c7ca6f21e30a70",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2024;concept=cash_from_operations;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 210.87
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "capital_expenditure",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2024-capital_expenditure",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "0b417c244d842ce824291ab5d8a40fb997c9d6a2413e1de1a1c7ca6f21e30a70",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2024;concept=capital_expenditure;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 42.6
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "depreciation_amortization",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2024-depreciation_amortization",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "0b417c244d842ce824291ab5d8a40fb997c9d6a2413e1de1a1c7ca6f21e30a70",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2024;concept=depreciation_amortization;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 28.4
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "stock_based_compensation",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2024-stock_based_compensation",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "0b417c244d842ce824291ab5d8a40fb997c9d6a2413e1de1a1c7ca6f21e30a70",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2024;concept=stock_based_compensation;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 17.75
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "acquisitions",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2024-acquisitions",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "0b417c244d842ce824291ab5d8a40fb997c9d6a2413e1de1a1c7ca6f21e30a70",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2024;concept=acquisitions;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 10.65
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "dividends",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2024-dividends",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "0b417c244d842ce824291ab5d8a40fb997c9d6a2413e1de1a1c7ca6f21e30a70",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2024;concept=dividends;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 16.472
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "share_repurchases",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2024-share_repurchases",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "0b417c244d842ce824291ab5d8a40fb997c9d6a2413e1de1a1c7ca6f21e30a70",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2024;concept=share_repurchases;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 17.75
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "share_issuance",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2024-share_issuance",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "0b417c244d842ce824291ab5d8a40fb997c9d6a2413e1de1a1c7ca6f21e30a70",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2024;concept=share_issuance;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 1.42
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "total_liabilities",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2022-total_liabilities",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": null,
+      "raw_content_hash": "34bcf72d69ab9a3b1859b31cd083b63869457dc17fe2037866b0b73b57513d47",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2022;concept=total_liabilities;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 240.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "cash_flow_working_capital_change",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2022-cash_flow_working_capital_change",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "34bcf72d69ab9a3b1859b31cd083b63869457dc17fe2037866b0b73b57513d47",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2022;concept=cash_flow_working_capital_change;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": -6.0
+    },
+    {
+      "accepted_at": "2023-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2022",
+      "available_at": "2023-03-01T15:05:00+00:00",
+      "concept": "other_operating_cash_adjustments",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2022-other_operating_cash_adjustments",
+      "filed_at": "2023-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2022,
+      "form": "10-K",
+      "period_end": "2022-12-31",
+      "period_start": "2022-01-01",
+      "raw_content_hash": "34bcf72d69ab9a3b1859b31cd083b63869457dc17fe2037866b0b73b57513d47",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2022;concept=other_operating_cash_adjustments;period=2022",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 6.0
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "total_liabilities",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2023-total_liabilities",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": null,
+      "raw_content_hash": "0dd06b13bc084df9df68183dabf9dc9662734ee2ccf2f123f8b3f5bf79b61f78",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2023;concept=total_liabilities;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 264.0
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "cash_flow_working_capital_change",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2023-cash_flow_working_capital_change",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "0dd06b13bc084df9df68183dabf9dc9662734ee2ccf2f123f8b3f5bf79b61f78",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2023;concept=cash_flow_working_capital_change;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": -6.6
+    },
+    {
+      "accepted_at": "2024-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2023",
+      "available_at": "2024-03-01T15:05:00+00:00",
+      "concept": "other_operating_cash_adjustments",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2023-other_operating_cash_adjustments",
+      "filed_at": "2024-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2023,
+      "form": "10-K",
+      "period_end": "2023-12-31",
+      "period_start": "2023-01-01",
+      "raw_content_hash": "0dd06b13bc084df9df68183dabf9dc9662734ee2ccf2f123f8b3f5bf79b61f78",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2023;concept=other_operating_cash_adjustments;period=2023",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 6.6
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "total_liabilities",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2024-total_liabilities",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": null,
+      "raw_content_hash": "0b417c244d842ce824291ab5d8a40fb997c9d6a2413e1de1a1c7ca6f21e30a70",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2024;concept=total_liabilities;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 284.0
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "cash_flow_working_capital_change",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2024-cash_flow_working_capital_change",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "0b417c244d842ce824291ab5d8a40fb997c9d6a2413e1de1a1c7ca6f21e30a70",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2024;concept=cash_flow_working_capital_change;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": -7.1
+    },
+    {
+      "accepted_at": "2025-03-01T15:00:00+00:00",
+      "accession_number": "000-GUIDE-2024",
+      "available_at": "2025-03-01T15:05:00+00:00",
+      "concept": "other_operating_cash_adjustments",
+      "contract_version": "3.0.0",
+      "fact_id": "GUIDE-2024-other_operating_cash_adjustments",
+      "filed_at": "2025-03-01T14:00:00+00:00",
+      "fiscal_period": "FY",
+      "fiscal_year": 2024,
+      "form": "10-K",
+      "period_end": "2024-12-31",
+      "period_start": "2024-01-01",
+      "raw_content_hash": "0b417c244d842ce824291ab5d8a40fb997c9d6a2413e1de1a1c7ca6f21e30a70",
+      "revision": 0,
+      "source_coordinate": "accession=000-GUIDE-2024;concept=other_operating_cash_adjustments;period=2024",
+      "supersedes_fact_id": null,
+      "ticker": "GUIDE",
+      "unit": "USD",
+      "value": 7.1
+    }
+  ],
+  "field_evidence": {
+    "business_industry": [
+      "guide-10k-evidence"
+    ],
+    "calibration": [
+      "guide-10k-evidence"
+    ],
+    "catalysts_risks": [
+      "guide-10k-evidence"
+    ],
+    "discount_rate": [
+      "guide-10k-evidence"
+    ],
+    "drivers": [
+      "guide-10k-evidence"
+    ],
+    "expected_volatility": [
+      "guide-10k-evidence"
+    ],
+    "guidance": [
+      "guide-10k-evidence"
+    ],
+    "management_actions": [
+      "guide-10k-evidence"
+    ],
+    "market_price": [
+      "guide-10k-evidence"
+    ],
+    "peers": [
+      "guide-10k-evidence"
+    ],
+    "scenario_probabilities": [
+      "guide-10k-evidence"
+    ],
+    "terminal_assumptions": [
+      "guide-10k-evidence"
+    ]
+  },
+  "guidance": [
+    {
+      "actual": 639.0,
+      "actual_available_at": "2025-02-01T14:00:00+00:00",
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "guidance_id": "GUIDE-guide-2024",
+      "issued_at": "2024-01-15T14:00:00+00:00",
+      "lower_bound": 695.8,
+      "metric": "revenue",
+      "period_end": "2024-12-31",
+      "upper_bound": 724.2
+    }
+  ],
+  "industry": "Enterprise Software",
+  "inputs_available_at": "2025-06-30T19:59:00+00:00",
+  "market_price": 75,
+  "peers": [
+    {
+      "ev_ebit": 12,
+      "ev_ebitda": 9.6,
+      "ev_revenue": 3.0,
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "operating_margin": 0.2,
+      "price_earnings": 14.4,
+      "price_fcf": 12,
+      "revenue_growth": 0.05,
+      "roic": 0.15,
+      "ticker": "PEER1"
+    },
+    {
+      "ev_ebit": 15,
+      "ev_ebitda": 12.0,
+      "ev_revenue": 3.75,
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "operating_margin": 0.24,
+      "price_earnings": 18.0,
+      "price_fcf": 15,
+      "revenue_growth": 0.08,
+      "roic": 0.15,
+      "ticker": "PEER2"
+    },
+    {
+      "ev_ebit": 18,
+      "ev_ebitda": 14.4,
+      "ev_revenue": 4.5,
+      "evidence_ids": [
+        "guide-10k-evidence"
+      ],
+      "operating_margin": 0.28,
+      "price_earnings": 21.6,
+      "price_fcf": 18,
+      "revenue_growth": 0.1,
+      "roic": 0.15,
+      "ticker": "PEER3"
+    }
+  ],
+  "profitable": true,
+  "raw_receipt_ids": [
+    "raw-GUIDE-10k"
+  ],
+  "request": {
+    "as_of": "2025-06-30T20:00:00+00:00",
+    "company_name": "Guidance Inc",
+    "contract_version": "3.0.0",
+    "horizon_days": 365,
+    "mode": "replay",
+    "question": "Produce a calculation-backed institutional research dossier.",
+    "request_id": "guide-research-20250630",
+    "ticker": "GUIDE"
+  },
+  "revenue_driver_descriptions": [
+    "volume, price and retained customer demand"
+  ],
+  "risks": [
+    "margin compression",
+    "slower demand"
+  ],
+  "scenario_probabilities": {
+    "base": 0.5,
+    "bear": 0.25,
+    "bull": 0.25
+  },
+  "sector": "Technology",
+  "source_manifest_versions": {
+    "sec-fixture": "1.0.0"
+  },
+  "source_receipt_ids": [
+    "raw-guide-fundamental-inputs"
+  ],
+  "subscription_revenue_share": 0.0,
+  "terminal_growth_by_scenario": {
+    "base": 0.025,
+    "bear": 0.015,
+    "bull": 0.035
+  },
+  "terminal_roic_by_scenario": {
+    "base": 0.15,
+    "bear": 0.11,
+    "bull": 0.2
+  }
+}
