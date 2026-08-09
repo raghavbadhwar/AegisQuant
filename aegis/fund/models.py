@@ -342,6 +342,67 @@ class MultiStrategyFixtureProvider(FixtureForecastProvider):
         )
 
 
+class HistoricalArtifactEntry(BaseModel):
+    """One local, sealed institutional artifact triplet at an exact cutoff."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    as_of: AwareDatetime
+    forecasts: str
+    evidence: str
+    quant_bundle: str
+
+
+class HistoricalArtifactManifest(BaseModel):
+    """Strict local-only index for exact-cutoff historical institutional artifacts."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    schema_version: str
+    artifacts: tuple[HistoricalArtifactEntry, ...]
+
+    @model_validator(mode="after")
+    def is_supported_and_unique(self) -> HistoricalArtifactManifest:
+        if self.schema_version != "aegis-historical-artifacts-v1":
+            raise ValueError("unsupported historical artifact manifest schema")
+        cutoffs = [item.as_of for item in self.artifacts]
+        if not cutoffs or len(set(cutoffs)) != len(cutoffs):
+            raise ValueError("historical artifact cutoffs must be nonempty and unique")
+        return self
+
+
+def load_historical_artifact_manifest(
+    path: str | Path,
+) -> dict[str, tuple[Path, Path, Path]]:
+    """Load a local manifest and reject traversal, missing, or unsafe artifact paths."""
+    manifest_path = Path(path).resolve()
+    try:
+        manifest = HistoricalArtifactManifest.model_validate_json(manifest_path.read_bytes())
+    except Exception as exc:
+        raise ForecastIntegrityError(f"invalid historical artifact manifest: {path}") from exc
+    root = manifest_path.parent
+
+    def resolve_local(value: str) -> Path:
+        candidate = Path(value)
+        if candidate.is_absolute():
+            raise ForecastIntegrityError("historical artifact paths must be relative")
+        resolved = (root / candidate).resolve()
+        if root not in resolved.parents or not resolved.is_file():
+            raise ForecastIntegrityError(
+                "historical artifact path is missing or escapes manifest root"
+            )
+        return resolved
+
+    return {
+        item.as_of.isoformat(): (
+            resolve_local(item.forecasts),
+            resolve_local(item.evidence),
+            resolve_local(item.quant_bundle),
+        )
+        for item in manifest.artifacts
+    }
+
+
 class HistoricalMultiStrategyFixtureProvider:
     """Exact-cutoff router for sealed, local institutional replay artifacts.
 

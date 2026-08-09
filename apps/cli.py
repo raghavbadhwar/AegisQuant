@@ -17,11 +17,13 @@ from aegis.fund.ledger import SQLiteRunLedger
 from aegis.fund.models import (
     FixtureForecastProvider,
     ForecastProvider,
+    HistoricalMultiStrategyFixtureProvider,
     MultiStrategyFixtureProvider,
+    load_historical_artifact_manifest,
     load_replay_manifest,
 )
 from aegis.fund.run_cycle import run_cycle
-from aegis.fund.spec import load_fund_mandate, load_fund_spec
+from aegis.fund.spec import load_fund_configuration, load_fund_mandate, load_fund_spec
 from aegis.fundamentals import (
     FixtureFundamentalProvider,
     load_fundamental_fixture,
@@ -348,6 +350,10 @@ def backtest(
     tickers: Annotated[str, typer.Option(help="Comma-separated ticker universe")],
     start: Annotated[str, typer.Option(help="First historical date (YYYY-MM-DD)")],
     end: Annotated[str, typer.Option(help="Last historical date (YYYY-MM-DD)")],
+    historical_artifacts: Annotated[
+        Path | None,
+        typer.Option("--historical-artifacts", help="Sealed local institutional artifact manifest"),
+    ] = None,
     ledger: Annotated[Path, typer.Option(help="Append-only SQLite run ledger")] = Path(
         "run_data/aegisquant.sqlite"
     ),
@@ -356,7 +362,12 @@ def backtest(
     universe = [ticker.strip() for ticker in tickers.split(",") if ticker.strip()]
     if not universe:
         raise typer.BadParameter("tickers cannot be empty")
-    fund = load_fund_spec(_project_path(fund_path))
+    fund = load_fund_configuration(_project_path(fund_path))
+    provider = None
+    if historical_artifacts is not None:
+        provider = HistoricalMultiStrategyFixtureProvider(
+            load_historical_artifact_manifest(_project_path(historical_artifacts))
+        )
     result = backtest_fund(
         fund,
         universe,
@@ -364,6 +375,7 @@ def backtest(
         date.fromisoformat(end),
         FixtureDataClient(PROJECT_ROOT / "data/fixtures"),
         SQLiteRunLedger(_project_path(ledger)),
+        provider,
     )
     typer.echo(result.canonical())
 
