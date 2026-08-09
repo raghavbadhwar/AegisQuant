@@ -11,6 +11,7 @@ from typing import Annotated, Literal, Protocol, TypedDict
 from langgraph.graph import END, START, StateGraph
 
 from aegis.contracts import (
+    REQUIRED_SPECIALIST_ROLES,
     CalculationLineage,
     CompanyResearchRequest,
     FundamentalCommitteeDecision,
@@ -31,25 +32,14 @@ from .hashing import build_hashed
 from .service import (
     FundamentalResearchInputs,
     _abstained_dossier,
-    compute_preliminary_research,
+    _abstained_forecast,
+    _compute_preliminary_research,
+    _finalize_verified_research,
 )
 
 
 class FundamentalGraphError(RuntimeError):
     pass
-
-
-_REQUIRED_ROLES: tuple[SpecialistRole, ...] = (
-    "business_industry",
-    "financial_quality",
-    "growth_drivers",
-    "accounting_quality",
-    "balance_sheet",
-    "capital_allocation",
-    "management_guidance",
-    "valuation",
-    "catalysts_risks",
-)
 
 
 @dataclass(frozen=True)
@@ -169,7 +159,7 @@ class FixtureFundamentalProvider:
         root = Path(__file__).resolve().parents[2]
         self._agent_prompts: dict[SpecialistRole, AgentPrompt] = {}
         self._skills: dict[SpecialistRole, SkillDefinition] = {}
-        for role in _REQUIRED_ROLES:
+        for role in REQUIRED_SPECIALIST_ROLES:
             self._agent_prompts[role] = load_agent_prompt(
                 root / "aegis" / "agents" / f"fundamental_{role}" / "AGENT.md",
                 root=root / "aegis" / "agents",
@@ -235,7 +225,7 @@ def _run_parallel_specialists(
     by_role = {item.role: item for item in role_inputs}
     builder = StateGraph(_SpecialistGraphState)
     node_names = []
-    for role in _REQUIRED_ROLES:
+    for role in REQUIRED_SPECIALIST_ROLES:
         node_name = f"specialist_{role}"
         node_names.append(node_name)
 
@@ -370,12 +360,12 @@ def _audit_specialists(
     inputs_by_role = {item.role: item for item in role_inputs}
     artifacts_by_role = {item.role: item for item in artifacts}
     if (
-        set(inputs_by_role) != set(_REQUIRED_ROLES)
-        or set(artifacts_by_role) != set(_REQUIRED_ROLES)
+        set(inputs_by_role) != set(REQUIRED_SPECIALIST_ROLES)
+        or set(artifacts_by_role) != set(REQUIRED_SPECIALIST_ROLES)
         or len(artifacts_by_role) != len(artifacts)
     ):
         raise FundamentalGraphError("exactly one artifact from every specialist is required")
-    for role in _REQUIRED_ROLES:
+    for role in REQUIRED_SPECIALIST_ROLES:
         role_input = inputs_by_role[role]
         artifact = artifacts_by_role[role]
         if artifact.request_id != request.request_id or artifact.as_of != request.as_of:
@@ -412,7 +402,7 @@ def _audit_specialists(
                     "specialist conclusion contradicts verified calculations "
                     "under role-specific semantics"
                 )
-    return tuple(artifacts_by_role[role] for role in _REQUIRED_ROLES)
+    return tuple(artifacts_by_role[role] for role in REQUIRED_SPECIALIST_ROLES)
 
 
 def run_fundamental_graph(
@@ -423,7 +413,7 @@ def run_fundamental_graph(
     if bundle.request != request:
         raise FundamentalGraphError("provider changed the research request")
     audited_inputs = _audit_bundle(bundle)
-    preliminary = compute_preliminary_research(request, bundle.snapshot, audited_inputs)
+    preliminary = _compute_preliminary_research(request, bundle.snapshot, audited_inputs)
     if preliminary.abstained:
         values = {
             name: getattr(preliminary, name)
@@ -431,6 +421,11 @@ def run_fundamental_graph(
             if name != "content_hash"
         }
         values["release_status"] = "terminal_abstention"
+        values["alpha_forecast"] = _abstained_forecast(
+            request,
+            preliminary.abstain_reason or "unsupported archetype",
+            verification_status="terminal_abstention",
+        )
         return build_hashed(FundamentalResearchDossier, **values)
     role_inputs = _build_role_inputs(request, audited_inputs, preliminary)
     artifacts = _audit_specialists(
@@ -461,8 +456,8 @@ def run_fundamental_graph(
             request_id=request.request_id,
             specialist_artifact_ids=sorted(artifact.artifact_id for artifact in artifacts),
             accepted_claim_ids=[],
-            evidence_ids=preliminary.evidence_ids,
-            calculation_ids=preliminary.calculation_ids,
+            evidence_ids=[],
+            calculation_ids=[],
             decision="abstained",
             rationale="One or more required post-calculation specialists abstained.",
             contract_version="3.0.0",
@@ -472,9 +467,20 @@ def run_fundamental_graph(
             for name in type(abstained).model_fields
             if name != "content_hash"
         }
-        values.update({"committee_decision": committee, "release_status": "committee_verified"})
+        values.update(
+            {
+                "alpha_forecast": _abstained_forecast(
+                    request,
+                    reason,
+                    verification_status="committee_verified",
+                    committee_id=committee.committee_id,
+                    committee_content_hash=committee.content_hash,
+                ),
+                "committee_decision": committee,
+                "release_status": "committee_verified",
+            }
+        )
         return build_hashed(FundamentalResearchDossier, **values)
-    dossier = compute_preliminary_research(request, bundle.snapshot, audited_inputs, artifacts)
     claim_ids = [claim.claim_id for artifact in artifacts for claim in artifact.claims]
     cited_calculations = {
         calculation_id
@@ -482,15 +488,15 @@ def run_fundamental_graph(
         for claim in artifact.claims
         for calculation_id in claim.calculation_ids
     }
-    if not cited_calculations.issubset(set(dossier.calculation_ids)):
+    if not cited_calculations.issubset(set(preliminary.calculation_ids)):
         raise FundamentalGraphError("specialist cited an unaudited calculation")
     committee_values = {
         "committee_id": f"fundamental-committee-{request.request_id}",
         "request_id": request.request_id,
         "specialist_artifact_ids": sorted(artifact.artifact_id for artifact in artifacts),
         "accepted_claim_ids": sorted(claim_ids),
-        "evidence_ids": dossier.evidence_ids,
-        "calculation_ids": dossier.calculation_ids,
+        "evidence_ids": preliminary.evidence_ids,
+        "calculation_ids": preliminary.calculation_ids,
         "decision": "approved",
         "rationale": (
             "Every accepted role conclusion was produced from its post-calculation "
@@ -499,14 +505,12 @@ def run_fundamental_graph(
         "contract_version": "3.0.0",
     }
     committee = build_hashed(FundamentalCommitteeDecision, **committee_values)
-    dossier_values = {
-        name: getattr(dossier, name)
-        for name in type(dossier).model_fields
-        if name != "content_hash"
-    }
-    dossier_values["committee_decision"] = committee
-    dossier_values["release_status"] = "committee_verified"
-    verified = build_hashed(FundamentalResearchDossier, **dossier_values)
+    verified = _finalize_verified_research(
+        preliminary,
+        audited_inputs,
+        artifacts,
+        committee,
+    )
     if verified.alpha_forecast.abstained:
         raise FundamentalGraphError("forecast verifier rejected a complete dossier")
     if not verified.calculation_ids or not verified.evidence_ids:

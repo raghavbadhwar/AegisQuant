@@ -203,14 +203,28 @@ def test_specialist_conclusions_are_calculation_first_and_all_abstain_is_typed()
     assert baseline.committee_decision is not None
     assert baseline.release_status == "committee_verified"
     _, snapshot, inputs = load_fundamental_fixture(FIXTURE)
-    from aegis.fundamentals import compute_preliminary_research
+    from aegis.fundamentals.service import _compute_preliminary_research
     from aegis.reporting import dossier_json
 
-    preliminary = compute_preliminary_research(request, snapshot, inputs)
+    preliminary = _compute_preliminary_research(request, snapshot, inputs)
     assert preliminary.release_status == "preliminary"
     assert preliminary.committee_decision is None
+    assert preliminary.alpha_forecast.abstained
+    assert preliminary.alpha_forecast.verification_status == "pending"
+    assert preliminary.alpha_forecast.expected_excess_return is None
     with pytest.raises(ValueError, match="not a releasable dossier"):
         dossier_json(preliminary)
+    from aegis.contracts import FundamentalResearchDossier
+    from aegis.fundamentals.hashing import build_hashed
+
+    forged_values = {
+        name: getattr(preliminary, name)
+        for name in type(preliminary).model_fields
+        if name != "content_hash"
+    }
+    forged_values["alpha_forecast"] = baseline.alpha_forecast
+    with pytest.raises(ValueError, match="pending forecast abstention"):
+        build_hashed(FundamentalResearchDossier, **forged_values)
 
     class ContradictingProvider:
         def load(self, request):  # type: ignore[no-untyped-def]
@@ -310,3 +324,146 @@ def test_specialist_conclusions_are_calculation_first_and_all_abstain_is_typed()
     result = run_fundamental_graph(request, AbstainingProvider())
     assert result.abstained and result.alpha_forecast.abstained
     assert "required specialists abstained" in (result.abstain_reason or "")
+
+
+def test_public_api_and_verified_forecast_enforce_committee_authority() -> None:
+    import aegis.fundamentals as fundamentals
+    from aegis.reporting import dossier_markdown
+
+    assert "compute_preliminary_research" not in fundamentals.__all__
+    assert not hasattr(fundamentals, "compute_preliminary_research")
+    request, _, _ = load_fundamental_fixture(FIXTURE)
+    verified = run_fundamental_graph(request, FixtureFundamentalProvider(FIXTURE))
+    committee = verified.committee_decision
+    assert verified.release_status == "committee_verified"
+    assert committee is not None and committee.decision == "approved"
+    assert not verified.alpha_forecast.abstained
+    assert verified.alpha_forecast.verification_status == "committee_verified"
+    assert verified.alpha_forecast.committee_id == committee.committee_id
+    assert verified.alpha_forecast.committee_content_hash == committee.content_hash
+    assert verified.alpha_forecast.source_dossier_id == verified.dossier_id
+    assert committee.request_id == request.request_id
+    assert committee.specialist_artifact_ids == sorted(
+        artifact.artifact_id for artifact in verified.specialist_artifacts
+    )
+    assert sorted(committee.accepted_claim_ids) == sorted(
+        claim.claim_id for artifact in verified.specialist_artifacts for claim in artifact.claims
+    )
+    assert committee.evidence_ids == verified.evidence_ids
+    assert committee.calculation_ids == verified.calculation_ids
+
+    reordered = verified.model_copy(
+        update={
+            "dcf": {
+                name: dcf.model_copy(
+                    update={"calculation_ids": list(reversed(dcf.calculation_ids))}
+                )
+                for name, dcf in verified.dcf.items()
+            },
+            "reverse_dcf": {
+                name: reverse.model_copy(
+                    update={"calculation_ids": list(reversed(reverse.calculation_ids))}
+                )
+                for name, reverse in verified.reverse_dcf.items()
+            },
+        }
+    )
+    markdown = dossier_markdown(reordered)
+    for dcf in verified.dcf.values():
+        primary_id = f"dcf-v1:{dcf.forecast_id}:value_per_share"
+        assert primary_id in markdown
+        for point in dcf.sensitivity:
+            assert (
+                f"{point.discount_rate:.2%} [calc: {point.discount_rate_calculation_id}]"
+            ) in markdown
+            assert (
+                f"{point.terminal_growth:.2%} [calc: {point.terminal_growth_calculation_id}]"
+            ) in markdown
+            assert (
+                f"{point.enterprise_value} [calc: {point.enterprise_value_calculation_id}]"
+            ) in markdown
+            assert (
+                f"{point.equity_value_per_share} "
+                f"[calc: {point.equity_value_per_share_calculation_id}]"
+            ) in markdown
+
+
+def test_approved_graph_computes_numeric_core_once(monkeypatch: pytest.MonkeyPatch) -> None:
+    import aegis.fundamentals.graph as graph_module
+
+    request, snapshot, inputs = load_fundamental_fixture(FIXTURE)
+    preliminary = graph_module._compute_preliminary_research(request, snapshot, inputs)
+    original = graph_module._compute_preliminary_research
+    calls = 0
+
+    def counted(request, snapshot, inputs):  # type: ignore[no-untyped-def]
+        nonlocal calls
+        calls += 1
+        return original(request, snapshot, inputs)
+
+    monkeypatch.setattr(graph_module, "_compute_preliminary_research", counted)
+    verified = graph_module.run_fundamental_graph(request, FixtureFundamentalProvider(FIXTURE))
+    assert calls == 1
+    assert verified.calculation_ids == preliminary.calculation_ids
+    assert verified.calculation_lineage == preliminary.calculation_lineage
+    assert verified.evidence_ids == preliminary.evidence_ids
+    assert verified.forecasts == preliminary.forecasts
+    assert verified.dcf == preliminary.dcf
+
+
+def test_finalizer_preserves_reordered_additional_thesis_claims() -> None:
+    from aegis.contracts import FundamentalResearchDossier, ThesisClaim
+    from aegis.fundamentals.hashing import build_hashed
+    from aegis.fundamentals.service import (
+        _compute_preliminary_research,
+        _finalize_verified_research,
+    )
+    from aegis.fundamentals.thesis import build_thesis
+
+    request, snapshot, inputs = load_fundamental_fixture(FIXTURE)
+    preliminary = _compute_preliminary_research(request, snapshot, inputs)
+    verified = run_fundamental_graph(request, FixtureFundamentalProvider(FIXTURE))
+    assert preliminary.thesis is not None and verified.committee_decision is not None
+    prior = preliminary.thesis
+    extra = ThesisClaim(
+        claim_id=f"thesis-{request.request_id}-secondary",
+        statement="A secondary audited claim must survive finalization.",
+        status="active",
+        evidence_ids=preliminary.evidence_ids,
+        calculation_ids=[preliminary.calculation_ids[0]],
+    )
+    reordered_thesis = build_thesis(
+        thesis_id=prior.thesis_id,
+        ticker=prior.ticker,
+        version=prior.version,
+        as_of=prior.as_of,
+        horizon_days=prior.horizon_days,
+        core_claims=[extra, *prior.core_claims],
+        catalysts=prior.catalysts,
+        risks=prior.risks,
+        invalidation_conditions=prior.invalidation_conditions,
+        valuation_case_ids=prior.valuation_case_ids,
+        checkpoints=prior.checkpoints,
+        supersedes_thesis_id=prior.supersedes_thesis_id,
+        status=prior.status,
+        contract_version="3.0.0",
+    )
+    preliminary_values = {
+        name: getattr(preliminary, name)
+        for name in type(preliminary).model_fields
+        if name != "content_hash"
+    }
+    preliminary_values["thesis"] = reordered_thesis
+    reordered_preliminary = build_hashed(FundamentalResearchDossier, **preliminary_values)
+    finalized = _finalize_verified_research(
+        reordered_preliminary,
+        inputs,
+        tuple(verified.specialist_artifacts),
+        verified.committee_decision,
+    )
+    assert finalized.thesis is not None
+    claims = {claim.claim_id: claim for claim in finalized.thesis.core_claims}
+    assert next(claim.claim_id for claim in finalized.thesis.core_claims) == extra.claim_id
+    assert claims[extra.claim_id].statement == extra.statement
+    primary = claims[f"thesis-{request.request_id}-core"]
+    assert "Specialist review:" in primary.statement

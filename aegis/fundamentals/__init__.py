@@ -7,7 +7,7 @@ from .graph import FixtureFundamentalProvider, run_fundamental_graph
 from .management import evaluate_management
 from .metrics import calculate_metrics
 from .normalization import normalize_statements, raw_snapshot, reverse_adjustments
-from .service import FundamentalResearchInputs, compute_preliminary_research
+from .service import FundamentalResearchInputs
 from .thesis import ThesisLedger, build_thesis
 from .valuation import (
     calculate_comparables,
@@ -26,7 +26,6 @@ __all__ = [
     "calculate_dcf",
     "calculate_metrics",
     "combine_scenarios",
-    "compute_preliminary_research",
     "evaluate_management",
     "forecast_operating_case",
     "load_fundamental_fixture",

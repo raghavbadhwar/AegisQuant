@@ -5,6 +5,10 @@ from __future__ import annotations
 import html
 
 from aegis.contracts import FundamentalResearchDossier, canonical_json
+from aegis.fundamentals.calculation_ids import (
+    dcf_calculation_id,
+    reverse_dcf_calculation_id,
+)
 
 
 def _require_releasable(dossier: FundamentalResearchDossier) -> None:
@@ -75,13 +79,13 @@ def dossier_markdown(dossier: FundamentalResearchDossier) -> str:
         f"Bear/base/bull per-share values: {dossier.dcf['bear'].value_per_share:.2f} / "
         f"{dossier.dcf['base'].value_per_share:.2f} / "
         f"{dossier.dcf['bull'].value_per_share:.2f} "
-        f"[calc: {dossier.dcf['bear'].calculation_ids[-1]}, "
-        f"{dossier.dcf['base'].calculation_ids[-1]}, "
-        f"{dossier.dcf['bull'].calculation_ids[-1]}]"
+        f"[calc: {dcf_calculation_id(dossier.dcf['bear'], 'value_per_share')}, "
+        f"{dcf_calculation_id(dossier.dcf['base'], 'value_per_share')}, "
+        f"{dcf_calculation_id(dossier.dcf['bull'], 'value_per_share')}]"
     )
     reverse_text = "; ".join(
         f"{name}: {result.implied_value} (feasible={result.feasible}) "
-        f"[calc: {result.calculation_ids[0]}]"
+        f"[calc: {reverse_dcf_calculation_id(result)}]"
         for name, result in sorted(dossier.reverse_dcf.items())
     )
     comps = dossier.comparables
@@ -137,8 +141,14 @@ def dossier_markdown(dossier: FundamentalResearchDossier) -> str:
                 "| Discount rate | Terminal growth | Enterprise value | Equity value/share |",
                 "|---:|---:|---:|---:|",
                 *[
-                    f"| {point.discount_rate:.2%} | {point.terminal_growth:.2%} | "
-                    f"{point.enterprise_value} | {point.equity_value_per_share} |"
+                    f"| {point.discount_rate:.2%} "
+                    f"[calc: {point.discount_rate_calculation_id}] | "
+                    f"{point.terminal_growth:.2%} "
+                    f"[calc: {point.terminal_growth_calculation_id}] | "
+                    f"{point.enterprise_value} "
+                    f"[calc: {point.enterprise_value_calculation_id}] | "
+                    f"{point.equity_value_per_share} "
+                    f"[calc: {point.equity_value_per_share_calculation_id}] |"
                     for point in result.sensitivity
                 ],
                 "",

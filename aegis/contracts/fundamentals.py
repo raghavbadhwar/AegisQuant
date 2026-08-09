@@ -521,6 +521,24 @@ class SensitivityPoint(ContractModel):
     terminal_growth: float = Field(gt=-1, lt=1, allow_inf_nan=False)
     enterprise_value: Decimal = Field(allow_inf_nan=False)
     equity_value_per_share: Decimal = Field(allow_inf_nan=False)
+    discount_rate_calculation_id: Annotated[str, Field(min_length=1)]
+    terminal_growth_calculation_id: Annotated[str, Field(min_length=1)]
+    enterprise_value_calculation_id: Annotated[str, Field(min_length=1)]
+    equity_value_per_share_calculation_id: Annotated[str, Field(min_length=1)]
+
+    @model_validator(mode="after")
+    def coordinate_and_calculations_are_valid(self) -> SensitivityPoint:
+        if self.terminal_growth >= self.discount_rate:
+            raise ValueError("sensitivity terminal growth must be below discount rate")
+        calculation_ids = (
+            self.discount_rate_calculation_id,
+            self.terminal_growth_calculation_id,
+            self.enterprise_value_calculation_id,
+            self.equity_value_per_share_calculation_id,
+        )
+        if len(set(calculation_ids)) != len(calculation_ids):
+            raise ValueError("sensitivity fields require distinct calculation IDs")
+        return self
 
 
 class DCFResult(ContractModel):
@@ -564,6 +582,20 @@ class DCFResult(ContractModel):
             raise ValueError("DCF equity value does not reconcile")
         if abs(self.value_per_share - self.equity_value / self.diluted_shares) > tolerance:
             raise ValueError("DCF per-share value does not reconcile")
+        sensitivity_ids = [
+            calculation_id
+            for point in self.sensitivity
+            for calculation_id in (
+                point.discount_rate_calculation_id,
+                point.terminal_growth_calculation_id,
+                point.enterprise_value_calculation_id,
+                point.equity_value_per_share_calculation_id,
+            )
+        ]
+        if len(sensitivity_ids) != len(set(sensitivity_ids)):
+            raise ValueError("DCF sensitivity calculation IDs must be unique")
+        if not set(sensitivity_ids).issubset(self.calculation_ids):
+            raise ValueError("DCF sensitivity calculations must be indexed by the result")
         if self.content_hash != canonical_sha256(self.model_dump(exclude={"content_hash"})):
             raise ValueError("DCF result hash mismatch")
         return self
@@ -805,6 +837,17 @@ SpecialistRole = Literal[
     "valuation",
     "catalysts_risks",
 ]
+REQUIRED_SPECIALIST_ROLES: tuple[SpecialistRole, ...] = (
+    "business_industry",
+    "financial_quality",
+    "growth_drivers",
+    "accounting_quality",
+    "balance_sheet",
+    "capital_allocation",
+    "management_guidance",
+    "valuation",
+    "catalysts_risks",
+)
 
 
 class SpecialistCalculationPredicate(ContractModel):
@@ -902,6 +945,30 @@ class FundamentalCommitteeDecision(ContractModel):
         return self
 
 
+class FundamentalAlphaForecast(AlphaForecast):
+    """A fundamental forecast bound to its dossier and verification authority."""
+
+    verification_status: Literal["pending", "committee_verified", "terminal_abstention"]
+    committee_id: str | None = None
+    committee_content_hash: Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")] | None = None
+    source_dossier_id: Annotated[str, Field(min_length=1)]
+
+    @model_validator(mode="after")
+    def verification_authority_is_consistent(self) -> FundamentalAlphaForecast:
+        if self.verification_status == "committee_verified":
+            if self.committee_id is None or self.committee_content_hash is None:
+                raise ValueError("committee-verified forecasts require committee identity")
+        elif (
+            self.committee_id is not None
+            or self.committee_content_hash is not None
+            or not self.abstained
+        ):
+            raise ValueError("unverified fundamental forecasts must abstain without committee")
+        if not self.abstained and self.verification_status != "committee_verified":
+            raise ValueError("active fundamental forecasts require committee verification")
+        return self
+
+
 class FundamentalResearchDossier(ContractModel):
     dossier_id: Annotated[str, Field(min_length=1)]
     request: CompanyResearchRequest
@@ -926,7 +993,7 @@ class FundamentalResearchDossier(ContractModel):
     scenario_valuation: ScenarioValuation | None
     scorecard: FundamentalScorecard | None
     thesis: InvestmentThesis | None
-    alpha_forecast: AlphaForecast
+    alpha_forecast: FundamentalAlphaForecast
     specialist_artifacts: list[FundamentalSpecialistArtifact] = Field(default_factory=list)
     specialist_findings: dict[str, list[str]] = Field(default_factory=dict)
     release_status: Literal["preliminary", "committee_verified", "terminal_abstention"]
@@ -942,16 +1009,70 @@ class FundamentalResearchDossier(ContractModel):
 
     @model_validator(mode="after")
     def dossier_state_and_hash_match(self) -> FundamentalResearchDossier:
-        if self.release_status == "preliminary" and self.committee_decision is not None:
-            raise ValueError("preliminary dossier cannot carry committee approval")
+        if self.alpha_forecast.source_dossier_id != self.dossier_id:
+            raise ValueError("fundamental forecast is not bound to its dossier")
+        if self.release_status == "preliminary" and (
+            self.committee_decision is not None
+            or not self.alpha_forecast.abstained
+            or self.alpha_forecast.verification_status != "pending"
+        ):
+            raise ValueError(
+                "preliminary dossier requires a committee-less pending forecast abstention"
+            )
+        if self.release_status == "terminal_abstention" and (
+            not self.abstained
+            or not self.alpha_forecast.abstained
+            or self.committee_decision is not None
+            or self.alpha_forecast.verification_status != "terminal_abstention"
+        ):
+            raise ValueError("terminal abstention requires an abstained forecast and no committee")
         if self.release_status == "committee_verified":
-            if self.committee_decision is None or len(self.specialist_artifacts) != 9:
-                raise ValueError("released dossier requires committee and nine specialists")
+            committee = self.committee_decision
+            roles = [artifact.role for artifact in self.specialist_artifacts]
+            artifact_ids = [artifact.artifact_id for artifact in self.specialist_artifacts]
+            required_roles = set(REQUIRED_SPECIALIST_ROLES)
+            if (
+                committee is None
+                or set(roles) != required_roles
+                or len(roles) != len(required_roles)
+                or len(artifact_ids) != len(set(artifact_ids))
+            ):
+                raise ValueError("released dossier requires committee and nine unique specialists")
+            claim_ids = [
+                claim.claim_id
+                for artifact in self.specialist_artifacts
+                for claim in artifact.claims
+            ]
+            if (
+                committee.request_id != self.request.request_id
+                or any(
+                    artifact.request_id != self.request.request_id
+                    for artifact in self.specialist_artifacts
+                )
+                or set(committee.specialist_artifact_ids) != set(artifact_ids)
+                or len(committee.specialist_artifact_ids)
+                != len(set(committee.specialist_artifact_ids))
+                or committee.evidence_ids != self.evidence_ids
+                or committee.calculation_ids != self.calculation_ids
+                or self.alpha_forecast.verification_status != "committee_verified"
+                or self.alpha_forecast.committee_id != committee.committee_id
+                or self.alpha_forecast.committee_content_hash != committee.content_hash
+            ):
+                raise ValueError("committee decision is not exactly bound to the dossier")
             expected_decision = "abstained" if self.abstained else "approved"
-            if self.committee_decision.decision != expected_decision:
+            if committee.decision != expected_decision:
                 raise ValueError("committee decision does not match dossier state")
-        if self.release_status == "terminal_abstention" and not self.abstained:
-            raise ValueError("only abstained dossiers may be terminal abstentions")
+            if len(claim_ids) != len(set(claim_ids)):
+                raise ValueError("released dossier specialist claim IDs must be unique")
+            if committee.decision == "approved":
+                if len(committee.accepted_claim_ids) != len(
+                    set(committee.accepted_claim_ids)
+                ) or sorted(committee.accepted_claim_ids) != sorted(claim_ids):
+                    raise ValueError("committee approval does not bind every specialist claim")
+                if self.alpha_forecast.abstained:
+                    raise ValueError("approved dossier requires a verified active forecast")
+            elif committee.accepted_claim_ids or not self.alpha_forecast.abstained:
+                raise ValueError("abstaining committee requires an abstained forecast")
         if self.abstained:
             if not self.abstain_reason or not self.alpha_forecast.abstained:
                 raise ValueError("abstained dossier requires reason and abstained forecast")
@@ -981,8 +1102,8 @@ class FundamentalResearchDossier(ContractModel):
                 "operating_margin",
             }:
                 raise ValueError("complete dossier requires three reverse-DCF inversions")
-            if self.alpha_forecast.abstained or not self.evidence_ids or not self.calculation_ids:
-                raise ValueError("complete dossier requires forecast and provenance")
+            if not self.evidence_ids or not self.calculation_ids:
+                raise ValueError("complete dossier requires provenance")
             lineage_ids = [item.calculation_id for item in self.calculation_lineage]
             if len(lineage_ids) != len(set(lineage_ids)):
                 raise ValueError("dossier calculation lineage IDs must be unique")

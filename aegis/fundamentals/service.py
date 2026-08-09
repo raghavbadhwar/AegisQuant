@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from datetime import timedelta
 from decimal import Decimal
+from typing import Literal
 
 from pydantic import AwareDatetime, Field, model_validator
 
 from aegis.contracts import (
     AccountingQualityAssessment,
-    AlphaForecast,
     BusinessModelAssessment,
     CalculationLineage,
     CompanyArchetype,
@@ -18,6 +18,8 @@ from aegis.contracts import (
     EvidenceBundle,
     ForecastCalibrationRecord,
     ForecastDriver,
+    FundamentalAlphaForecast,
+    FundamentalCommitteeDecision,
     FundamentalResearchDossier,
     FundamentalScorecard,
     FundamentalSpecialistArtifact,
@@ -36,6 +38,12 @@ from aegis.contracts import (
 from aegis.contracts._base import ContractModel
 
 from .archetypes import route_archetype
+from .calculation_ids import (
+    comparable_calculation_id,
+    dcf_calculation_id,
+    reverse_dcf_calculation_id,
+    scenario_calculation_id,
+)
 from .forecasting import forecast_operating_case, validate_scenario_ordering
 from .hashing import build_hashed
 from .management import evaluate_management
@@ -220,8 +228,31 @@ def _clamp(value: float) -> float:
     return min(1.0, max(-1.0, value))
 
 
-def _abstained_forecast(request: CompanyResearchRequest, reason: str) -> AlphaForecast:
-    return AlphaForecast(
+def _dcf_primary_calculation_ids(result: DCFResult) -> list[str]:
+    return [
+        dcf_calculation_id(result, output_name)
+        for output_name in (
+            "explicit_present_value",
+            "terminal_value",
+            "terminal_present_value",
+            "enterprise_value",
+            "equity_value",
+            "value_per_share",
+        )
+    ]
+
+
+def _abstained_forecast(
+    request: CompanyResearchRequest,
+    reason: str,
+    *,
+    verification_status: Literal["pending", "committee_verified", "terminal_abstention"] = (
+        "pending"
+    ),
+    committee_id: str | None = None,
+    committee_content_hash: str | None = None,
+) -> FundamentalAlphaForecast:
+    return FundamentalAlphaForecast(
         forecast_id=f"fundamental-{request.request_id}-abstain",
         model_name="fundamental-alpha-v1",
         ticker=request.ticker,
@@ -240,6 +271,10 @@ def _abstained_forecast(request: CompanyResearchRequest, reason: str) -> AlphaFo
         abstain_reason=reason,
         components={},
         metadata={"provider": "fundamental-research-v3"},
+        verification_status=verification_status,
+        committee_id=committee_id,
+        committee_content_hash=committee_content_hash,
+        source_dossier_id=f"fundamental-dossier-{request.request_id}",
     )
 
 
@@ -291,11 +326,10 @@ def _abstained_dossier(
     return build_hashed(FundamentalResearchDossier, **values)
 
 
-def compute_preliminary_research(
+def _compute_preliminary_research(
     request: CompanyResearchRequest,
     snapshot: RawFilingSnapshot,
     inputs: FundamentalResearchInputs,
-    specialist_artifacts: tuple[FundamentalSpecialistArtifact, ...] = (),
 ) -> FundamentalResearchDossier:
     if snapshot.ticker != request.ticker or snapshot.as_of != request.as_of:
         raise FundamentalResearchError("research request and filing snapshot do not align")
@@ -320,12 +354,6 @@ def compute_preliminary_research(
         <= inputs.calibration.horizon_days_max
     ):
         raise FundamentalResearchError("forecast horizon is outside calibration support")
-    specialist_by_role = {artifact.role: artifact for artifact in specialist_artifacts}
-    specialist_text = {
-        role: " ".join(claim.statement for claim in artifact.claims)
-        for role, artifact in specialist_by_role.items()
-        if not artifact.abstained
-    }
     archetype = route_archetype(
         request.ticker,
         sector=inputs.sector,
@@ -339,7 +367,6 @@ def compute_preliminary_research(
             archetype.reason,
             archetype,
             inputs.content_hash,
-            specialist_artifacts,
         )
     if inputs.market_price <= 0 or not inputs.evidence_ids:
         raise FundamentalResearchError("research inputs require market price and evidence")
@@ -497,31 +524,21 @@ def compute_preliminary_research(
         acquisition_warning=acquisition_warning,
         one_time_adjustments=[],
         findings=[
-            *[
-                name
-                for active, name in (
-                    (accrual_warning, "high accruals"),
-                    (sbc_warning, "high stock-based compensation"),
-                    (acquisition_warning, "acquisition intensity"),
-                )
-                if active
-            ],
-            *(
-                [specialist_text["accounting_quality"]]
-                if "accounting_quality" in specialist_text
-                else []
-            ),
+            name
+            for active, name in (
+                (accrual_warning, "high accruals"),
+                (sbc_warning, "high stock-based compensation"),
+                (acquisition_warning, "acquisition intensity"),
+            )
+            if active
         ],
         evidence_ids=list(inputs.evidence_ids),
         calculation_ids=metrics.calculation_ids,
     )
     business = BusinessModelAssessment(
-        summary=specialist_text.get(
-            "business_industry",
-            (
-                f"{request.company_name} is assessed through verified general-company "
-                "operating drivers."
-            ),
+        summary=(
+            f"{request.company_name} is assessed through verified general-company "
+            "operating drivers."
         ),
         revenue_drivers=list(inputs.revenue_driver_descriptions),
         moat_evidence=[],
@@ -530,10 +547,7 @@ def compute_preliminary_research(
     )
     industry = IndustryAssessment(
         industry=inputs.industry,
-        structure=specialist_text.get(
-            "business_industry",
-            "competitive structure assessed from the frozen evidence pack",
-        ),
+        structure="competitive structure assessed from the frozen evidence pack",
         cycle_position="point-in-time cycle state recorded in the research inputs",
         competitors=list(inputs.competitors),
         evidence_ids=list(inputs.evidence_ids),
@@ -610,8 +624,8 @@ def compute_preliminary_research(
             metric_id_by_name["acquisition_intensity"],
         ],
         "management": list(management.calculation_ids),
-        "valuation": [scenario_valuation.calculation_ids[1]],
-        "expectations_gap": [reverse_dcf["revenue_growth"].calculation_ids[0]],
+        "valuation": [scenario_calculation_id(scenario_valuation, "implied_return")],
+        "expectations_gap": [reverse_dcf_calculation_id(reverse_dcf["revenue_growth"])],
         "catalyst": [],
         "uncertainty": [
             metric_id_by_name["accrual_ratio"],
@@ -644,7 +658,7 @@ def compute_preliminary_research(
         capital_allocation=capital_signal,
         management=management_signal,
         valuation=valuation_signal,
-        expectations_gap=valuation_signal,
+        expectations_gap=expectations_gap_signal,
         catalyst=catalyst_signal,
         uncertainty=uncertainty,
         composite=composite,
@@ -659,14 +673,6 @@ def compute_preliminary_research(
         f"growth rate with {metrics.operating_margin:.1%} operating margin; the "
         f"probability-weighted valuation implies {scenario_valuation.implied_return:.1%}."
     )
-    if specialist_text:
-        challenge = " ".join(
-            f"{role}: {statement}"
-            for role, statement in sorted(specialist_text.items())
-            if role != "business_industry"
-        )
-        if challenge:
-            thesis_statement = f"{thesis_statement} Specialist review: {challenge}"
     thesis: InvestmentThesis = build_thesis(
         thesis_id=f"thesis-{request.request_id}-v1",
         ticker=request.ticker,
@@ -732,40 +738,7 @@ def compute_preliminary_research(
     )
     uncertainty = max(uncertainty, calibration_uncertainty)
     confidence = 1 - uncertainty
-    alpha = AlphaForecast(
-        forecast_id=f"fundamental-alpha-{request.request_id}",
-        model_name="fundamental-alpha-v1",
-        ticker=request.ticker,
-        as_of=request.as_of,
-        horizon_days=request.horizon_days,
-        expected_excess_return=annualized_expected_return,
-        expected_volatility=inputs.expected_volatility,
-        probability_positive=min(1.0, max(0.0, probability_positive)),
-        confidence=confidence,
-        uncertainty=1 - confidence,
-        downside_case=float(dcf["bear"].value_per_share / inputs.market_price - Decimal("1")),
-        base_case=float(dcf["base"].value_per_share / inputs.market_price - Decimal("1")),
-        upside_case=float(dcf["bull"].value_per_share / inputs.market_price - Decimal("1")),
-        thesis=thesis_statement,
-        evidence_ids=list(inputs.evidence_ids),
-        invalidation_conditions=thesis.invalidation_conditions,
-        catalyst_dates=[],
-        thesis_expiry=request.as_of + timedelta(days=request.horizon_days),
-        abstained=False,
-        abstain_reason=None,
-        components={
-            "quality": quality_signal,
-            "growth": growth_signal,
-            "accounting": accounting_signal,
-            "valuation": valuation_signal,
-            "composite": composite,
-        },
-        metadata={
-            "provider": "fundamental-research-v3",
-            "scorecard": "v1",
-            "calibration_id": inputs.calibration.calibration_id,
-        },
-    )
+    alpha = _abstained_forecast(request, "pending required specialist and committee verification")
     guidance_assumptions = [f"guidance:{item.guidance_id}" for item in management.guidance]
     extra_lineage = [
         _derived_lineage(
@@ -877,37 +850,34 @@ def compute_preliminary_research(
                     ],
                     unit="USD/share",
                 )
-                for calculation_id, label, output_value in zip(
-                    comparables.calculation_ids,
-                    ("low", "mid", "high"),
-                    (
-                        comparables.implied_value_low,
-                        comparables.implied_value_mid,
-                        comparables.implied_value_high,
-                    ),
-                    strict=True,
+                for label, output_value in (
+                    ("low", comparables.implied_value_low),
+                    ("mid", comparables.implied_value_mid),
+                    ("high", comparables.implied_value_high),
                 )
+                for calculation_id in [comparable_calculation_id(comparables, label)]
             ],
             *[
                 _derived_lineage(
-                    result.calculation_ids[0],
+                    reverse_dcf_calculation_id(result),
                     "reverse-dcf-bisection",
                     "solve(DCF(assumption) - market_price = 0)",
                     result.solved_variable if result.feasible else "feasible",
                     result.implied_value if result.implied_value is not None else 0.0,
-                    input_calculation_ids=dcf["base"].calculation_ids,
+                    input_calculation_ids=_dcf_primary_calculation_ids(dcf["base"]),
                     input_assumption_ids=result.assumption_ids,
                 )
                 for result in reverse_dcf.values()
             ],
             _derived_lineage(
-                scenario_valuation.calculation_ids[0],
+                scenario_calculation_id(scenario_valuation, "probability_weighted_value"),
                 "scenario-valuation",
                 "sum(probability_s * value_per_share_s)",
                 "probability_weighted_value",
                 scenario_valuation.probability_weighted_value,
                 input_calculation_ids=[
-                    dcf[name].calculation_ids[-1] for name in ("bear", "base", "bull")
+                    dcf_calculation_id(dcf[name], "value_per_share")
+                    for name in ("bear", "base", "bull")
                 ],
                 input_assumption_ids=[
                     f"scenario-probability:{name}" for name in ("bear", "base", "bull")
@@ -915,12 +885,14 @@ def compute_preliminary_research(
                 unit="USD/share",
             ),
             _derived_lineage(
-                scenario_valuation.calculation_ids[1],
+                scenario_calculation_id(scenario_valuation, "implied_return"),
                 "scenario-valuation",
                 "probability_weighted_value / market_price - 1",
                 "scenario_implied_return",
                 scenario_valuation.implied_return,
-                input_calculation_ids=[scenario_valuation.calculation_ids[0]],
+                input_calculation_ids=[
+                    scenario_calculation_id(scenario_valuation, "probability_weighted_value")
+                ],
                 input_assumption_ids=[f"{request.request_id}:market-price"],
             ),
             *[
@@ -955,7 +927,7 @@ def compute_preliminary_research(
                 "expected_excess_return",
                 annualized_expected_return,
                 input_calculation_ids=[
-                    scenario_valuation.calculation_ids[1],
+                    scenario_calculation_id(scenario_valuation, "implied_return"),
                     next(
                         item for item in metrics.calculation_ids if item.endswith(":dividend_yield")
                     ),
@@ -972,7 +944,8 @@ def compute_preliminary_research(
                 "probability_positive",
                 probability_positive,
                 input_calculation_ids=[
-                    dcf[name].calculation_ids[-1] for name in ("bear", "base", "bull")
+                    dcf_calculation_id(dcf[name], "value_per_share")
+                    for name in ("bear", "base", "bull")
                 ],
                 input_assumption_ids=[
                     inputs.calibration.calibration_id,
@@ -1034,11 +1007,8 @@ def compute_preliminary_research(
         "scorecard": scorecard,
         "thesis": thesis,
         "alpha_forecast": alpha,
-        "specialist_artifacts": list(specialist_artifacts),
-        "specialist_findings": {
-            artifact.role: [claim.statement for claim in artifact.claims]
-            for artifact in specialist_artifacts
-        },
+        "specialist_artifacts": [],
+        "specialist_findings": {},
         "release_status": "preliminary",
         "committee_decision": None,
         "evidence_ids": sorted(inputs.evidence_ids),
@@ -1052,4 +1022,182 @@ def compute_preliminary_research(
         "abstain_reason": None,
         "contract_version": "3.0.0",
     }
+    return build_hashed(FundamentalResearchDossier, **values)
+
+
+def _finalize_verified_research(
+    preliminary: FundamentalResearchDossier,
+    inputs: FundamentalResearchInputs,
+    specialist_artifacts: tuple[FundamentalSpecialistArtifact, ...],
+    committee_decision: FundamentalCommitteeDecision,
+) -> FundamentalResearchDossier:
+    """Attach audited narrative and emit AlphaForecast only after committee approval."""
+    if (
+        preliminary.release_status != "preliminary"
+        or preliminary.abstained
+        or not preliminary.alpha_forecast.abstained
+        or inputs.content_hash != preliminary.input_snapshot_hash
+    ):
+        raise FundamentalResearchError(
+            "forecast finalization requires its verified preliminary core"
+        )
+    artifact_ids = sorted(artifact.artifact_id for artifact in specialist_artifacts)
+    claim_ids = sorted(
+        claim.claim_id for artifact in specialist_artifacts for claim in artifact.claims
+    )
+    if (
+        committee_decision.decision != "approved"
+        or committee_decision.request_id != preliminary.request.request_id
+        or committee_decision.specialist_artifact_ids != artifact_ids
+        or sorted(committee_decision.accepted_claim_ids) != claim_ids
+        or committee_decision.evidence_ids != preliminary.evidence_ids
+        or committee_decision.calculation_ids != preliminary.calculation_ids
+    ):
+        raise FundamentalResearchError(
+            "approved committee decision is not bound to the preliminary research"
+        )
+    accounting = preliminary.accounting
+    business = preliminary.business
+    industry = preliminary.industry
+    thesis = preliminary.thesis
+    scorecard = preliminary.scorecard
+    if any(value is None for value in (accounting, business, industry, thesis, scorecard)):
+        raise FundamentalResearchError("preliminary research lacks finalization inputs")
+    assert accounting is not None
+    assert business is not None
+    assert industry is not None
+    assert thesis is not None
+    assert scorecard is not None
+    specialist_text = {
+        artifact.role: " ".join(claim.statement for claim in artifact.claims)
+        for artifact in specialist_artifacts
+        if not artifact.abstained
+    }
+    accounting = accounting.model_copy(
+        update={
+            "findings": [
+                *accounting.findings,
+                *(
+                    [specialist_text["accounting_quality"]]
+                    if "accounting_quality" in specialist_text
+                    else []
+                ),
+            ]
+        }
+    )
+    business = business.model_copy(
+        update={"summary": specialist_text.get("business_industry", business.summary)}
+    )
+    industry = industry.model_copy(
+        update={"structure": specialist_text.get("business_industry", industry.structure)}
+    )
+    primary_claim_id = f"thesis-{preliminary.request.request_id}-core"
+    primary_claims = [claim for claim in thesis.core_claims if claim.claim_id == primary_claim_id]
+    if len(primary_claims) != 1:
+        raise FundamentalResearchError(
+            "preliminary thesis requires exactly one generated primary claim"
+        )
+    thesis_statement = primary_claims[0].statement
+    challenge = " ".join(
+        f"{role}: {statement}"
+        for role, statement in sorted(specialist_text.items())
+        if role != "business_industry"
+    )
+    if challenge:
+        thesis_statement = f"{thesis_statement} Specialist review: {challenge}"
+    core_claims = [
+        claim.model_copy(update={"statement": thesis_statement})
+        if claim.claim_id == primary_claim_id
+        else claim
+        for claim in thesis.core_claims
+    ]
+    thesis = build_thesis(
+        thesis_id=thesis.thesis_id,
+        ticker=thesis.ticker,
+        version=thesis.version,
+        as_of=thesis.as_of,
+        horizon_days=thesis.horizon_days,
+        core_claims=core_claims,
+        catalysts=thesis.catalysts,
+        risks=thesis.risks,
+        invalidation_conditions=thesis.invalidation_conditions,
+        valuation_case_ids=thesis.valuation_case_ids,
+        checkpoints=thesis.checkpoints,
+        supersedes_thesis_id=thesis.supersedes_thesis_id,
+        status=thesis.status,
+        contract_version="3.0.0",
+    )
+    lineage = {item.calculation_id: item for item in preliminary.calculation_lineage}
+    expected_return = float(lineage["fundamental-alpha-v1:calibrated-expected-return"].output_value)
+    probability_positive = float(
+        lineage["fundamental-alpha-v1:calibrated-probability"].output_value
+    )
+    confidence = float(lineage["fundamental-alpha-v1:calibrated-confidence"].output_value)
+    alpha = FundamentalAlphaForecast(
+        forecast_id=f"fundamental-alpha-{preliminary.request.request_id}",
+        model_name="fundamental-alpha-v1",
+        ticker=preliminary.request.ticker,
+        as_of=preliminary.request.as_of,
+        horizon_days=preliminary.request.horizon_days,
+        expected_excess_return=expected_return,
+        expected_volatility=inputs.expected_volatility,
+        probability_positive=probability_positive,
+        confidence=confidence,
+        uncertainty=1 - confidence,
+        downside_case=float(
+            preliminary.dcf["bear"].value_per_share / inputs.market_price - Decimal("1")
+        ),
+        base_case=float(
+            preliminary.dcf["base"].value_per_share / inputs.market_price - Decimal("1")
+        ),
+        upside_case=float(
+            preliminary.dcf["bull"].value_per_share / inputs.market_price - Decimal("1")
+        ),
+        thesis=thesis_statement,
+        evidence_ids=list(inputs.evidence_ids),
+        invalidation_conditions=thesis.invalidation_conditions,
+        catalyst_dates=[],
+        thesis_expiry=(
+            preliminary.request.as_of + timedelta(days=preliminary.request.horizon_days)
+        ),
+        abstained=False,
+        abstain_reason=None,
+        components={
+            "quality": scorecard.quality,
+            "growth": scorecard.growth,
+            "accounting": scorecard.accounting,
+            "valuation": scorecard.valuation,
+            "composite": scorecard.composite,
+        },
+        metadata={
+            "provider": "fundamental-research-v3",
+            "scorecard": "v1",
+            "calibration_id": inputs.calibration.calibration_id,
+        },
+        verification_status="committee_verified",
+        committee_id=committee_decision.committee_id,
+        committee_content_hash=committee_decision.content_hash,
+        source_dossier_id=preliminary.dossier_id,
+    )
+    values = {
+        name: getattr(preliminary, name)
+        for name in type(preliminary).model_fields
+        if name != "content_hash"
+    }
+    values.update(
+        {
+            "business": business,
+            "industry": industry,
+            "accounting": accounting,
+            "thesis": thesis,
+            "alpha_forecast": alpha,
+            "specialist_artifacts": list(specialist_artifacts),
+            "specialist_findings": {
+                artifact.role: [claim.statement for claim in artifact.claims]
+                for artifact in specialist_artifacts
+            },
+            "release_status": "committee_verified",
+            "committee_decision": committee_decision,
+        }
+    )
     return build_hashed(FundamentalResearchDossier, **values)

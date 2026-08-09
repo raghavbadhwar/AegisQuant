@@ -13,6 +13,7 @@ from .evidence import (
 from .execution import Fill, Order, OrderSide, OrderStatus, Position, SimulationMode
 from .forecasts import AlphaForecast
 from .fundamentals import (
+    REQUIRED_SPECIALIST_ROLES,
     AccountingQualityAssessment,
     BusinessModelAssessment,
     CalculationLineage,
@@ -25,6 +26,7 @@ from .fundamentals import (
     ForecastCalibrationRecord,
     ForecastDriver,
     ForecastPeriod,
+    FundamentalAlphaForecast,
     FundamentalCommitteeDecision,
     FundamentalMetrics,
     FundamentalResearchDossier,
@@ -96,6 +98,7 @@ from .source import (
 )
 
 __all__ = [
+    "REQUIRED_SPECIALIST_ROLES",
     "AccountingQualityAssessment",
     "AlphaForecast",
     "AuditFinding",
@@ -124,6 +127,7 @@ __all__ = [
     "ForecastCalibrationRecord",
     "ForecastDriver",
     "ForecastPeriod",
+    "FundamentalAlphaForecast",
     "FundamentalCommitteeDecision",
     "FundamentalMetrics",
     "FundamentalResearchDossier",

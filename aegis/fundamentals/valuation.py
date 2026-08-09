@@ -171,22 +171,118 @@ def calculate_dcf(
         ),
     ]
     sensitivity = []
-    for rate_shift in (-0.01, 0.0, 0.01):
-        for growth_shift in (-0.005, 0.0, 0.005):
-            rate = discount_rate + rate_shift
-            growth = terminal_growth + growth_shift
-            if rate <= 0 or growth >= rate:
+    sensitivity_lineage: list[CalculationLineage] = []
+    rate_shifts = (Decimal("-0.01"), Decimal("0"), Decimal("0.01"))
+    growth_shifts = (Decimal("-0.005"), Decimal("0"), Decimal("0.005"))
+    for rate_shift in rate_shifts:
+        for growth_shift in growth_shifts:
+            rate_decimal = _d(discount_rate) + rate_shift
+            growth_decimal = _d(terminal_growth) + growth_shift
+            if rate_decimal <= 0 or growth_decimal >= rate_decimal:
                 continue
+            rate = float(rate_decimal)
+            growth = float(growth_decimal)
+            rate_token = format(rate_decimal.normalize(), "f")
+            growth_token = format(growth_decimal.normalize(), "f")
+            coordinate = f"wacc={rate_token}:g={growth_token}"
+            rate_calculation_id = (
+                f"dcf-sensitivity-v1:{forecast.forecast_id}:{coordinate}:discount_rate"
+            )
+            growth_calculation_id = (
+                f"dcf-sensitivity-v1:{forecast.forecast_id}:{coordinate}:terminal_growth"
+            )
+            enterprise_calculation_id = (
+                f"dcf-sensitivity-v1:{forecast.forecast_id}:{coordinate}:enterprise_value"
+            )
+            per_share_calculation_id = (
+                f"dcf-sensitivity-v1:{forecast.forecast_id}:{coordinate}:equity_value_per_share"
+            )
             sens_explicit, _, sens_terminal_pv = _enterprise_value(forecast, rate, growth)
             sens_enterprise = sens_explicit + sens_terminal_pv
+            sens_per_share = (sens_enterprise - net_debt) / shares
+            sensitivity_lineage.extend(
+                [
+                    build_hashed(
+                        CalculationLineage,
+                        calculation_id=rate_calculation_id,
+                        calculator="fcff-dcf-sensitivity-grid",
+                        calculator_version="1.0.0",
+                        formula=f"base_discount_rate + ({rate_shift})",
+                        input_fact_ids=[],
+                        input_calculation_ids=[],
+                        input_assumption_ids=[f"{forecast.forecast_id}:discount-rate"],
+                        output_name=f"{coordinate}_discount_rate",
+                        output_value=rate_decimal,
+                        unit="ratio",
+                        contract_version="3.0.0",
+                    ),
+                    build_hashed(
+                        CalculationLineage,
+                        calculation_id=growth_calculation_id,
+                        calculator="fcff-dcf-sensitivity-grid",
+                        calculator_version="1.0.0",
+                        formula=f"base_terminal_growth + ({growth_shift})",
+                        input_fact_ids=[],
+                        input_calculation_ids=[],
+                        input_assumption_ids=[f"{forecast.forecast_id}:terminal-growth"],
+                        output_name=f"{coordinate}_terminal_growth",
+                        output_value=growth_decimal,
+                        unit="ratio",
+                        contract_version="3.0.0",
+                    ),
+                    build_hashed(
+                        CalculationLineage,
+                        calculation_id=enterprise_calculation_id,
+                        calculator="fcff-dcf-sensitivity",
+                        calculator_version="1.0.0",
+                        formula=(
+                            "sum(FCFF_t/(1+WACC_s)^t) + terminal_FCFF_s/(WACC_s-g_s)/(1+WACC_s)^n"
+                        ),
+                        input_fact_ids=[],
+                        input_calculation_ids=[
+                            *forecast.calculation_ids,
+                            rate_calculation_id,
+                            growth_calculation_id,
+                        ],
+                        input_assumption_ids=[f"{forecast.forecast_id}:terminal-roic"],
+                        output_name=f"{coordinate}_enterprise_value",
+                        output_value=sens_enterprise,
+                        unit="USD",
+                        contract_version="3.0.0",
+                    ),
+                    build_hashed(
+                        CalculationLineage,
+                        calculation_id=per_share_calculation_id,
+                        calculator="fcff-dcf-sensitivity",
+                        calculator_version="1.0.0",
+                        formula="(sensitivity_enterprise_value - net_debt) / diluted_shares",
+                        input_fact_ids=[],
+                        input_calculation_ids=[enterprise_calculation_id],
+                        input_assumption_ids=[
+                            f"{forecast.forecast_id}:net-debt",
+                            f"{forecast.forecast_id}:diluted-shares",
+                        ],
+                        output_name=f"{coordinate}_equity_value_per_share",
+                        output_value=sens_per_share,
+                        unit="USD/share",
+                        contract_version="3.0.0",
+                    ),
+                ]
+            )
             sensitivity.append(
                 SensitivityPoint(
                     discount_rate=rate,
                     terminal_growth=growth,
                     enterprise_value=sens_enterprise,
-                    equity_value_per_share=(sens_enterprise - net_debt) / shares,
+                    equity_value_per_share=sens_per_share,
+                    discount_rate_calculation_id=rate_calculation_id,
+                    terminal_growth_calculation_id=growth_calculation_id,
+                    enterprise_value_calculation_id=enterprise_calculation_id,
+                    equity_value_per_share_calculation_id=per_share_calculation_id,
                 )
             )
+    all_lineages = (*lineages, *sensitivity_lineage)
+
     values = {
         "valuation_id": f"dcf-{forecast.forecast_id}",
         "ticker": forecast.ticker,
@@ -207,10 +303,10 @@ def calculate_dcf(
             sensitivity, key=lambda item: (item.discount_rate, item.terminal_growth)
         ),
         "assumptions": assumptions,
-        "calculation_ids": [item.calculation_id for item in lineages],
+        "calculation_ids": [item.calculation_id for item in all_lineages],
         "contract_version": "3.0.0",
     }
-    return build_hashed(DCFResult, **values), lineages
+    return build_hashed(DCFResult, **values), all_lineages
 
 
 def solve_implied_assumption(

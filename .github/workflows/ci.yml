@@ -25,3 +25,5 @@ jobs:
           uv run aegis replay data/fixtures/cases/nvda_earnings_case.json --ledger /tmp/a.sqlite > /tmp/a.json
           uv run aegis replay data/fixtures/cases/nvda_earnings_case.json --ledger /tmp/b.sqlite > /tmp/b.json
           cmp /tmp/a.json /tmp/b.json
+      - name: Require clean worktree
+        run: test -z "$(git status --porcelain=v1 --untracked-files=all)"

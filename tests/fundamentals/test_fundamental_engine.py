@@ -15,30 +15,30 @@ from aegis.contracts import (
 )
 from aegis.fundamentals import (
     calculate_dcf,
-    compute_preliminary_research,
     load_fundamental_fixture,
     reverse_adjustments,
     solve_implied_growth,
 )
 from aegis.fundamentals.normalization import raw_snapshot
+from aegis.fundamentals.service import _compute_preliminary_research
 from aegis.fundamentals.thesis import ThesisLedger, ThesisLedgerError
 
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURES = ROOT / "data/fixtures/fundamentals"
 GOLDEN_DOSSIER_HASHES = {
-    "acqr": "c4e7a14738305ef31822638503d9507032191ca128131fe2e746d088274dd3d1",
-    "bank": "562c33b42aabc32375e34b4cda97995591afc2c84166896621a388d1568c04ea",
-    "cmpd": "2379576923efefaa814475f640564e4616f3d66289f4532b57bacf0752b129c9",
-    "cycl": "1801669817415cf640ecc05436da148b19e18f3b749e84ecb5810df6b70798c0",
-    "grow": "5de305adc6878997bab9cb4727c7c6d07ba981a14ba806476d8df3b6c5e9d37a",
-    "guide": "ab5bd716e4bb1adba4b30d1a7ff025b75b56a96226e668186381b5a111bf4504",
-    "warn": "235112f3b8724559710e5fa3eb23bfe7164990a97bfc13cd6b99d9c1833a5e9d",
+    "acqr": "826c3ad712a8a49d737a567f61e62610099ce229a2c83e0ee1f605713979be9c",
+    "bank": "9a7fd69823ce166bd8818fed1028f905e01b2003d294ba3fd91b8099cdf87089",
+    "cmpd": "6ebade257ad17bb1b4c390e4881535af86f90826a62b32a0e29435a6d16181d3",
+    "cycl": "6adc2bb09444124c68e847310d6aa51dd8945179b32ef6161c914f897f1d16ca",
+    "grow": "dcecd2c441d3cdf7802b9c8e804b256cceffe979bab9f3d964a2bfde386422b1",
+    "guide": "3ab6de26b7b5ee39ae091cee193221557adb7c2ca207fc3637bf0d86773f2043",
+    "warn": "b7b5bfefff8e4164ed50d5d44d2654e95b2153205554ebd846940fcc3be496c4",
 }
 
 
 def dossier(name: str):  # type: ignore[no-untyped-def]
     request, snapshot, inputs = load_fundamental_fixture(FIXTURES / f"{name}.json")
-    return compute_preliminary_research(request, snapshot, inputs)
+    return _compute_preliminary_research(request, snapshot, inputs)
 
 
 def test_all_golden_cases_are_deterministic_and_safely_routed() -> None:
@@ -50,7 +50,7 @@ def test_all_golden_cases_are_deterministic_and_safely_routed() -> None:
         assert first == second
         assert first.content_hash == GOLDEN_DOSSIER_HASHES[name]
         assert first.abstained is (name in unsupported)
-        assert first.alpha_forecast.abstained is (name in unsupported)
+        assert first.alpha_forecast.abstained
         if name in completed:
             assert first.statements is not None
             assert first.metrics is not None
@@ -65,9 +65,7 @@ def test_all_golden_cases_are_deterministic_and_safely_routed() -> None:
             assert first.dcf["base"].value_per_share <= first.dcf["bull"].value_per_share
             assert first.evidence_ids and first.calculation_ids
             assert first.input_snapshot_hash
-            assert first.alpha_forecast.metadata["calibration_id"].startswith(
-                "fundamental-alpha-v1-calibration"
-            )
+            assert first.alpha_forecast.verification_status == "pending"
             assert {
                 "fundamental-alpha-v1:calibrated-expected-return",
                 "fundamental-alpha-v1:calibrated-probability",
@@ -209,7 +207,7 @@ def test_guidance_deterioration_and_future_actual_exclusion(tmp_path: Path) -> N
     try:
         path.write_text(json.dumps(fixture))
         request, snapshot, inputs = load_fundamental_fixture(path)
-        future = compute_preliminary_research(request, snapshot, inputs)
+        future = _compute_preliminary_research(request, snapshot, inputs)
         assert future.management is not None and future.management.matured_count == 0
     finally:
         path.unlink(missing_ok=True)
@@ -361,7 +359,7 @@ def test_exact_statement_numbers_reversible_adjustments_and_closed_lineage() -> 
     adjustment_ids = {item.calculation_id for item in statements.calculation_lineage}
     assert "normalize-adjustment:analytical-one-time-2024" in adjustment_ids
     assert "normalize-adjusted-operating-income:2024-12-31" in adjustment_ids
-    dossier_result = compute_preliminary_research(request, snapshot, inputs)
+    dossier_result = _compute_preliminary_research(request, snapshot, inputs)
     lineage_ids = {item.calculation_id for item in dossier_result.calculation_lineage}
     assert lineage_ids == set(dossier_result.calculation_ids)
     assert all(
@@ -372,7 +370,7 @@ def test_exact_statement_numbers_reversible_adjustments_and_closed_lineage() -> 
 
 def test_terminal_roic_and_horizon_change_economic_outputs() -> None:
     request, snapshot, inputs = load_fundamental_fixture(FIXTURES / "cmpd.json")
-    base = compute_preliminary_research(request, snapshot, inputs)
+    base = _compute_preliminary_research(request, snapshot, inputs)
     lower_roic_values = {
         name: getattr(inputs, name) for name in type(inputs).model_fields if name != "content_hash"
     }
@@ -385,19 +383,23 @@ def test_terminal_roic_and_horizon_change_economic_outputs() -> None:
     from aegis.fundamentals.service import FundamentalResearchInputs
 
     lower_roic_inputs = build_hashed(FundamentalResearchInputs, **lower_roic_values)
-    lower_roic = compute_preliminary_research(request, snapshot, lower_roic_inputs)
+    lower_roic = _compute_preliminary_research(request, snapshot, lower_roic_inputs)
     assert lower_roic.dcf["base"].value_per_share < base.dcf["base"].value_per_share
     longer_request = request.model_copy(update={"horizon_days": 730})
-    longer = compute_preliminary_research(
+    longer = _compute_preliminary_research(
         longer_request,
         snapshot,
         inputs,
     )
-    assert longer.alpha_forecast.expected_excess_return != pytest.approx(
-        base.alpha_forecast.expected_excess_return
-    )
+    assert base.alpha_forecast.abstained and longer.alpha_forecast.abstained
     assert base.metrics is not None and base.scenario_valuation is not None
     lineage = {item.calculation_id: item for item in base.calculation_lineage}
+    longer_lineage = {item.calculation_id: item for item in longer.calculation_lineage}
+    assert longer_lineage[
+        "fundamental-alpha-v1:calibrated-expected-return"
+    ].output_value != pytest.approx(
+        lineage["fundamental-alpha-v1:calibrated-expected-return"].output_value
+    )
     dividend_id = next(
         item for item in base.metrics.calculation_ids if item.endswith(":dividend_yield")
     )
@@ -418,7 +420,7 @@ def test_terminal_roic_and_horizon_change_economic_outputs() -> None:
     expected_calibrated = (
         inputs.calibration.return_intercept + inputs.calibration.return_slope * raw_annualized
     )
-    assert base.alpha_forecast.expected_excess_return == pytest.approx(expected_calibrated)
+    assert expected_lineage.output_value == pytest.approx(expected_calibrated)
 
 
 def test_future_nonfiling_inputs_and_dimension_corruption_halt() -> None:
@@ -427,7 +429,7 @@ def test_future_nonfiling_inputs_and_dimension_corruption_halt() -> None:
     from aegis.fundamentals.service import FundamentalResearchError
 
     with pytest.raises(FundamentalResearchError, match="entity/request bound"):
-        compute_preliminary_research(request, snapshot, wrong_entity_inputs)
+        _compute_preliminary_research(request, snapshot, wrong_entity_inputs)
     grow_record = wrong_entity_inputs.evidence.records[0]
     mixed_evidence = inputs.evidence.model_copy(
         update={"records": [inputs.evidence.records[0], grow_record]}
@@ -462,7 +464,7 @@ def test_future_nonfiling_inputs_and_dimension_corruption_halt() -> None:
 
     wrong_mode_inputs = build_hashed(FundamentalResearchInputs, **mode_values)
     with pytest.raises(FundamentalResearchError, match="modes do not match"):
-        compute_preliminary_research(request, snapshot, wrong_mode_inputs)
+        _compute_preliminary_research(request, snapshot, wrong_mode_inputs)
     poisoned_record = inputs.evidence.records[0].model_copy(
         update={"injection_flags": ["ignore prior rules"]}
     )
@@ -513,7 +515,117 @@ def test_saas_and_preprofit_abstention_preserve_original_archetype() -> None:
         }
         values.update(update)
         modified = build_hashed(FundamentalResearchInputs, **values)
-        result = compute_preliminary_research(request, snapshot, modified)
+        result = _compute_preliminary_research(request, snapshot, modified)
         assert result.abstained
         assert result.archetype.kind == expected
         assert not result.archetype.supported
+
+
+@pytest.mark.parametrize("fixture_name", ["cmpd", "grow", "warn", "guide", "acqr"])
+def test_scorecard_fields_match_same_named_calculation_lineage(fixture_name: str) -> None:
+    result = dossier(fixture_name)
+    assert result.scorecard is not None
+    lineage = {item.calculation_id: item for item in result.calculation_lineage}
+    for field_name in (
+        "quality",
+        "growth",
+        "profitability",
+        "accounting",
+        "balance_sheet",
+        "cash_conversion",
+        "capital_allocation",
+        "management",
+        "valuation",
+        "expectations_gap",
+        "catalyst",
+        "uncertainty",
+    ):
+        calculation = lineage[f"fundamental-scorecard-v1:{field_name}"]
+        assert calculation.output_name == field_name
+        assert calculation.output_value == pytest.approx(getattr(result.scorecard, field_name))
+
+
+def test_dcf_sensitivity_cells_have_dependency_complete_exact_lineage() -> None:
+    result = dossier("cmpd")
+    lineage = {item.calculation_id: item for item in result.calculation_lineage}
+    all_point_ids: list[str] = []
+    primary_per_share_ids: dict[str, str] = {}
+    for scenario, dcf in sorted(result.dcf.items()):
+        assert len(dcf.sensitivity) == 9
+        primary_id = f"dcf-v1:{dcf.forecast_id}:value_per_share"
+        assert primary_id in dcf.calculation_ids
+        primary_per_share_ids[scenario] = primary_id
+        for point in dcf.sensitivity:
+            field_ids = {
+                "discount_rate": point.discount_rate_calculation_id,
+                "terminal_growth": point.terminal_growth_calculation_id,
+                "enterprise_value": point.enterprise_value_calculation_id,
+                "equity_value_per_share": point.equity_value_per_share_calculation_id,
+            }
+            assert len(set(field_ids.values())) == 4
+            assert set(field_ids.values()).issubset(dcf.calculation_ids)
+            all_point_ids.extend(field_ids.values())
+            for field_name, calculation_id in field_ids.items():
+                calculation = lineage[calculation_id]
+                assert calculation_id in result.calculation_ids
+                assert calculation.output_name.endswith(field_name)
+                assert Decimal(str(calculation.output_value)) == Decimal(
+                    str(getattr(point, field_name))
+                )
+            enterprise_lineage = lineage[point.enterprise_value_calculation_id]
+            assert point.discount_rate_calculation_id in enterprise_lineage.input_calculation_ids
+            assert point.terminal_growth_calculation_id in enterprise_lineage.input_calculation_ids
+            per_share_lineage = lineage[point.equity_value_per_share_calculation_id]
+            assert per_share_lineage.input_calculation_ids == [
+                point.enterprise_value_calculation_id
+            ]
+            assert any("net-debt" in item for item in per_share_lineage.input_assumption_ids)
+            assert any("diluted-shares" in item for item in per_share_lineage.input_assumption_ids)
+    assert len(all_point_ids) == len(set(all_point_ids))
+    scenario_lineage = lineage[result.scenario_valuation.calculation_ids[0]]  # type: ignore[union-attr]
+    assert scenario_lineage.input_calculation_ids == [
+        primary_per_share_ids[name] for name in ("bear", "base", "bull")
+    ]
+
+
+def test_semantic_calculation_id_selectors_are_order_independent() -> None:
+    from aegis.fundamentals.calculation_ids import (
+        CalculationIdentityError,
+        comparable_calculation_id,
+        dcf_calculation_id,
+        reverse_dcf_calculation_id,
+        scenario_calculation_id,
+    )
+
+    result = dossier("cmpd")
+    base_dcf = result.dcf["base"]
+    reordered_dcf = base_dcf.model_copy(
+        update={"calculation_ids": list(reversed(base_dcf.calculation_ids))}
+    )
+    assert dcf_calculation_id(reordered_dcf, "value_per_share") == (
+        f"dcf-v1:{base_dcf.forecast_id}:value_per_share"
+    )
+    assert result.scenario_valuation is not None
+    reordered_scenario = result.scenario_valuation.model_copy(
+        update={"calculation_ids": list(reversed(result.scenario_valuation.calculation_ids))}
+    )
+    assert scenario_calculation_id(reordered_scenario, "implied_return") == (
+        "scenario-valuation-v1:implied-return"
+    )
+    reverse = result.reverse_dcf["revenue_growth"]
+    reordered_reverse = reverse.model_copy(
+        update={"calculation_ids": list(reversed(reverse.calculation_ids))}
+    )
+    assert reverse_dcf_calculation_id(reordered_reverse).startswith(
+        "reverse-dcf-bisection-v1:revenue-growth"
+    )
+    assert result.comparables is not None
+    reordered_comparables = result.comparables.model_copy(
+        update={"calculation_ids": list(reversed(result.comparables.calculation_ids))}
+    )
+    assert comparable_calculation_id(reordered_comparables, "mid") == (
+        "comparable-valuation-v2:implied-mid"
+    )
+    missing = base_dcf.model_copy(update={"calculation_ids": ["unrelated"]})
+    with pytest.raises(CalculationIdentityError, match="exactly one"):
+        dcf_calculation_id(missing, "value_per_share")
