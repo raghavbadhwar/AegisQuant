@@ -59,3 +59,17 @@ def test_artifact_cannot_claim_availability_before_filing() -> None:
             sha256="a" * 64,
             parser_version="test",
         )
+
+
+def test_equivalent_snapshots_have_identical_world_hash_despite_build_time(tmp_path: Path) -> None:
+    item = artifact("old", datetime(2021, 8, 1, tzinfo=UTC), "a" * 64)
+    ledger = PITAvailabilityLedger((item,))
+    first_path = ledger.write_snapshot(
+        tmp_path / "one", datetime(2021, 9, 15, tzinfo=UTC), ("AAPL",), dataset_version="sec-v1"
+    )
+    second_path = ledger.write_snapshot(
+        tmp_path / "two", datetime(2021, 9, 15, tzinfo=UTC), ("AAPL",), dataset_version="sec-v1"
+    )
+    first, _ = load_snapshot(first_path)
+    second, _ = load_snapshot(second_path)
+    assert first.manifest_hash == second.manifest_hash

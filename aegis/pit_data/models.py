@@ -88,7 +88,9 @@ class PITSnapshotManifest(BaseModel):
             raise ValueError("snapshot artifact IDs must be unique")
         if any(item != item.lower() or len(item) != 64 for item in self.artifact_hashes):
             raise ValueError("snapshot artifact hashes must be sha256 values")
-        expected = canonical_sha256(self.model_dump(mode="json", exclude={"manifest_hash"}))
+        expected = canonical_sha256(
+            self.model_dump(mode="json", exclude={"built_at", "manifest_hash"})
+        )
         if self.manifest_hash is not None and self.manifest_hash != expected:
             raise ValueError("snapshot manifest hash mismatch")
         return self
@@ -97,7 +99,7 @@ class PITSnapshotManifest(BaseModel):
         return self.model_copy(
             update={
                 "manifest_hash": canonical_sha256(
-                    self.model_dump(mode="json", exclude={"manifest_hash"})
+                    self.model_dump(mode="json", exclude={"built_at", "manifest_hash"})
                 )
             }
         )

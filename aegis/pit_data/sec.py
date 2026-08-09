@@ -225,6 +225,12 @@ class SecPITClient:
             try:
                 accessions = recent["accessionNumber"]
                 for index, accession in enumerate(accessions):
+                    primary_document = recent["primaryDocument"][index]
+                    if not isinstance(primary_document, str) or not primary_document:
+                        # The original submission index remains raw-captured; without a
+                        # primary document this narrow artifact downloader cannot
+                        # construct a stable archive-document URL.
+                        continue
                     filed = datetime.fromisoformat(recent["filingDate"][index]).replace(tzinfo=UTC)
                     report = recent["reportDate"][index]
                     result.append(
@@ -233,7 +239,7 @@ class SecPITClient:
                             ticker=ticker,
                             form=recent["form"][index],
                             accession_number=accession,
-                            primary_document=recent["primaryDocument"][index],
+                            primary_document=primary_document,
                             period_end=datetime.fromisoformat(report).replace(tzinfo=UTC)
                             if report
                             else None,
@@ -323,7 +329,16 @@ class SecPITClient:
         accession = filing.accession_number.replace("-", "")
         document = quote(filing.primary_document, safe="")
         url = f"{_SEC_ARCHIVES_HOST}/Archives/edgar/data/{int(filing.cik)}/{accession}/{document}"
-        body = self._fetch(url, "text/html")
+        try:
+            body = self._fetch(url, "text/html")
+        except SecPITError as exc:
+            if "redirect" not in str(exc):
+                raise
+            # SEC may route some primary-document paths through an interactive
+            # viewer. Preserve the canonical complete submitted filing instead.
+            archive_root = f"{_SEC_ARCHIVES_HOST}/Archives/edgar/data/{int(filing.cik)}"
+            url = f"{archive_root}/{accession}/{accession}.txt"
+            body = self._fetch(url, "text/plain")
         return self._commit(
             source_id="sec-edgar",
             request_id=f"filing-{filing.accession_number}",

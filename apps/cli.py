@@ -94,9 +94,21 @@ def pit_ingest_sec(
     root: Annotated[Path, typer.Option("--root", help="Local PIT lake directory")] = Path(
         "data/pit"
     ),
+    filing_start: Annotated[
+        str | None, typer.Option("--from", help="Earliest filing date (YYYY-MM-DD)")
+    ] = None,
+    filing_end: Annotated[
+        str | None, typer.Option("--to", help="Latest filing date (YYYY-MM-DD)")
+    ] = None,
 ) -> None:
     """Acquire official SEC filing artifacts; records are content-addressed and immutable."""
-    artifacts = ingest_sec(_project_path(root), user_agent, tuple(tickers))
+    artifacts = ingest_sec(
+        _project_path(root),
+        user_agent,
+        tuple(tickers),
+        filing_start=date.fromisoformat(filing_start) if filing_start else None,
+        filing_end=date.fromisoformat(filing_end) if filing_end else None,
+    )
     typer.echo(
         canonical_json(
             {
@@ -125,9 +137,7 @@ def pit_ingest_nport(
 
 @pit_app.command("build-snapshot")
 def pit_build_snapshot(
-    at: Annotated[
-        datetime, typer.Option("--at", help="Timezone-aware ISO-8601 simulation timestamp")
-    ],
+    at: Annotated[str, typer.Option("--at", help="Timezone-aware ISO-8601 simulation timestamp")],
     universe: Annotated[list[str], typer.Option("--universe", help="Ticker/entity universe")],
     root: Annotated[Path, typer.Option("--root", help="Local PIT lake directory")] = Path(
         "data/pit"
@@ -141,8 +151,12 @@ def pit_build_snapshot(
     artifacts = tuple(
         PITArtifact.model_validate_json(row) for row in ledger_path.read_text().splitlines() if row
     )
+    try:
+        simulation_at = datetime.fromisoformat(at)
+    except ValueError as exc:
+        raise typer.BadParameter("--at must be ISO-8601") from exc
     snapshot = PITAvailabilityLedger(artifacts).write_snapshot(
-        lake / "snapshots", at, tuple(universe), dataset_version="sec-edgar-v1"
+        lake / "snapshots", simulation_at, tuple(universe), dataset_version="sec-edgar-v1"
     )
     typer.echo(str(snapshot))
 

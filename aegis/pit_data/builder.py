@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 from aegis.contracts import canonical_json
@@ -12,22 +12,10 @@ from .fundamentals import PITFundamentalFact, normalize_sec_facts
 from .models import PITArtifact, SecurityMasterRecord
 from .sec import SecPITClient
 
-DEFAULT_FORMS = frozenset(
-    {
-        "10-K",
-        "10-Q",
-        "8-K",
-        "10-K/A",
-        "10-Q/A",
-        "8-K/A",
-        "DEF 14A",
-        "3",
-        "4",
-        "5",
-        "SC 13D",
-        "SC 13G",
-    }
-)
+# The initial automatic corpus is statements-first. Event/ownership forms
+# require an archive-index resolver because some SEC rows do not expose a
+# stable primary-document route; callers may opt in after that resolver exists.
+DEFAULT_FORMS = frozenset({"10-K", "10-Q", "10-K/A", "10-Q/A"})
 
 
 class PITBuildError(RuntimeError):
@@ -65,8 +53,12 @@ def ingest_sec(
     tickers: tuple[str, ...],
     *,
     allowed_forms: frozenset[str] = DEFAULT_FORMS,
+    filing_start: date | None = None,
+    filing_end: date | None = None,
 ) -> tuple[PITArtifact, ...]:
     """Download official SEC filing evidence and append non-mutating ledger rows."""
+    if filing_start is not None and filing_end is not None and filing_end < filing_start:
+        raise PITBuildError("SEC filing end must not precede filing start")
     lake = bootstrap(root)
     client = SecPITClient(user_agent, RawStore(lake / "raw"))
     mappings = client.ticker_cik_map()
@@ -92,7 +84,11 @@ def ingest_sec(
             )
         )
         for filing in filings:
-            if filing.form not in allowed_forms:
+            if (
+                filing.form not in allowed_forms
+                or (filing_start is not None and filing.filed_at.date() < filing_start)
+                or (filing_end is not None and filing.filed_at.date() > filing_end)
+            ):
                 continue
             receipt = client.filing_document(filing)
             built.append(

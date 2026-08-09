@@ -79,3 +79,27 @@ def test_company_facts_preserves_versions_for_later_as_of_selection(tmp_path: Pa
     visible_2022 = [x.value for x in facts if x.available_at <= datetime(2022, 3, 1, tzinfo=UTC)]
     assert visible_2021 == [10.0]
     assert visible_2022 == [10.0, 9.6]
+
+
+def test_submission_skips_rows_without_primary_document_but_preserves_raw_index(
+    tmp_path: Path,
+) -> None:
+    payload = {
+        "tickers": ["AAPL"],
+        "filings": {
+            "recent": {
+                "accessionNumber": ["0000320193-24-000069"],
+                "filingDate": ["2024-05-03"],
+                "reportDate": ["2024-03-30"],
+                "form": ["4"],
+                "primaryDocument": [""],
+            }
+        },
+    }
+    client = SecPITClient(
+        "AegisQuant test@example.com",
+        RawStore(tmp_path / "raw"),
+        fetch=lambda _url, _type: json.dumps(payload).encode(),
+    )
+    assert client.submissions("320193") == ()
+    assert list((tmp_path / "raw").glob("**/*.json"))

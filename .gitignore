@@ -70,3 +70,7 @@ outputs/
 
 # Local-only release tooling
 scripts/release.sh
+
+# Immutable, locally acquired PIT source artifacts; retain locally, never commit.
+data/pit/*
+!data/pit/README.md
