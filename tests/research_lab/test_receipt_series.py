@@ -8,6 +8,7 @@ from aegis.research_lab.receipt_series import (
     ReceiptComparisonRow,
     ReceiptComparisonSpec,
     ReceiptReturnObservation,
+    load_receipt_comparison_spec,
     receipt_cpcv_folds,
     receipt_validation_folds,
 )
@@ -47,7 +48,7 @@ def test_receipt_intervals_drive_purged_walk_forward_and_cpcv() -> None:
     assert all(11 not in train and 11 not in test for train, test in (*walk_forward, *cpcv))
 
 
-def test_receipt_comparison_spec_requires_exact_predeclared_set() -> None:
+def test_receipt_comparison_spec_requires_exact_predeclared_set(tmp_path) -> None:  # type: ignore[no-untyped-def]
     now = datetime(2024, 1, 1, tzinfo=UTC)
     rows = tuple(
         ReceiptComparisonRow(
@@ -71,6 +72,9 @@ def test_receipt_comparison_spec_requires_exact_predeclared_set() -> None:
         rows=rows,
     )
     assert len(spec.rows) == 6
+    path = tmp_path / "comparison.json"
+    path.write_text(spec.model_dump_json())
+    assert load_receipt_comparison_spec(path) == spec
     with pytest.raises(ValueError, match="exactly six"):
         ReceiptComparisonSpec(
             schema_version="aegis-receipt-comparison-v1",

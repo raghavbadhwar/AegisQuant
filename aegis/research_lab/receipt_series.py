@@ -9,6 +9,7 @@ from __future__ import annotations
 import itertools
 import math
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -235,3 +236,11 @@ def receipt_cpcv_folds(
         )
     except ValueError as exc:
         raise ReceiptSeriesError(f"receipt CPCV validation failed: {exc}") from exc
+
+
+def load_receipt_comparison_spec(path: str | Path) -> ReceiptComparisonSpec:
+    """Load a receipt-only comparison declaration; reject malformed external input."""
+    try:
+        return ReceiptComparisonSpec.model_validate_json(Path(path).read_bytes())
+    except Exception as exc:
+        raise ReceiptSeriesError(f"invalid receipt comparison specification: {path}") from exc
