@@ -193,10 +193,12 @@ def strategy_evaluate_command(
     dates = tuple(date.fromisoformat(value) for value in payload["dates"])
     base_cost_bps = float(payload["base_cost_bps"])
     eligible_ids = tuple(payload["eligible_observation_ids"])
+    label_end_dates = tuple(date.fromisoformat(value) for value in payload["label_end_dates"])
     common_hash = common_sample_hash(
         dates=dates,
         data_snapshot_hash=payload["data_snapshot_hash"],
         eligible_observation_ids=eligible_ids,
+        label_end_dates=label_end_dates,
         return_horizon_days=int(payload["return_horizon_days"]),
         capital=float(payload["capital"]),
         constraints_hash=payload["constraints_hash"],
@@ -233,6 +235,7 @@ def strategy_evaluate_command(
                 dates=dates,
                 data_snapshot_hash=payload["data_snapshot_hash"],
                 eligible_observation_ids=eligible_ids,
+                label_end_dates=label_end_dates,
                 series_input_hash=series_hash,
                 return_horizon_days=int(payload["return_horizon_days"]),
                 capital=float(payload["capital"]),

@@ -44,6 +44,7 @@ def common_sample_hash(
     dates: tuple[date, ...],
     data_snapshot_hash: str,
     eligible_observation_ids: tuple[str, ...],
+    label_end_dates: tuple[date, ...],
     return_horizon_days: int,
     capital: float,
     constraints_hash: str,
@@ -56,6 +57,7 @@ def common_sample_hash(
             "dates": dates,
             "data_snapshot_hash": data_snapshot_hash,
             "eligible_observation_ids": eligible_observation_ids,
+            "label_end_dates": label_end_dates,
             "return_horizon_days": return_horizon_days,
             "capital": capital,
             "constraints_hash": constraints_hash,
@@ -93,6 +95,7 @@ class StrategyReturnSeries(BaseModel):
     dates: tuple[date, ...] = Field(min_length=4)
     data_snapshot_hash: _SHA256
     eligible_observation_ids: tuple[str, ...] = Field(min_length=4)
+    label_end_dates: tuple[date, ...] = Field(min_length=4)
     series_input_hash: _SHA256
     return_horizon_days: int = Field(gt=0)
     capital: Annotated[float, Field(gt=0.0)]
@@ -111,6 +114,11 @@ class StrategyReturnSeries(BaseModel):
             raise ValueError("eligible observation IDs must be unique")
         if len(self.eligible_observation_ids) != len(self.dates):
             raise ValueError("eligible observation IDs must align to the common sample")
+        if len(self.label_end_dates) != len(self.dates) or any(
+            label_end < prediction
+            for prediction, label_end in zip(self.dates, self.label_end_dates, strict=True)
+        ):
+            raise ValueError("label end dates must align to and not precede predictions")
         if len(self.gross_returns) != len(self.dates) or len(self.turnover) != len(self.dates):
             raise ValueError("dates, gross returns, and turnover must have equal lengths")
         if any(
@@ -132,6 +140,7 @@ class StrategyReturnSeries(BaseModel):
             dates=self.dates,
             data_snapshot_hash=self.data_snapshot_hash,
             eligible_observation_ids=self.eligible_observation_ids,
+            label_end_dates=self.label_end_dates,
             return_horizon_days=self.return_horizon_days,
             capital=self.capital,
             constraints_hash=self.constraints_hash,
@@ -204,6 +213,7 @@ def _validate_common_comparison(ordered: Sequence[StrategyReturnSeries]) -> None
         "common_sample_hash",
         "dates",
         "data_snapshot_hash",
+        "label_end_dates",
         "return_horizon_days",
         "capital",
         "constraints_hash",
