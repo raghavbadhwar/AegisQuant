@@ -9,11 +9,12 @@ import numpy as np
 from pydantic import BaseModel, ConfigDict
 
 from aegis.brokers import SimBroker
-from aegis.contracts import ResearchCase, canonical_json, canonical_sha256
+from aegis.contracts import FundMandate, ResearchCase, canonical_json, canonical_sha256
 from aegis.data import DataClient, DataIntegrityError, PriceBar
 from aegis.fund.ledger import CycleRecord, SQLiteRunLedger
+from aegis.fund.models import ForecastProvider
 from aegis.fund.run_cycle import run_cycle
-from aegis.fund.spec import FundSpec
+from aegis.fund.spec import FundConfiguration
 from aegis.quant import DeterministicCompositeProvider
 
 
@@ -115,14 +116,20 @@ def _metrics(
 
 
 def backtest_fund(
-    fund: FundSpec,
+    fund: FundConfiguration,
     universe: list[str],
     start: date,
     end: date,
     data_client: DataClient,
     ledger: SQLiteRunLedger,
+    forecast_provider: ForecastProvider | None = None,
 ) -> BacktestResult:
-    """Run historical research cycles with one persistent simulated broker."""
+    """Run historical research cycles with one persistent simulated broker.
+
+    Institutional mandates must supply an explicitly sealed local historical
+    provider.  Falling back to a composite provider would silently bypass the
+    multi-strategy, quant-bundle and master-portfolio authorities.
+    """
     if start > end:
         raise ValueError("backtest start must not be after end")
     start_dt = datetime.combine(start, time.min, tzinfo=UTC)
@@ -132,13 +139,22 @@ def backtest_fund(
     if not grid:
         raise DataIntegrityError("benchmark produced no historical trading grid")
 
-    broker = SimBroker(fund.capital)
-    provider = DeterministicCompositeProvider(data_client)
+    capital = float(fund.capital)
+    fund_name = fund.display_name if isinstance(fund, FundMandate) else fund.name
+    broker = SimBroker(capital)
+    if forecast_provider is None:
+        if isinstance(fund, FundMandate):
+            raise DataIntegrityError(
+                "institutional backtest requires a sealed local historical forecast provider"
+            )
+        provider: ForecastProvider = DeterministicCompositeProvider(data_client)
+    else:
+        provider = forecast_provider
     records: list[CycleRecord] = []
     for bar in grid:
         as_of = bar.available_at
         case = ResearchCase(
-            case_id=f"backtest-{fund.name}-{as_of:%Y%m%d}",
+            case_id=f"backtest-{fund_name}-{as_of:%Y%m%d}",
             tickers=universe,
             as_of=as_of,
             horizon_days=20,
@@ -151,9 +167,9 @@ def backtest_fund(
     nav = [record.nav_after for record in records]
     benchmark_by_date = {bar.date: bar.close for bar in benchmark_bars}
     initial_benchmark = benchmark_by_date[grid[0].date]
-    benchmark_nav = [fund.capital * benchmark_by_date[bar.date] / initial_benchmark for bar in grid]
+    benchmark_nav = [capital * benchmark_by_date[bar.date] / initial_benchmark for bar in grid]
     return BacktestResult(
-        fund_name=fund.name,
+        fund_name=fund_name,
         universe=tuple(sorted(set(universe))),
         start=start,
         end=end,
