@@ -6,6 +6,7 @@ import pytest
 
 from aegis.research_lab.validation import (
     combinatorial_purged_splits,
+    interval_combinatorial_purged_splits,
     interval_purged_walk_forward,
     probability_of_backtest_overfitting,
     purged_walk_forward,
@@ -94,3 +95,20 @@ def test_probability_statistics_use_period_sharpe_not_double_annualization() -> 
     period_sharpe = mean / variance**0.5
     assert stats["probabilistic_sharpe_ratio"] < 0.7
     assert stats["annualized_sharpe"] == pytest.approx(period_sharpe * 252**0.5)
+
+
+def test_interval_cpcv_purges_all_label_overlap_and_excludes_holdout() -> None:
+    start = datetime(2025, 1, 1, tzinfo=UTC)
+    predictions = tuple(start + timedelta(days=index) for index in range(12))
+    label_ends = tuple(value + timedelta(days=2) for value in predictions)
+    folds = interval_combinatorial_purged_splits(
+        predictions, label_ends, 4, 1, embargo=timedelta(days=1), locked_holdout={11}
+    )
+    assert len(folds) == 4
+    for train, test in folds:
+        assert 11 not in train and 11 not in test
+        for train_index in train:
+            for test_index in test:
+                assert label_ends[train_index] < predictions[test_index] or (
+                    predictions[train_index] > label_ends[test_index] + timedelta(days=1)
+                )

@@ -149,6 +149,72 @@ def combinatorial_purged_splits(
     return tuple(folds)
 
 
+def interval_combinatorial_purged_splits(
+    prediction_times: Sequence[datetime],
+    label_end_times: Sequence[datetime],
+    n_groups: int,
+    n_test_groups: int,
+    *,
+    embargo: timedelta = timedelta(0),
+    locked_holdout: Collection[int] = (),
+) -> tuple[tuple[tuple[int, ...], tuple[int, ...]], ...]:
+    """CPCV folds that purge every overlapping realized-label interval.
+
+    Unlike index-only CPCV, each training candidate is denied when its inclusive
+    label interval intersects any test interval.  The embargo additionally
+    removes observations starting just after a test label ends.  Locked final
+    holdout rows are excluded from every fold rather than silently reused.
+    """
+    n_samples = len(prediction_times)
+    if (
+        len(label_end_times) != n_samples
+        or not (1 <= n_test_groups < n_groups <= n_samples)
+        or embargo < timedelta(0)
+    ):
+        raise ValueError("invalid interval CPCV parameters")
+    all_times = (*prediction_times, *label_end_times)
+    if any(value.tzinfo is None or value.utcoffset() is None for value in all_times):
+        raise ValueError("interval CPCV requires timezone-aware timestamps")
+    if any(current <= previous for previous, current in itertools.pairwise(prediction_times)):
+        raise ValueError("interval CPCV prediction times must be strictly increasing")
+    if any(
+        label_end < prediction
+        for prediction, label_end in zip(prediction_times, label_end_times, strict=True)
+    ):
+        raise ValueError("interval CPCV label end times may not precede predictions")
+    holdout = set(locked_holdout)
+    if any(index < 0 or index >= n_samples for index in holdout):
+        raise ValueError("locked holdout index is out of range")
+    groups = [tuple(map(int, part)) for part in np.array_split(np.arange(n_samples), n_groups)]
+    folds = []
+    for test_group_ids in itertools.combinations(range(n_groups), n_test_groups):
+        test = tuple(
+            index
+            for group_id in test_group_ids
+            for index in groups[group_id]
+            if index not in holdout
+        )
+        if not test:
+            continue
+        intervals = tuple((prediction_times[index], label_end_times[index]) for index in test)
+        train = tuple(
+            index
+            for index in range(n_samples)
+            if index not in holdout
+            and index not in test
+            and all(
+                label_end_times[index] < test_start or prediction_times[index] > test_end + embargo
+                for test_start, test_end in intervals
+            )
+        )
+        if not train:
+            raise ValueError("interval CPCV purge and embargo leave an empty fold")
+        folds.append((train, test))
+    if not folds:
+        raise ValueError("interval CPCV produced no folds")
+    return tuple(folds)
+
+
 def validation_statistics(returns: list[float], *, trial_sharpes: list[float]) -> dict[str, float]:
     values = np.asarray(returns, dtype=float)
     if len(values) < 3 or not np.all(np.isfinite(values)):

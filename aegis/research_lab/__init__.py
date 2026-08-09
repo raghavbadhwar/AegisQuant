@@ -13,6 +13,7 @@ from .strategy_evaluation import (
 )
 from .validation import (
     combinatorial_purged_splits,
+    interval_combinatorial_purged_splits,
     interval_purged_walk_forward,
     purged_walk_forward,
     validation_statistics,
@@ -30,6 +31,7 @@ __all__ = [
     "combinatorial_purged_splits",
     "common_sample_hash",
     "evaluate_predeclared_strategies",
+    "interval_combinatorial_purged_splits",
     "interval_purged_walk_forward",
     "purged_walk_forward",
     "strategy_series_hash",
