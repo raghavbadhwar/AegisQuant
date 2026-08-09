@@ -222,3 +222,10 @@ def test_quant_research_bundle_rejects_event_study_leakage() -> None:
 def test_quant_research_bundle_rejects_incomplete_behavioral_ticker_coverage() -> None:
     with pytest.raises(ValueError, match="behavioral features must cover exactly eligible"):
         _bundle(behavioral_features=(_behavioral("AAPL"),))
+
+
+def test_quant_bundle_rejects_missing_behavioral_or_graph_feature_collections() -> None:
+    with pytest.raises(ValueError, match="behavioral_features"):
+        _bundle(behavioral_features=())
+    with pytest.raises(ValueError, match="graph_features"):
+        _bundle(graph_features=())

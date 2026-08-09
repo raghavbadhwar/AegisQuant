@@ -352,8 +352,8 @@ class QuantResearchBundle(HashedContractModel):
     factor_evaluations: tuple[FactorEvaluation, ...] = Field(min_length=1)
     event_study_results: tuple[EventStudyResult, ...] = Field(min_length=1)
     regime_snapshot: RegimeSnapshot
-    behavioral_features: tuple[BehavioralFeatures, ...] = ()
-    graph_features: tuple[GraphFeatures, ...] = ()
+    behavioral_features: tuple[BehavioralFeatures, ...] = Field(min_length=1)
+    graph_features: tuple[GraphFeatures, ...] = Field(min_length=1)
 
     @model_validator(mode="after")
     def research_is_complete_and_point_in_time(self) -> Self:
