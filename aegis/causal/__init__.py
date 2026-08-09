@@ -1,5 +1,6 @@
 """Candidate-only v4 causal thesis contracts; no execution authority."""
 
+from .beliefs import BeliefState
 from .contracts import (
     CausalEdge,
     CausalEdgeKind,
@@ -10,6 +11,7 @@ from .contracts import (
 )
 
 __all__ = [
+    "BeliefState",
     "CausalEdge",
     "CausalEdgeKind",
     "CausalGraphSnapshot",
