@@ -96,10 +96,10 @@ def test_v3b_cli_surface_is_offline_typed_and_byte_stable(tmp_path: Path, monkey
     monkeypatch.setattr(socket, "socket", denied)
     runner = CliRunner()
     expected_keys = {
-        ("screen", "run"): "snapshot_id",
-        ("factors", "evaluate"): "information_coefficient",
-        ("events", "study"): "cumulative_abnormal_returns",
-        ("regimes", "show"): "snapshot_id",
+        ("demo", "screen"): "snapshot_id",
+        ("demo", "factors"): "information_coefficient",
+        ("demo", "events"): "cumulative_abnormal_returns",
+        ("demo", "regimes"): "snapshot_id",
     }
     for command, key in expected_keys.items():
         result = runner.invoke(app, list(command))

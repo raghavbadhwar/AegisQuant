@@ -40,15 +40,15 @@ This mode does not load a fund, portfolio policy, broker, or cycle ledger. It pr
 ### Institutional multi-strategy research and simulated fund cycle (v3B candidate)
 
 ```bash
-uv run aegisquant screen run
-uv run aegisquant factors evaluate
-uv run aegisquant events study
-uv run aegisquant regimes show
+uv run aegisquant demo screen
+uv run aegisquant demo factors
+uv run aegisquant demo events
+uv run aegisquant demo regimes
 uv run aegisquant strategy evaluate
 uv run aegisquant fund run
 ```
 
-The frozen v3B acceptance surface is no-network and deterministic. The strategy comparison always retains the six predeclared common-sample rows and can only make the combined candidate *eligible for later human review*; it cannot promote it. `fund run` loads the hash-bound four-pod mandate, retains abstained pod budgets as cash, preserves every opposing contribution, creates one `MasterPortfolio`, and crosses only the existing `PortfolioProposal → risk → orders → SimBroker → ledger` seam. The institutional receipt uses the explicit `aegis-cycle-v2` schema while legacy `aegis-cycle-v1` receipts retain their original canonical payload and digest behavior.
+The `demo` commands are frozen no-network illustrations, not production research outputs. The fund and comparison commands remain deterministic implementation surfaces but are not release-accepted. The strategy comparison always retains the six predeclared common-sample rows and can only make the combined candidate *eligible for later human review*; it cannot promote it. `fund run` loads the hash-bound four-pod mandate, retains abstained pod budgets as cash, preserves every opposing contribution, creates one `MasterPortfolio`, and crosses only the existing `PortfolioProposal → risk → orders → SimBroker → ledger` seam. The institutional receipt uses the explicit `aegis-cycle-v2` schema while legacy `aegis-cycle-v1` receipts retain their original canonical payload and digest behavior.
 
 `uv run aegisquant fund backtest --help` exposes the historical same-cycle backtest command. The frozen six-strategy v3B evaluation is an implementation fixture, not release authority, until the remaining independent-audit remediation and clean-tree re-audit pass.
 

@@ -151,16 +151,6 @@ class StrategyReturnSeries(BaseModel):
             raise ValueError("experiment record is not bound to the return series")
         return self
 
-    @property
-    def experiment_record(self) -> ExperimentRecord:
-        """Explicit alias for callers that use the full lineage name."""
-        return self.experiment
-
-    @property
-    def per_period_turnover(self) -> tuple[float, ...]:
-        """Explicit alias documenting that turnover is period-aligned."""
-        return self.turnover
-
 
 def _net_returns(series: StrategyReturnSeries, cost_bps: float) -> list[float]:
     values = [

@@ -567,30 +567,6 @@ class PortfolioModelResult(PointInTimeContract):
         return self
 
 
-class QuantTrialRecord(HashedContractModel):
-    trial_id: SemanticId
-    experiment_id: Annotated[str, Field(min_length=1)]
-    experiment_hash: Sha256
-    trial_number: int = Field(gt=0)
-    strategy_id: StrategyComparisonId
-    common_sample_hash: Sha256
-    parameters_hash: Sha256
-    status: Literal["declared", "running", "completed", "failed", "rejected", "abstained"]
-    declared_at: AwareDatetime
-    evaluated_at: AwareDatetime | None = None
-    metrics: dict[str, FiniteFloat] = Field(default_factory=dict)
-    contract_version: ContractVersion = "3.1.0"
-
-    @model_validator(mode="after")
-    def trial_timestamps_match_status(self) -> Self:
-        terminal = self.status in {"completed", "failed", "rejected", "abstained"}
-        if terminal != (self.evaluated_at is not None):
-            raise ValueError("terminal trials require evaluated_at; open trials must omit it")
-        if self.evaluated_at is not None and self.evaluated_at < self.declared_at:
-            raise ValueError("trial cannot be evaluated before declaration")
-        return self
-
-
 class BaselinePerformance(HashedContractModel):
     strategy_id: StrategyComparisonId
     common_sample_hash: Sha256

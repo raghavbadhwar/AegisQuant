@@ -57,18 +57,14 @@ app = typer.Typer(
 )
 source_app = typer.Typer(help="Governed live-research source intelligence.")
 research_app = typer.Typer(help="Standalone institutional research workflows.")
-screen_app = typer.Typer(help="Point-in-time universe screening.")
-factors_app = typer.Typer(help="Deterministic factor diagnostics.")
-events_app = typer.Typer(help="Timestamp-correct event studies.")
-regimes_app = typer.Typer(help="Deterministic regime evidence.")
+demo_app = typer.Typer(
+    help="Frozen no-network illustrative v3B examples; not production screening."
+)
 strategy_app = typer.Typer(help="Honest predeclared strategy evaluation.")
 fund_app = typer.Typer(help="Multi-strategy simulated fund workflows.")
 app.add_typer(source_app, name="sources")
 app.add_typer(research_app, name="research")
-app.add_typer(screen_app, name="screen")
-app.add_typer(factors_app, name="factors")
-app.add_typer(events_app, name="events")
-app.add_typer(regimes_app, name="regimes")
+app.add_typer(demo_app, name="demo")
 app.add_typer(strategy_app, name="strategy")
 app.add_typer(fund_app, name="fund")
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -157,27 +153,27 @@ def research_company_command(
         typer.echo(rendered, nl=False)
 
 
-@screen_app.command("run")
+@demo_app.command("screen")
 def screen_run_command() -> None:
-    """Run the frozen PIT universe example; exclusions remain visible."""
+    """Illustrate a frozen PIT universe; not production screening."""
     typer.echo(canonical_json(demo_universe()))
 
 
-@factors_app.command("evaluate")
+@demo_app.command("factors")
 def factors_evaluate_command() -> None:
-    """Run full deterministic factor diagnostics on the frozen panel."""
+    """Illustrate factor diagnostics on a small frozen panel."""
     typer.echo(canonical_json(demo_factor_diagnostics()))
 
 
-@events_app.command("study")
+@demo_app.command("events")
 def events_study_command() -> None:
-    """Run the timestamp-correct frozen market-model CAR study."""
+    """Illustrate a timestamp-correct frozen market-model CAR study."""
     typer.echo(canonical_json(demo_event_study()))
 
 
-@regimes_app.command("show")
+@demo_app.command("regimes")
 def regimes_show_command() -> None:
-    """Show deterministic six-axis regime evidence."""
+    """Illustrate deterministic six-axis regime evidence."""
     typer.echo(canonical_json(demo_regime()))
 
 
