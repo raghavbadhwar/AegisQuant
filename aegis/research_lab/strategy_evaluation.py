@@ -1,15 +1,15 @@
 """Honest, deterministic evaluation of the six predeclared v3B strategies.
 
-This module evaluates supplied return series only.  It cannot configure, activate,
-or promote a strategy.  Every supplied experiment is ledgered before any
-cross-strategy performance calculation is run.
+This module evaluates sealed series only. Receipt-derived construction is the
+eligibility path; it cannot configure, activate, or promote a strategy. Every
+supplied experiment is ledgered before any cross-strategy calculation.
 """
 
 from __future__ import annotations
 
 import math
 from collections.abc import Sequence
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Annotated, Any, Self
 
 import numpy as np
@@ -24,6 +24,7 @@ from aegis.contracts import (
 )
 from aegis.contracts.quant import StrategyComparisonId
 from aegis.research_lab.experiments import ExperimentLedger
+from aegis.research_lab.receipt_series import ReceiptReturnObservation
 from aegis.research_lab.validation import (
     probability_of_backtest_overfitting,
     validation_statistics,
@@ -165,6 +166,91 @@ class StrategyReturnSeries(BaseModel):
         if self.experiment.parameters.get("series_input_hash") != self.series_input_hash:
             raise ValueError("experiment record is not bound to the return series")
         return self
+
+
+def strategy_series_from_receipts(
+    *,
+    strategy_id: StrategyComparisonId,
+    observations: tuple[ReceiptReturnObservation, ...],
+    capital: float,
+    constraints_hash: str,
+    benchmark_id: str,
+    base_cost_bps: float,
+    experiment: ExperimentRecord,
+) -> StrategyReturnSeries:
+    """Construct eligibility inputs solely from governed adjacent-receipt observations.
+
+    No return, turnover, date, snapshot, or label input is accepted from a caller.
+    The receipt stream must already be a common, fixed-horizon PIT information
+    world; any inconsistency fails before an ExperimentRecord can be evaluated.
+    """
+    if strategy_id not in PREDECLARED_STRATEGY_IDS:
+        raise StrategyEvaluationError("receipt row is not a predeclared strategy")
+    if len(observations) < 4:
+        raise StrategyEvaluationError("receipt comparison needs at least four observations")
+    horizons = {item.label_time - item.prediction_time for item in observations}
+    if len(horizons) != 1 or next(iter(horizons)) <= timedelta(0):
+        raise StrategyEvaluationError("receipt labels must have one positive common horizon")
+    snapshots = {item.snapshot_hash for item in observations}
+    if len(snapshots) != 1:
+        raise StrategyEvaluationError("receipt comparison requires one sealed data snapshot")
+    dates = tuple(item.prediction_time.date() for item in observations)
+    labels = tuple(item.label_time.date() for item in observations)
+    if len(set(dates)) != len(dates):
+        raise StrategyEvaluationError("receipt comparison needs unique prediction dates")
+    observation_ids = tuple(
+        canonical_sha256(
+            {
+                "prediction_run_id": item.prediction_run_id,
+                "prediction_digest": item.prediction_digest,
+                "label_run_id": item.label_run_id,
+                "label_digest": item.label_digest,
+            }
+        )
+        for item in observations
+    )
+    horizon_days = next(iter(horizons)).days
+    common_hash = common_sample_hash(
+        dates=dates,
+        data_snapshot_hash=next(iter(snapshots)),
+        eligible_observation_ids=observation_ids,
+        label_end_dates=labels,
+        quant_bundle_hashes=tuple(item.quant_bundle_hash for item in observations),
+        return_horizon_days=horizon_days,
+        capital=capital,
+        constraints_hash=constraints_hash,
+        benchmark_id=benchmark_id,
+        base_cost_bps=base_cost_bps,
+    )
+    gross_returns = tuple(item.gross_return for item in observations)
+    turnover = tuple(item.turnover for item in observations)
+    input_hash = strategy_series_hash(
+        common_hash=common_hash, gross_returns=gross_returns, turnover=turnover
+    )
+    if experiment.data_snapshot_hash != next(iter(snapshots)):
+        raise StrategyEvaluationError("receipt experiment must bind the sealed data snapshot")
+    if experiment.parameters.get("strategy_id") != strategy_id:
+        raise StrategyEvaluationError("receipt experiment must bind its strategy ID")
+    if experiment.parameters.get("series_input_hash") != input_hash:
+        raise StrategyEvaluationError("receipt experiment must bind the derived receipt series")
+    return StrategyReturnSeries(
+        strategy_id=strategy_id,
+        common_sample_hash=common_hash,
+        dates=dates,
+        data_snapshot_hash=next(iter(snapshots)),
+        eligible_observation_ids=observation_ids,
+        label_end_dates=labels,
+        quant_bundle_hashes=tuple(item.quant_bundle_hash for item in observations),
+        series_input_hash=input_hash,
+        return_horizon_days=horizon_days,
+        capital=capital,
+        constraints_hash=constraints_hash,
+        benchmark_id=benchmark_id,
+        gross_returns=gross_returns,
+        turnover=turnover,
+        base_cost_bps=base_cost_bps,
+        experiment=experiment,
+    )
 
 
 def _net_returns(series: StrategyReturnSeries, cost_bps: float) -> list[float]:

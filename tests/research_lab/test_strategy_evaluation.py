@@ -8,11 +8,13 @@ from pydantic import BaseModel
 
 from aegis.contracts import PREDECLARED_STRATEGY_IDS, ExperimentRecord, canonical_sha256
 from aegis.research_lab.experiments import ExperimentLedger
+from aegis.research_lab.receipt_series import ReceiptReturnObservation
 from aegis.research_lab.strategy_evaluation import (
     StrategyEvaluationError,
     StrategyReturnSeries,
     common_sample_hash,
     evaluate_predeclared_strategies,
+    strategy_series_from_receipts,
     strategy_series_hash,
 )
 
@@ -170,4 +172,34 @@ def test_quant_bundle_hashes_are_part_of_the_six_way_common_sample(tmp_path: Any
     with pytest.raises(StrategyEvaluationError, match="common sample"):
         evaluate_predeclared_strategies(
             attempted, DECLARED, EVALUATED, ExperimentLedger(tmp_path / "bundles.sqlite")
+        )
+
+
+def test_receipt_adapter_rejects_mixed_sealed_snapshot_before_returns_are_accepted() -> None:
+    observations = tuple(
+        ReceiptReturnObservation(
+            prediction_run_id=f"p-{index}",
+            prediction_digest="a" * 64,
+            prediction_time=DECLARED + timedelta(days=index * 10),
+            label_run_id=f"l-{index}",
+            label_digest="b" * 64,
+            label_time=DECLARED + timedelta(days=index * 10 + 5),
+            quant_bundle_hash="c" * 64,
+            snapshot_hash=SNAPSHOT if index != 2 else "d" * 64,
+            entry_cost=1.0,
+            fill_notional=100.0,
+            gross_return=0.01,
+            turnover=0.01,
+        )
+        for index in range(4)
+    )
+    with pytest.raises(StrategyEvaluationError, match="one sealed data snapshot"):
+        strategy_series_from_receipts(
+            strategy_id="equal-weight-v1",
+            observations=observations,
+            capital=100_000.0,
+            constraints_hash=CONSTRAINTS,
+            benchmark_id="benchmark-spy-v1",
+            base_cost_bps=10.0,
+            experiment=experiment("equal-weight-v1", 1, "a" * 64),
         )

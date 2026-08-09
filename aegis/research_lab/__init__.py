@@ -16,6 +16,7 @@ from .strategy_evaluation import (
     StrategyReturnSeries,
     common_sample_hash,
     evaluate_predeclared_strategies,
+    strategy_series_from_receipts,
     strategy_series_hash,
 )
 from .validation import (
@@ -46,6 +47,7 @@ __all__ = [
     "interval_purged_walk_forward",
     "purged_walk_forward",
     "receipt_series_hash",
+    "strategy_series_from_receipts",
     "strategy_series_hash",
     "validate_candidate_target",
     "validation_statistics",
