@@ -101,7 +101,7 @@ class PITAvailabilityLedger:
             for item in self.securities
             if item.valid_from <= cutoff
             and (item.valid_to is None or cutoff <= item.valid_to)
-            and item.canonical_security_id in set(universe)
+            and (item.canonical_security_id in set(universe) or item.ticker in set(universe))
         ]
         (temporary / "security_master.jsonl").write_text(
             "".join(canonical_json(item) + "\n" for item in security_rows)
@@ -122,8 +122,25 @@ def load_snapshot(path: str | Path) -> tuple[PITSnapshotManifest, tuple[PITArtif
             for line in (root / "artifacts.jsonl").read_text().splitlines()
             if line
         )
+        securities = tuple(
+            SecurityMasterRecord.model_validate_json(line)
+            for line in (root / "security_master.jsonl").read_text().splitlines()
+            if line
+        )
     except Exception as exc:
         raise PITLedgerError(f"invalid PIT snapshot: {path}") from exc
+    universe = set(manifest.universe)
+    mapped = {item.ticker for item in securities}.union(
+        item.canonical_security_id for item in securities
+    )
+    if not universe.issubset(mapped):
+        raise PITLedgerError("snapshot lacks applicable historical security mappings")
+    if any(
+        item.valid_from > manifest.simulation_at
+        or (item.valid_to is not None and item.valid_to < manifest.simulation_at)
+        for item in securities
+    ):
+        raise PITLedgerError("snapshot security mapping is not valid at its cutoff")
     if any(item.available_at > manifest.simulation_at for item in rows):
         raise PITLedgerError("snapshot contains future artifact")
     if tuple(item.artifact_id for item in rows) != manifest.artifact_ids:

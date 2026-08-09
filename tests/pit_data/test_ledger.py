@@ -15,6 +15,17 @@ from aegis.pit_data import (
 from aegis.pit_data.nport import NPortHolding
 
 
+def security() -> SecurityMasterRecord:
+    return SecurityMasterRecord(
+        canonical_security_id="us:AAPL",
+        ticker="AAPL",
+        issuer="Apple Inc.",
+        valid_from=datetime(1900, 1, 1, tzinfo=UTC),
+        source="test",
+        source_version="v1",
+    )
+
+
 def artifact(identifier: str, available: datetime, digest: str) -> PITArtifact:
     return PITArtifact(
         artifact_id=identifier,
@@ -38,7 +49,7 @@ def artifact(identifier: str, available: datetime, digest: str) -> PITArtifact:
 def test_snapshot_time_gate_and_immutable_provenance(tmp_path: Path) -> None:
     old = artifact("old", datetime(2021, 8, 1, tzinfo=UTC), "a" * 64)
     future = artifact("future", datetime(2021, 9, 20, tzinfo=UTC), "b" * 64)
-    ledger = PITAvailabilityLedger((future, old))
+    ledger = PITAvailabilityLedger((future, old), (security(),))
     root = ledger.write_snapshot(
         tmp_path, datetime(2021, 9, 15, tzinfo=UTC), ("AAPL",), dataset_version="sec-v1"
     )
@@ -70,7 +81,7 @@ def test_artifact_cannot_claim_availability_before_filing() -> None:
 
 def test_equivalent_snapshots_have_identical_world_hash_despite_build_time(tmp_path: Path) -> None:
     item = artifact("old", datetime(2021, 8, 1, tzinfo=UTC), "a" * 64)
-    ledger = PITAvailabilityLedger((item,))
+    ledger = PITAvailabilityLedger((item,), (security(),))
     first_path = ledger.write_snapshot(
         tmp_path / "one", datetime(2021, 9, 15, tzinfo=UTC), ("AAPL",), dataset_version="sec-v1"
     )
@@ -83,7 +94,9 @@ def test_equivalent_snapshots_have_identical_world_hash_despite_build_time(tmp_p
 
 
 def test_snapshot_excludes_nport_holdings_not_yet_public(tmp_path: Path) -> None:
-    ledger = PITAvailabilityLedger((artifact("old", datetime(2021, 8, 1, tzinfo=UTC), "a" * 64),))
+    ledger = PITAvailabilityLedger(
+        (artifact("old", datetime(2021, 8, 1, tzinfo=UTC), "a" * 64),), (security(),)
+    )
     holding = NPortHolding(
         fund_id="S1",
         fund_name="Fund",
@@ -103,7 +116,7 @@ def test_snapshot_excludes_nport_holdings_not_yet_public(tmp_path: Path) -> None
     assert (snapshot / "fund_holdings.jsonl").read_text() == ""
 
 
-def test_load_snapshot_rejects_artifact_hash_drift(tmp_path: Path) -> None:
+def test_snapshot_includes_historical_security_mapping_for_ticker_universe(tmp_path: Path) -> None:
     security = SecurityMasterRecord(
         canonical_security_id="sec:0000320193",
         ticker="AAPL",
@@ -115,6 +128,16 @@ def test_load_snapshot_rejects_artifact_hash_drift(tmp_path: Path) -> None:
     )
     ledger = PITAvailabilityLedger(
         (artifact("old", datetime(2021, 8, 1, tzinfo=UTC), "a" * 64),), (security,)
+    )
+    snapshot = ledger.write_snapshot(
+        tmp_path, datetime(2021, 9, 15, tzinfo=UTC), ("AAPL",), dataset_version="sec-v1"
+    )
+    assert "sec:0000320193" in (snapshot / "security_master.jsonl").read_text()
+
+
+def test_load_snapshot_rejects_artifact_hash_drift(tmp_path: Path) -> None:
+    ledger = PITAvailabilityLedger(
+        (artifact("old", datetime(2021, 8, 1, tzinfo=UTC), "a" * 64),), (security(),)
     )
     snapshot = ledger.write_snapshot(
         tmp_path, datetime(2021, 9, 15, tzinfo=UTC), ("AAPL",), dataset_version="sec-v1"

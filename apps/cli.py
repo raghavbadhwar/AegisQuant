@@ -35,7 +35,7 @@ from aegis.harness.skill_loader import load_skill_tree
 from aegis.pit_data.builder import bootstrap as bootstrap_pit
 from aegis.pit_data.builder import ingest_sec, normalize_nport
 from aegis.pit_data.ledger import PITAvailabilityLedger
-from aegis.pit_data.models import PITArtifact
+from aegis.pit_data.models import PITArtifact, SecurityMasterRecord
 from aegis.pit_data.nport import NPortHolding, acquire_nport_archive
 from aegis.pit_data.sec import SecPITClient
 from aegis.quant_research.demo import (
@@ -172,6 +172,16 @@ def pit_build_snapshot(
     artifacts = tuple(
         PITArtifact.model_validate_json(row) for row in ledger_path.read_text().splitlines() if row
     )
+    security_path = lake / "normalized" / "security_master.jsonl"
+    securities = (
+        tuple(
+            SecurityMasterRecord.model_validate_json(row)
+            for row in security_path.read_text().splitlines()
+            if row
+        )
+        if security_path.exists()
+        else ()
+    )
     try:
         simulation_at = datetime.fromisoformat(at)
     except ValueError as exc:
@@ -186,7 +196,7 @@ def pit_build_snapshot(
         if holdings_path.exists()
         else ()
     )
-    snapshot = PITAvailabilityLedger(artifacts).write_snapshot(
+    snapshot = PITAvailabilityLedger(artifacts, securities).write_snapshot(
         lake / "snapshots",
         simulation_at,
         tuple(universe),
