@@ -95,6 +95,8 @@ def run_cycle(
     cash_before_decimal = broker.cash
     current_weights = broker.weights(marks) if held else {}
     dossier = forecast_provider.research(case, snapshot)
+    if isinstance(fund, FundMandate) and dossier.quant_research_bundle is None:
+        raise DataIntegrityError("institutional cycle requires a sealed quant research bundle")
     evidence = dossier.evidence
     forecasts = dossier.forecasts
     master_portfolio = None
@@ -234,6 +236,7 @@ def run_cycle(
         cash_after=float(broker.cash),
         nav_after=float(nav_after_decimal),
         master_portfolio=master_portfolio,
+        quant_research_bundle=dossier.quant_research_bundle,
     )
     if ledger is not None:
         try:

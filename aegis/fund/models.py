@@ -274,6 +274,18 @@ class FixtureForecastProvider:
 class MultiStrategyFixtureProvider(FixtureForecastProvider):
     """Sealed replay provider allowing one forecast per declared model and ticker."""
 
+    def __init__(
+        self, forecast_path: str | Path, evidence_path: str | Path, quant_bundle_path: str | Path
+    ) -> None:
+        self.quant_bundle_path = Path(quant_bundle_path).resolve()
+        super().__init__(forecast_path, evidence_path)
+        try:
+            self._quant_bundle = QuantResearchBundle.model_validate_json(
+                self.quant_bundle_path.read_bytes()
+            )
+        except Exception as exc:
+            raise ForecastIntegrityError("invalid sealed quant research bundle") from exc
+
     def _load_forecasts(self) -> tuple[AlphaForecast, ...]:
         if not self.forecast_path.is_file():
             raise ForecastIntegrityError(f"missing replay forecasts: {self.forecast_path}")
@@ -294,6 +306,31 @@ class MultiStrategyFixtureProvider(FixtureForecastProvider):
         ):
             raise ForecastIntegrityError("strategy forecasts require typed numeric batch metadata")
         return tuple(sorted(forecasts, key=lambda forecast: (forecast.model_name, forecast.ticker)))
+
+    def research(self, case: ResearchCase, snapshot: MarketSnapshot) -> ResearchDossier:
+        if self._quant_bundle.as_of != case.as_of:
+            raise ForecastIntegrityError("quant research bundle cutoff does not match replay case")
+        eligible = {
+            decision.ticker
+            for decision in self._quant_bundle.universe_snapshot.decisions
+            if decision.eligible
+        }
+        if not set(case.tickers).issubset(eligible):
+            raise ForecastIntegrityError("quant research bundle does not cover replay universe")
+        base = super().research(case, snapshot)
+        return build_dossier(
+            case,
+            base.evidence,
+            base.artifacts,
+            base.forecasts,
+            base.graph_events,
+            base.claim_graph,
+            base.evidence_audit,
+            base.memory_hits,
+            base.memory_snapshot_hash,
+            base.relation_snapshot_hash,
+            self._quant_bundle,
+        )
 
 
 def load_replay_manifest(path: str | Path) -> ReplayManifest:

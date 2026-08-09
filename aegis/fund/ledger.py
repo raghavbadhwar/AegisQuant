@@ -16,6 +16,7 @@ from aegis.contracts import (
     Order,
     PortfolioProposal,
     Position,
+    QuantResearchBundle,
     ResearchCase,
     canonical_json,
     canonical_sha256,
@@ -54,12 +55,19 @@ class CycleRecord(BaseModel):
     cash_after: float
     nav_after: float
     master_portfolio: MasterPortfolio | None = None
+    quant_research_bundle: QuantResearchBundle | None = None
 
     @model_validator(mode="after")
     def schema_matches_fund_generation(self) -> CycleRecord:
         if isinstance(self.fund, FundMandate):
-            if self.schema_version != "aegis-cycle-v2" or self.master_portfolio is None:
-                raise ValueError("institutional cycles require a v2 master portfolio trace")
+            if (
+                self.schema_version != "aegis-cycle-v2"
+                or self.master_portfolio is None
+                or self.quant_research_bundle is None
+            ):
+                raise ValueError("institutional cycles require v2 master and quant bundle traces")
+            if self.dossier.quant_research_bundle != self.quant_research_bundle:
+                raise ValueError("institutional cycle dossier and record quant bundles must agree")
             if (
                 self.master_portfolio.mandate_id != self.fund.mandate_id
                 or self.master_portfolio.as_of != self.case.as_of
@@ -68,14 +76,20 @@ class CycleRecord(BaseModel):
                 or abs(self.master_portfolio.gross_exposure - self.portfolio.gross_exposure) > 1e-12
             ):
                 raise ValueError("cycle master portfolio is not bound to the fund/case/proposal")
-        elif self.schema_version != "aegis-cycle-v1" or self.master_portfolio is not None:
-            raise ValueError("legacy cycles must retain the v1 schema without a master trace")
+        elif (
+            self.schema_version != "aegis-cycle-v1"
+            or self.master_portfolio is not None
+            or self.quant_research_bundle is not None
+        ):
+            raise ValueError("legacy cycles must retain v1 schema without institutional traces")
         return self
 
     def canonical_payload(self) -> dict[str, object]:
         payload = self.model_dump(mode="python")
         if self.master_portfolio is None:
             payload.pop("master_portfolio")
+        if self.quant_research_bundle is None:
+            payload.pop("quant_research_bundle")
         return payload
 
     def canonical(self) -> str:

@@ -1,0 +1,471 @@
+{
+  "content_hash": "f9d2a5275e59c0bbbd644291eb89503cde597105ce6a29e9204036969195fc48",
+  "bundle_id": "quant-bundle-nvda-earnings-v1",
+  "as_of": "2024-02-23T21:05:00Z",
+  "universe_snapshot": {
+    "content_hash": "34899d964383707b83c56fadeb9a5c3c6bdb1de09105521def309f7fbf2b2050",
+    "snapshot_id": "universe-nvda-earnings-v1",
+    "universe_id": "universe-nvda-earnings-v1",
+    "as_of": "2024-02-23T21:05:00Z",
+    "members": [
+      {
+        "content_hash": "1af0bb7c0c64ecc664a777bf7a5625f178c4a6aa543e9d3f097c9ae302cf17f5",
+        "as_of": "2024-02-23T21:05:00Z",
+        "available_at": "2024-02-22T21:05:00Z",
+        "member_id": "member-aapl-v1",
+        "ticker": "AAPL",
+        "listing_status": "listed",
+        "average_daily_dollar_volume": 100000000.0,
+        "market_cap": 100000000000.0,
+        "sector": "Technology",
+        "industry": "Software",
+        "corporate_action_status": "none",
+        "data_completeness": 1.0,
+        "borrow_eligible": true,
+        "source_ids": [
+          "fixture-aapl"
+        ],
+        "contract_version": "3.1.0"
+      },
+      {
+        "content_hash": "ca823b98890bca650f566342448a62ba8df36a76ff763bfeefed9fdf2da0940a",
+        "as_of": "2024-02-23T21:05:00Z",
+        "available_at": "2024-02-22T21:05:00Z",
+        "member_id": "member-msft-v1",
+        "ticker": "MSFT",
+        "listing_status": "listed",
+        "average_daily_dollar_volume": 100000000.0,
+        "market_cap": 100000000000.0,
+        "sector": "Technology",
+        "industry": "Software",
+        "corporate_action_status": "none",
+        "data_completeness": 1.0,
+        "borrow_eligible": true,
+        "source_ids": [
+          "fixture-msft"
+        ],
+        "contract_version": "3.1.0"
+      },
+      {
+        "content_hash": "d1e48fc0f1da781b8b9b875b4a4d027cee7bf43554e01428b37e852ab455cf2f",
+        "as_of": "2024-02-23T21:05:00Z",
+        "available_at": "2024-02-22T21:05:00Z",
+        "member_id": "member-nvda-v1",
+        "ticker": "NVDA",
+        "listing_status": "listed",
+        "average_daily_dollar_volume": 100000000.0,
+        "market_cap": 100000000000.0,
+        "sector": "Technology",
+        "industry": "Software",
+        "corporate_action_status": "none",
+        "data_completeness": 1.0,
+        "borrow_eligible": true,
+        "source_ids": [
+          "fixture-nvda"
+        ],
+        "contract_version": "3.1.0"
+      },
+      {
+        "content_hash": "23d670eba1ddcf2d5c37b18e897286c28de2fd006344444a0478c056238af59b",
+        "as_of": "2024-02-23T21:05:00Z",
+        "available_at": "2024-02-22T21:05:00Z",
+        "member_id": "member-amzn-v1",
+        "ticker": "AMZN",
+        "listing_status": "listed",
+        "average_daily_dollar_volume": 100000000.0,
+        "market_cap": 100000000000.0,
+        "sector": "Technology",
+        "industry": "Software",
+        "corporate_action_status": "none",
+        "data_completeness": 1.0,
+        "borrow_eligible": true,
+        "source_ids": [
+          "fixture-amzn"
+        ],
+        "contract_version": "3.1.0"
+      },
+      {
+        "content_hash": "c959cdf7f94f69086a82fa53535fa5689c6bfc8b717a2f7263d026680952255d",
+        "as_of": "2024-02-23T21:05:00Z",
+        "available_at": "2024-02-22T21:05:00Z",
+        "member_id": "member-googl-v1",
+        "ticker": "GOOGL",
+        "listing_status": "listed",
+        "average_daily_dollar_volume": 100000000.0,
+        "market_cap": 100000000000.0,
+        "sector": "Technology",
+        "industry": "Software",
+        "corporate_action_status": "none",
+        "data_completeness": 1.0,
+        "borrow_eligible": true,
+        "source_ids": [
+          "fixture-googl"
+        ],
+        "contract_version": "3.1.0"
+      }
+    ],
+    "decisions": [
+      {
+        "content_hash": "a982651a1eb6526e9cf239c5814dbfdd94114c5e06eb4984a761378166aac0e9",
+        "as_of": "2024-02-23T21:05:00Z",
+        "available_at": "2024-02-22T21:05:00Z",
+        "decision_id": "eligibility-aapl-v1",
+        "member_id": "member-aapl-v1",
+        "ticker": "AAPL",
+        "eligible": true,
+        "reasons": [
+          "eligible"
+        ],
+        "rules_version": "fixture-eligibility-v1",
+        "contract_version": "3.1.0"
+      },
+      {
+        "content_hash": "12d5ede7454865af0568a560ef10294a437bd5734be1ed4f49cf0d92056e1218",
+        "as_of": "2024-02-23T21:05:00Z",
+        "available_at": "2024-02-22T21:05:00Z",
+        "decision_id": "eligibility-msft-v1",
+        "member_id": "member-msft-v1",
+        "ticker": "MSFT",
+        "eligible": true,
+        "reasons": [
+          "eligible"
+        ],
+        "rules_version": "fixture-eligibility-v1",
+        "contract_version": "3.1.0"
+      },
+      {
+        "content_hash": "470cd4250152b899c8fb53f3de205ff4f68f30ea811795710590db60f1704631",
+        "as_of": "2024-02-23T21:05:00Z",
+        "available_at": "2024-02-22T21:05:00Z",
+        "decision_id": "eligibility-nvda-v1",
+        "member_id": "member-nvda-v1",
+        "ticker": "NVDA",
+        "eligible": true,
+        "reasons": [
+          "eligible"
+        ],
+        "rules_version": "fixture-eligibility-v1",
+        "contract_version": "3.1.0"
+      },
+      {
+        "content_hash": "32a401eb2195052196c3ade23440a604e042ff9c2a1b67e8f5fa411ee425e92b",
+        "as_of": "2024-02-23T21:05:00Z",
+        "available_at": "2024-02-22T21:05:00Z",
+        "decision_id": "eligibility-amzn-v1",
+        "member_id": "member-amzn-v1",
+        "ticker": "AMZN",
+        "eligible": true,
+        "reasons": [
+          "eligible"
+        ],
+        "rules_version": "fixture-eligibility-v1",
+        "contract_version": "3.1.0"
+      },
+      {
+        "content_hash": "6d5c7eb3158e06404481e89d9c8699bcb03c621eb8dabb39502c4825cdbff80e",
+        "as_of": "2024-02-23T21:05:00Z",
+        "available_at": "2024-02-22T21:05:00Z",
+        "decision_id": "eligibility-googl-v1",
+        "member_id": "member-googl-v1",
+        "ticker": "GOOGL",
+        "eligible": true,
+        "reasons": [
+          "eligible"
+        ],
+        "rules_version": "fixture-eligibility-v1",
+        "contract_version": "3.1.0"
+      }
+    ],
+    "fixed_fixture": true,
+    "limitation": "Frozen local fixture for v3B integration; not a survivorship-free production security master.",
+    "contract_version": "3.1.0"
+  },
+  "factor_evaluations": [
+    {
+      "content_hash": "b6ce680473afa1bfe369ce95921e34079b479c7b8e67059409b759b879d4ec6d",
+      "as_of": "2024-02-23T21:05:00Z",
+      "available_at": "2024-02-23T21:05:00Z",
+      "evaluation_id": "factor-evaluation-nvda-v1",
+      "factor_id": "quality-factor-v1",
+      "universe_snapshot_ids": [
+        "universe-nvda-earnings-v1"
+      ],
+      "observation_ids": [
+        "factor-observation-nvda-v1"
+      ],
+      "period_start": "2024-01-01",
+      "period_end": "2024-02-23",
+      "diagnostics": {
+        "information_coefficient": 0.1,
+        "rank_information_coefficient": 0.1,
+        "icir": 0.5,
+        "quantile_returns": [
+          0.01,
+          0.02
+        ],
+        "long_short_return": 0.01,
+        "monotonicity": 1.0,
+        "turnover": 0.2,
+        "autocorrelation": 0.1,
+        "sector_neutrality": 0.0,
+        "size_neutrality": 0.0,
+        "subperiod_returns": {},
+        "regime_returns": {},
+        "gross_return": 0.02,
+        "cost_adjusted_return": 0.01,
+        "capacity": 10000000.0,
+        "decay": {},
+        "factor_correlations": {},
+        "crowding_score": 0.1,
+        "contract_version": "3.1.0"
+      },
+      "calculation_ids": [
+        "factor-calculation-nvda-v1"
+      ],
+      "contract_version": "3.1.0"
+    }
+  ],
+  "event_study_results": [
+    {
+      "content_hash": "7639bef727fed055a1ec644844fcf330be5e995ab4ef00f4a29937ef1dd95fae",
+      "as_of": "2024-02-23T21:05:00Z",
+      "available_at": "2024-02-23T21:05:00Z",
+      "result_id": "event-study-nvda-v1",
+      "spec_id": "event-study-spec-v1",
+      "event_ids": [
+        "event-nvda-v1"
+      ],
+      "cumulative_abnormal_returns": {
+        "-1:1": 0.01
+      },
+      "bootstrap_intervals": {
+        "-1:1": {
+          "lower": -0.01,
+          "upper": 0.03
+        }
+      },
+      "source_segment_cars": {},
+      "surprise_slope": null,
+      "pre_event_leakage_detected": false,
+      "calculation_ids": [
+        "event-study-calculation-nvda-v1"
+      ],
+      "contract_version": "3.1.0"
+    }
+  ],
+  "regime_snapshot": {
+    "content_hash": "40e2d8b8bd65e3f518b2f46d99e84b05e0b3b651b055eed0045cddafc104942c",
+    "as_of": "2024-02-23T21:05:00Z",
+    "available_at": "2024-02-23T21:05:00Z",
+    "snapshot_id": "regime-nvda-v1",
+    "volatility_regime": "normal",
+    "market_trend": "up",
+    "rates_liquidity_context": "neutral",
+    "risk_state": "risk_on",
+    "factor_leadership": [
+      "quality"
+    ],
+    "correlation_regime": "normal",
+    "model_id": "regime-model-v1",
+    "calculation_ids": [
+      "regime-calculation-nvda-v1"
+    ],
+    "interpretation_only": true,
+    "order_authority": false,
+    "contract_version": "3.1.0"
+  },
+  "behavioral_features": [
+    {
+      "content_hash": "ff90303518ecffe64886d5a4c60bdb109e63453b1e2f4c5ce12a17274272ae67",
+      "as_of": "2024-02-23T21:05:00Z",
+      "available_at": "2024-02-23T21:05:00Z",
+      "feature_id": "behavioral-aapl-v1",
+      "ticker": "AAPL",
+      "attention_shock": 0.0,
+      "mention_acceleration": 0.0,
+      "sentiment_dispersion": 0.0,
+      "source_diversity": 1.0,
+      "narrative_saturation": 0.0,
+      "abnormal_volume": 0.0,
+      "price_attention_reflexivity": 0.0,
+      "source_ids": [
+        "fixture-aapl"
+      ],
+      "calculator_id": "behavioral-calculator-v1",
+      "order_authority": false,
+      "contract_version": "3.1.0"
+    },
+    {
+      "content_hash": "60cc4e76c231ae4a28ded23d3e4e6ee91a0197ce743ff5a82996af5a4719e470",
+      "as_of": "2024-02-23T21:05:00Z",
+      "available_at": "2024-02-23T21:05:00Z",
+      "feature_id": "behavioral-msft-v1",
+      "ticker": "MSFT",
+      "attention_shock": 0.0,
+      "mention_acceleration": 0.0,
+      "sentiment_dispersion": 0.0,
+      "source_diversity": 1.0,
+      "narrative_saturation": 0.0,
+      "abnormal_volume": 0.0,
+      "price_attention_reflexivity": 0.0,
+      "source_ids": [
+        "fixture-msft"
+      ],
+      "calculator_id": "behavioral-calculator-v1",
+      "order_authority": false,
+      "contract_version": "3.1.0"
+    },
+    {
+      "content_hash": "75b5d4a7200426a4bfea9b9f09b4a41db4efef9f61aea449c8ee8db3625ed24d",
+      "as_of": "2024-02-23T21:05:00Z",
+      "available_at": "2024-02-23T21:05:00Z",
+      "feature_id": "behavioral-nvda-v1",
+      "ticker": "NVDA",
+      "attention_shock": 0.0,
+      "mention_acceleration": 0.0,
+      "sentiment_dispersion": 0.0,
+      "source_diversity": 1.0,
+      "narrative_saturation": 0.0,
+      "abnormal_volume": 0.0,
+      "price_attention_reflexivity": 0.0,
+      "source_ids": [
+        "fixture-nvda"
+      ],
+      "calculator_id": "behavioral-calculator-v1",
+      "order_authority": false,
+      "contract_version": "3.1.0"
+    },
+    {
+      "content_hash": "09c40a06c619d6fecdc8776dfbf10ae64dbd7cacbda6067fbc987490a48ce854",
+      "as_of": "2024-02-23T21:05:00Z",
+      "available_at": "2024-02-23T21:05:00Z",
+      "feature_id": "behavioral-amzn-v1",
+      "ticker": "AMZN",
+      "attention_shock": 0.0,
+      "mention_acceleration": 0.0,
+      "sentiment_dispersion": 0.0,
+      "source_diversity": 1.0,
+      "narrative_saturation": 0.0,
+      "abnormal_volume": 0.0,
+      "price_attention_reflexivity": 0.0,
+      "source_ids": [
+        "fixture-amzn"
+      ],
+      "calculator_id": "behavioral-calculator-v1",
+      "order_authority": false,
+      "contract_version": "3.1.0"
+    },
+    {
+      "content_hash": "5d3526600050237ab30e32fc872d942e367819b2c1540ba4801e952ea09e0dcf",
+      "as_of": "2024-02-23T21:05:00Z",
+      "available_at": "2024-02-23T21:05:00Z",
+      "feature_id": "behavioral-googl-v1",
+      "ticker": "GOOGL",
+      "attention_shock": 0.0,
+      "mention_acceleration": 0.0,
+      "sentiment_dispersion": 0.0,
+      "source_diversity": 1.0,
+      "narrative_saturation": 0.0,
+      "abnormal_volume": 0.0,
+      "price_attention_reflexivity": 0.0,
+      "source_ids": [
+        "fixture-googl"
+      ],
+      "calculator_id": "behavioral-calculator-v1",
+      "order_authority": false,
+      "contract_version": "3.1.0"
+    }
+  ],
+  "graph_features": [
+    {
+      "content_hash": "60b50b1815ee69cb1236c04ce86a858501618a38da3a76fd7563049e17d3760b",
+      "as_of": "2024-02-23T21:05:00Z",
+      "available_at": "2024-02-23T21:05:00Z",
+      "feature_id": "graph-aapl-v1",
+      "ticker": "AAPL",
+      "supplier_concentration": 0.0,
+      "customer_concentration": 0.0,
+      "director_executive_overlap": 0.0,
+      "ownership_centrality": 0.0,
+      "litigation_regulatory_exposure": 0.0,
+      "narrative_propagation": 0.0,
+      "common_exposure_cluster": null,
+      "graph_snapshot_id": "graph-nvda-v1",
+      "calculator_id": "graph-calculator-v1",
+      "order_authority": false,
+      "contract_version": "3.1.0"
+    },
+    {
+      "content_hash": "f9d4e8a3919eb7b5ba46eb726fd0127e0792bfc7711b3dd881c404c876c72aa5",
+      "as_of": "2024-02-23T21:05:00Z",
+      "available_at": "2024-02-23T21:05:00Z",
+      "feature_id": "graph-msft-v1",
+      "ticker": "MSFT",
+      "supplier_concentration": 0.0,
+      "customer_concentration": 0.0,
+      "director_executive_overlap": 0.0,
+      "ownership_centrality": 0.0,
+      "litigation_regulatory_exposure": 0.0,
+      "narrative_propagation": 0.0,
+      "common_exposure_cluster": null,
+      "graph_snapshot_id": "graph-nvda-v1",
+      "calculator_id": "graph-calculator-v1",
+      "order_authority": false,
+      "contract_version": "3.1.0"
+    },
+    {
+      "content_hash": "32eeab77af54ec9dd7af4748d2b0bdb125d655b64ad8851abd9d4faf73776a04",
+      "as_of": "2024-02-23T21:05:00Z",
+      "available_at": "2024-02-23T21:05:00Z",
+      "feature_id": "graph-nvda-v1",
+      "ticker": "NVDA",
+      "supplier_concentration": 0.0,
+      "customer_concentration": 0.0,
+      "director_executive_overlap": 0.0,
+      "ownership_centrality": 0.0,
+      "litigation_regulatory_exposure": 0.0,
+      "narrative_propagation": 0.0,
+      "common_exposure_cluster": null,
+      "graph_snapshot_id": "graph-nvda-v1",
+      "calculator_id": "graph-calculator-v1",
+      "order_authority": false,
+      "contract_version": "3.1.0"
+    },
+    {
+      "content_hash": "68c07de91bc431837f976ed64bd7b4cfe8a7771fdd3bb2db229426dce4813268",
+      "as_of": "2024-02-23T21:05:00Z",
+      "available_at": "2024-02-23T21:05:00Z",
+      "feature_id": "graph-amzn-v1",
+      "ticker": "AMZN",
+      "supplier_concentration": 0.0,
+      "customer_concentration": 0.0,
+      "director_executive_overlap": 0.0,
+      "ownership_centrality": 0.0,
+      "litigation_regulatory_exposure": 0.0,
+      "narrative_propagation": 0.0,
+      "common_exposure_cluster": null,
+      "graph_snapshot_id": "graph-nvda-v1",
+      "calculator_id": "graph-calculator-v1",
+      "order_authority": false,
+      "contract_version": "3.1.0"
+    },
+    {
+      "content_hash": "132e33a46ff465423e46f67d7967f52e5f8c07b86be0f1a2ee8ee75526e8534b",
+      "as_of": "2024-02-23T21:05:00Z",
+      "available_at": "2024-02-23T21:05:00Z",
+      "feature_id": "graph-googl-v1",
+      "ticker": "GOOGL",
+      "supplier_concentration": 0.0,
+      "customer_concentration": 0.0,
+      "director_executive_overlap": 0.0,
+      "ownership_centrality": 0.0,
+      "litigation_regulatory_exposure": 0.0,
+      "narrative_propagation": 0.0,
+      "common_exposure_cluster": null,
+      "graph_snapshot_id": "graph-nvda-v1",
+      "calculator_id": "graph-calculator-v1",
+      "order_authority": false,
+      "contract_version": "3.1.0"
+    }
+  ]
+}

@@ -267,6 +267,9 @@ def institutional_fund_run_command(
     evidence_path: Annotated[
         Path, typer.Option("--evidence", help="Sealed evidence fixture")
     ] = Path("data/fixtures/evidence/replay_evidence.jsonl"),
+    quant_bundle: Annotated[
+        Path, typer.Option("--quant-bundle", help="Sealed same-case quant research bundle")
+    ] = Path("data/fixtures/v3b/quant_research_bundle.json"),
     ledger: Annotated[Path, typer.Option(help="Append-only SQLite run ledger")] = Path(
         "run_data/aegisquant-v3b.sqlite"
     ),
@@ -280,7 +283,11 @@ def institutional_fund_run_command(
         case,
         SimBroker(float(fund.capital)),
         FixtureDataClient(PROJECT_ROOT / "data/fixtures"),
-        MultiStrategyFixtureProvider(_project_path(forecast_path), _project_path(evidence_path)),
+        MultiStrategyFixtureProvider(
+            _project_path(forecast_path),
+            _project_path(evidence_path),
+            _project_path(quant_bundle),
+        ),
         SQLiteRunLedger(_project_path(ledger)),
     )
     typer.echo(record.canonical())

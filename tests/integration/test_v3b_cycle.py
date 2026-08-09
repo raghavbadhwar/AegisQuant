@@ -124,7 +124,11 @@ def test_v3b_master_portfolio_runs_twice_through_the_existing_cycle(tmp_path: Pa
     case = manifest.research_case()
     forecasts = tmp_path / "strategy_forecasts.json"
     strategy_forecasts(forecasts)
-    provider = MultiStrategyFixtureProvider(forecasts, ROOT / manifest.evidence_fixture)
+    provider = MultiStrategyFixtureProvider(
+        forecasts,
+        ROOT / manifest.evidence_fixture,
+        ROOT / "data/fixtures/v3b/quant_research_bundle.json",
+    )
     fund = mandate()
     client = FixtureDataClient(ROOT / "data/fixtures")
 
@@ -148,6 +152,8 @@ def test_v3b_master_portfolio_runs_twice_through_the_existing_cycle(tmp_path: Pa
     assert first.canonical() == second.canonical()
     assert first.schema_version == "aegis-cycle-v2"
     assert first.master_portfolio is not None
+    assert first.quant_research_bundle is not None
+    assert first.dossier.quant_research_bundle == first.quant_research_bundle
     assert first.portfolio.target_weights == first.master_portfolio.target_weights
     assert first.risk.decision.approved
     assert 0.0 < first.nav_after < 100_000.0
@@ -181,6 +187,7 @@ def test_replay_rejects_multi_strategy_provider_subclasses(tmp_path: Path) -> No
     provider = UnsealedProvider(
         ROOT / "data/fixtures/v3b/multi_strategy_forecasts.json",
         ROOT / manifest.evidence_fixture,
+        ROOT / "data/fixtures/v3b/quant_research_bundle.json",
     )
     fund = load_fund_mandate(ROOT / "configs/funds/aegis-institutional-demo-v3.yaml")
     with pytest.raises(RuntimeError, match="unsealed forecast provider"):
