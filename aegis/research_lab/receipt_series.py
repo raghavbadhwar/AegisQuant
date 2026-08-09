@@ -8,13 +8,17 @@ from __future__ import annotations
 
 import itertools
 import math
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Self
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from aegis.contracts import FundMandate, canonical_sha256
 from aegis.fund.ledger import CycleRecord, SQLiteRunLedger
+from aegis.research_lab.validation import (
+    interval_combinatorial_purged_splits,
+    interval_purged_walk_forward,
+)
 
 
 class ReceiptSeriesError(ValueError):
@@ -141,3 +145,51 @@ def derive_receipt_observations_from_ledger(
         except KeyError as exc:
             raise ReceiptSeriesError("comparison references a missing governed receipt") from exc
     return derive_receipt_observations(tuple(records), expected_mandate_hash=expected_mandate_hash)
+
+
+def receipt_validation_folds(
+    observations: tuple[ReceiptReturnObservation, ...],
+    *,
+    n_splits: int,
+    minimum_train: int,
+    embargo: timedelta,
+    locked_holdout: tuple[int, ...] = (),
+) -> tuple[tuple[tuple[int, ...], tuple[int, ...]], ...]:
+    """Build label-aware walk-forward folds directly from receipt-pair clocks."""
+    if len(observations) < 4:
+        raise ReceiptSeriesError("receipt validation requires at least four observations")
+    try:
+        return interval_purged_walk_forward(
+            tuple(item.prediction_time for item in observations),
+            tuple(item.label_time for item in observations),
+            n_splits,
+            minimum_train=minimum_train,
+            embargo=embargo,
+            locked_holdout=locked_holdout,
+        )
+    except ValueError as exc:
+        raise ReceiptSeriesError(f"receipt walk-forward validation failed: {exc}") from exc
+
+
+def receipt_cpcv_folds(
+    observations: tuple[ReceiptReturnObservation, ...],
+    *,
+    n_groups: int,
+    n_test_groups: int,
+    embargo: timedelta,
+    locked_holdout: tuple[int, ...] = (),
+) -> tuple[tuple[tuple[int, ...], tuple[int, ...]], ...]:
+    """Build label-aware CPCV folds directly from receipt-pair clocks."""
+    if len(observations) < 4:
+        raise ReceiptSeriesError("receipt validation requires at least four observations")
+    try:
+        return interval_combinatorial_purged_splits(
+            tuple(item.prediction_time for item in observations),
+            tuple(item.label_time for item in observations),
+            n_groups,
+            n_test_groups,
+            embargo=embargo,
+            locked_holdout=locked_holdout,
+        )
+    except ValueError as exc:
+        raise ReceiptSeriesError(f"receipt CPCV validation failed: {exc}") from exc
