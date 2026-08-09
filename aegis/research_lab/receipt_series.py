@@ -14,7 +14,7 @@ from typing import Self
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from aegis.contracts import FundMandate, canonical_sha256
-from aegis.fund.ledger import CycleRecord
+from aegis.fund.ledger import CycleRecord, SQLiteRunLedger
 
 
 class ReceiptSeriesError(ValueError):
@@ -119,3 +119,25 @@ def receipt_series_hash(
 ) -> str:
     """Commit every receipt pair, derived value, and governing mandate."""
     return canonical_sha256({"mandate_hash": mandate_hash, "observations": observations})
+
+
+def derive_receipt_observations_from_ledger(
+    ledger: SQLiteRunLedger,
+    run_ids: tuple[str, ...],
+    *,
+    expected_mandate_hash: str,
+) -> tuple[ReceiptReturnObservation, ...]:
+    """Load receipt records through the append-only ledger before derivation.
+
+    ``SQLiteRunLedger.get`` revalidates canonical receipt bytes and digest;
+    callers therefore cannot supply model-constructed or mutable receipt data.
+    """
+    if len(run_ids) < 2 or len(set(run_ids)) != len(run_ids):
+        raise ReceiptSeriesError("comparison requires unique ordered ledger run IDs")
+    records: list[CycleRecord] = []
+    for run_id in run_ids:
+        try:
+            records.append(ledger.get(run_id))
+        except KeyError as exc:
+            raise ReceiptSeriesError("comparison references a missing governed receipt") from exc
+    return derive_receipt_observations(tuple(records), expected_mandate_hash=expected_mandate_hash)

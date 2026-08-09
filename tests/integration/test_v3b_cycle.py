@@ -33,7 +33,12 @@ from aegis.fund.models import (
 )
 from aegis.fund.run_cycle import run_cycle
 from aegis.quant_research.hashing import build_hashed
-from aegis.research_lab.receipt_series import derive_receipt_observations, receipt_series_hash
+from aegis.research_lab.receipt_series import (
+    ReceiptSeriesError,
+    derive_receipt_observations,
+    derive_receipt_observations_from_ledger,
+    receipt_series_hash,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -223,13 +228,14 @@ def test_historical_mandate_cycle_uses_exact_sealed_artifact_triplet(tmp_path: P
         }
     )
     fund = load_fund_mandate(ROOT / "configs/funds/aegis-institutional-demo-v3.yaml")
+    ledger = SQLiteRunLedger(tmp_path / "historical.sqlite")
     record = run_cycle(
         fund,
         case,
         SimBroker(fund.capital),
         FixtureDataClient(ROOT / "data/fixtures"),
         provider,
-        SQLiteRunLedger(tmp_path / "historical.sqlite"),
+        ledger,
     )
     assert record.schema_version == "aegis-cycle-v2"
     assert record.evidence.mode == "historical"
@@ -248,6 +254,10 @@ def test_historical_mandate_cycle_uses_exact_sealed_artifact_triplet(tmp_path: P
     assert observations[0].gross_return == pytest.approx(0.0)
     assert observations[0].turnover >= 0.0
     assert receipt_series_hash(observations, fund.content_hash)
+    with pytest.raises(ReceiptSeriesError, match="unique ordered"):
+        derive_receipt_observations_from_ledger(
+            ledger, (record.run_id,), expected_mandate_hash=fund.content_hash
+        )
 
 
 def test_sealed_provider_rejects_non_abstained_forecast_without_bundle_hash(tmp_path: Path) -> None:
