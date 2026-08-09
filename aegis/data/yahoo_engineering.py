@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pandas as pd
@@ -82,11 +82,18 @@ def write_engineering_price_fixture(
     ]
     if not rows:
         raise YahooEngineeringDataError("engineering fixture has no prices")
+    # Engineering-only conservative convention: a daily bar is available next UTC day.
+    # This is an imputation, never a source-backed release-time assertion.
+    for row in rows:
+        row["available_at"] = (
+            datetime.fromisoformat(str(row["date"])).replace(tzinfo=UTC) + timedelta(days=1)
+        ).isoformat()
     destination.mkdir(parents=True)
     pd.DataFrame(rows).to_parquet(destination / "prices.parquet", index=False)
     (destination / "README.md").write_text(
         "# Non-release engineering price fixture\n\n"
-        "Source: Yahoo public chart endpoint. Not valid for release, performance, "
-        "eligibility, or investment claims.\n"
+        "Source: Yahoo public chart endpoint. Bars use an engineering-imputed next-UTC-day "
+        "availability convention. Not valid for release, performance, eligibility, "
+        "or investment claims.\n"
     )
     return destination
