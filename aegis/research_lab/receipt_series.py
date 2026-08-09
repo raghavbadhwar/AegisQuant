@@ -9,16 +9,58 @@ from __future__ import annotations
 import itertools
 import math
 from datetime import datetime, timedelta
-from typing import Self
+from typing import Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from aegis.contracts import FundMandate, canonical_sha256
+from aegis.contracts import PREDECLARED_STRATEGY_IDS, FundMandate, canonical_sha256
 from aegis.fund.ledger import CycleRecord, SQLiteRunLedger
 from aegis.research_lab.validation import (
     interval_combinatorial_purged_splits,
     interval_purged_walk_forward,
 )
+
+
+class ReceiptComparisonRow(BaseModel):
+    """One predeclared strategy's ordered ledger receipts; never return vectors."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    strategy_id: str
+    mandate_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
+    run_ids: tuple[str, ...] = Field(min_length=2)
+
+    @model_validator(mode="after")
+    def run_ids_are_unique(self) -> Self:
+        if self.strategy_id not in PREDECLARED_STRATEGY_IDS:
+            raise ValueError("receipt row is not a predeclared strategy")
+        if len(set(self.run_ids)) != len(self.run_ids):
+            raise ValueError("receipt row run IDs must be unique")
+        return self
+
+
+class ReceiptComparisonSpec(BaseModel):
+    """Frozen six-way eligibility input that carries only governed receipt IDs."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    schema_version: Literal["aegis-receipt-comparison-v1"]
+    declared_at: datetime
+    evaluated_at: datetime
+    rows: tuple[ReceiptComparisonRow, ...]
+
+    @model_validator(mode="after")
+    def is_predeclared_and_temporal(self) -> Self:
+        if self.declared_at.tzinfo is None or self.evaluated_at.tzinfo is None:
+            raise ValueError("receipt comparison times must be timezone-aware")
+        if self.declared_at > self.evaluated_at:
+            raise ValueError("receipt comparison must be declared before evaluation")
+        ids = [row.strategy_id for row in self.rows]
+        if len(self.rows) != len(PREDECLARED_STRATEGY_IDS) or set(ids) != set(
+            PREDECLARED_STRATEGY_IDS
+        ):
+            raise ValueError("receipt comparison requires exactly six predeclared strategies")
+        return self
 
 
 class ReceiptSeriesError(ValueError):

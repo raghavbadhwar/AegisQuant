@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 
+import pytest
+
 from aegis.research_lab.receipt_series import (
+    ReceiptComparisonRow,
+    ReceiptComparisonSpec,
     ReceiptReturnObservation,
     receipt_cpcv_folds,
     receipt_validation_folds,
@@ -41,3 +45,36 @@ def test_receipt_intervals_drive_purged_walk_forward_and_cpcv() -> None:
     assert walk_forward
     assert cpcv
     assert all(11 not in train and 11 not in test for train, test in (*walk_forward, *cpcv))
+
+
+def test_receipt_comparison_spec_requires_exact_predeclared_set() -> None:
+    now = datetime(2024, 1, 1, tzinfo=UTC)
+    rows = tuple(
+        ReceiptComparisonRow(
+            strategy_id=strategy_id,
+            mandate_hash="a" * 64,
+            run_ids=(f"{strategy_id}-one", f"{strategy_id}-two"),
+        )
+        for strategy_id in (
+            "equal-weight-v1",
+            "inverse-vol-v1",
+            "simple-factor-v1",
+            "fundamental-only-v1",
+            "quant-only-v1",
+            "combined-multistrategy-v1",
+        )
+    )
+    spec = ReceiptComparisonSpec(
+        schema_version="aegis-receipt-comparison-v1",
+        declared_at=now,
+        evaluated_at=now,
+        rows=rows,
+    )
+    assert len(spec.rows) == 6
+    with pytest.raises(ValueError, match="exactly six"):
+        ReceiptComparisonSpec(
+            schema_version="aegis-receipt-comparison-v1",
+            declared_at=now,
+            evaluated_at=now,
+            rows=rows[:-1],
+        )
