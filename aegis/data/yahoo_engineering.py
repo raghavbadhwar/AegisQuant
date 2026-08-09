@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from pathlib import Path
+
+import pandas as pd
 
 from aegis.data.protocol import DataIntegrityError, PriceBar
 
@@ -63,3 +66,27 @@ def download_daily_prices(ticker: str, start: datetime, end: datetime) -> tuple[
     if not bars:
         raise YahooEngineeringDataError("Yahoo engineering response has no complete bars")
     return tuple(bars)
+
+
+def write_engineering_price_fixture(
+    root: str | Path, tickers: tuple[str, ...], start: datetime, end: datetime
+) -> Path:
+    """Write a local-only, explicitly non-release price fixture for offline tests."""
+    destination = Path(root).resolve()
+    if destination.exists():
+        raise YahooEngineeringDataError("engineering price fixture destination is immutable")
+    rows = [
+        item.model_dump(mode="json")
+        for ticker in sorted(set(tickers))
+        for item in download_daily_prices(ticker, start, end)
+    ]
+    if not rows:
+        raise YahooEngineeringDataError("engineering fixture has no prices")
+    destination.mkdir(parents=True)
+    pd.DataFrame(rows).to_parquet(destination / "prices.parquet", index=False)
+    (destination / "README.md").write_text(
+        "# Non-release engineering price fixture\n\n"
+        "Source: Yahoo public chart endpoint. Not valid for release, performance, "
+        "eligibility, or investment claims.\n"
+    )
+    return destination
