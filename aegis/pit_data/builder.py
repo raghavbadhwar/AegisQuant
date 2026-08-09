@@ -10,6 +10,7 @@ from aegis.sources.raw_store import RawStore
 
 from .fundamentals import PITFundamentalFact, normalize_sec_facts
 from .models import PITArtifact, SecurityMasterRecord
+from .nport import NPortHolding, normalize_nport_holdings
 from .sec import SecPITClient
 
 # The initial automatic corpus is statements-first. Event/ownership forms
@@ -126,3 +127,24 @@ def ingest_sec(
     if not security_path.exists():
         security_path.write_text("".join(canonical_json(item) + "\n" for item in securities))
     return tuple(built)
+
+
+def normalize_nport(
+    root: str | Path,
+    archive_path: str | Path,
+    *,
+    raw_artifact_id: str,
+    series_ids: frozenset[str],
+) -> tuple[NPortHolding, ...]:
+    """Persist selected real N-PORT rows; source zip remains immutable in raw store."""
+    lake = bootstrap(root)
+    rows = normalize_nport_holdings(
+        archive_path, raw_artifact_id=raw_artifact_id, series_ids=series_ids
+    )
+    output = lake / "normalized" / "nport_holdings.jsonl"
+    existing = set(output.read_text().splitlines()) if output.exists() else set()
+    additions = [canonical_json(item) for item in rows]
+    if additions:
+        with output.open("a") as handle:
+            handle.write("".join(item + "\n" for item in additions if item not in existing))
+    return rows

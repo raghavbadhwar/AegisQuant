@@ -9,6 +9,7 @@ from pathlib import Path
 from aegis.contracts import canonical_json
 
 from .models import PITArtifact, PITSnapshotManifest, SecurityMasterRecord
+from .nport import NPortHolding
 
 
 class PITLedgerError(RuntimeError):
@@ -62,11 +63,17 @@ class PITAvailabilityLedger:
         *,
         dataset_version: str,
         warnings: tuple[str, ...] = (),
+        fund_holdings: tuple[NPortHolding, ...] = (),
     ) -> Path:
         cutoff = self._cutoff(at)
         selected = self.get_artifacts_as_of(cutoff, universe)
+        selected_holdings = tuple(
+            item for item in fund_holdings if item.public_available_at <= cutoff
+        )
         if any(item.available_at > cutoff for item in selected):
             raise PITLedgerError("future artifact contamination")
+        if any(item.public_available_at > cutoff for item in selected_holdings):
+            raise PITLedgerError("future fund-holding contamination")
         name = cutoff.astimezone(UTC).strftime("%Y-%m-%dT%H-%M-%SZ")
         destination = Path(root).resolve() / name
         if destination.exists():
@@ -98,6 +105,9 @@ class PITAvailabilityLedger:
         ]
         (temporary / "security_master.jsonl").write_text(
             "".join(canonical_json(item) + "\n" for item in security_rows)
+        )
+        (temporary / "fund_holdings.jsonl").write_text(
+            "".join(canonical_json(item) + "\n" for item in selected_holdings)
         )
         os.replace(temporary, destination)
         return destination

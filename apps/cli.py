@@ -33,10 +33,10 @@ from aegis.harness.graph import LangGraphForecastProvider
 from aegis.harness.model_router import ReplayModelProvider
 from aegis.harness.skill_loader import load_skill_tree
 from aegis.pit_data.builder import bootstrap as bootstrap_pit
-from aegis.pit_data.builder import ingest_sec
+from aegis.pit_data.builder import ingest_sec, normalize_nport
 from aegis.pit_data.ledger import PITAvailabilityLedger
 from aegis.pit_data.models import PITArtifact
-from aegis.pit_data.nport import acquire_nport_archive
+from aegis.pit_data.nport import NPortHolding, acquire_nport_archive
 from aegis.pit_data.sec import SecPITClient
 from aegis.quant_research.demo import (
     demo_event_study,
@@ -135,6 +135,27 @@ def pit_ingest_nport(
     typer.echo(canonical_json(receipt))
 
 
+@pit_app.command("normalize-nport")
+def pit_normalize_nport(
+    archive: Annotated[Path, typer.Option("--archive", help="Locally captured SEC N-PORT ZIP")],
+    raw_artifact_id: Annotated[
+        str, typer.Option("--raw-artifact-id", help="Raw archive provenance ID")
+    ],
+    series: Annotated[list[str], typer.Option("--series", help="Explicit bounded SEC series ID")],
+    root: Annotated[Path, typer.Option("--root", help="Local PIT lake directory")] = Path(
+        "data/pit"
+    ),
+) -> None:
+    """Normalize selected N-PORT fund holdings under a conservative availability policy."""
+    rows = normalize_nport(
+        _project_path(root),
+        _project_path(archive),
+        raw_artifact_id=raw_artifact_id,
+        series_ids=frozenset(series),
+    )
+    typer.echo(canonical_json({"holding_count": len(rows)}))
+
+
 @pit_app.command("build-snapshot")
 def pit_build_snapshot(
     at: Annotated[str, typer.Option("--at", help="Timezone-aware ISO-8601 simulation timestamp")],
@@ -155,8 +176,22 @@ def pit_build_snapshot(
         simulation_at = datetime.fromisoformat(at)
     except ValueError as exc:
         raise typer.BadParameter("--at must be ISO-8601") from exc
+    holdings_path = lake / "normalized" / "nport_holdings.jsonl"
+    holdings = (
+        tuple(
+            NPortHolding.model_validate_json(row)
+            for row in holdings_path.read_text().splitlines()
+            if row
+        )
+        if holdings_path.exists()
+        else ()
+    )
     snapshot = PITAvailabilityLedger(artifacts).write_snapshot(
-        lake / "snapshots", simulation_at, tuple(universe), dataset_version="sec-edgar-v1"
+        lake / "snapshots",
+        simulation_at,
+        tuple(universe),
+        dataset_version="sec-edgar-v1",
+        fund_holdings=holdings,
     )
     typer.echo(str(snapshot))
 

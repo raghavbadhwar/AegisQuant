@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from aegis.pit_data import PITArtifact, PITAvailabilityLedger, PITLedgerError, load_snapshot
+from aegis.pit_data.nport import NPortHolding
 
 
 def artifact(identifier: str, available: datetime, digest: str) -> PITArtifact:
@@ -73,3 +74,24 @@ def test_equivalent_snapshots_have_identical_world_hash_despite_build_time(tmp_p
     first, _ = load_snapshot(first_path)
     second, _ = load_snapshot(second_path)
     assert first.manifest_hash == second.manifest_hash
+
+
+def test_snapshot_excludes_nport_holdings_not_yet_public(tmp_path: Path) -> None:
+    ledger = PITAvailabilityLedger((artifact("old", datetime(2021, 8, 1, tzinfo=UTC), "a" * 64),))
+    holding = NPortHolding(
+        fund_id="S1",
+        fund_name="Fund",
+        holding_name="Apple",
+        report_at=datetime(2021, 6, 30, tzinfo=UTC),
+        public_available_at=datetime(2021, 9, 16, tzinfo=UTC),
+        accession="accession",
+        raw_artifact_id="raw",
+    )
+    snapshot = ledger.write_snapshot(
+        tmp_path,
+        datetime(2021, 9, 15, tzinfo=UTC),
+        ("AAPL",),
+        dataset_version="sec-v1",
+        fund_holdings=(holding,),
+    )
+    assert (snapshot / "fund_holdings.jsonl").read_text() == ""
