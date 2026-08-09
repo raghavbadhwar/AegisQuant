@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import itertools
 import math
-from collections.abc import Callable
+from collections.abc import Callable, Collection, Sequence
+from datetime import datetime, timedelta
 from statistics import NormalDist
 
 import numpy as np
@@ -22,18 +23,103 @@ def purged_walk_forward(
     purge: int = 0,
     embargo: int = 0,
 ) -> tuple[tuple[tuple[int, ...], tuple[int, ...]], ...]:
-    if n_samples <= minimum_train or n_splits <= 0 or purge < 0 or embargo < 0:
+    """Build expanding walk-forward folds with index purge and embargo.
+
+    Both buffers are measured in observations immediately before the test
+    block: ``purge`` represents the label-overlap allowance and ``embargo``
+    is an additional pre-test gap.  Thus training always precedes testing and
+    increasing either buffer can only remove training observations.
+    """
+    if (
+        minimum_train <= 0
+        or n_samples <= minimum_train
+        or not 1 <= n_splits <= n_samples - minimum_train
+        or purge < 0
+        or embargo < 0
+    ):
         raise ValueError("invalid purged walk-forward parameters")
     test_size = max(1, (n_samples - minimum_train) // n_splits)
     folds = []
     for split in range(n_splits):
         test_start = minimum_train + split * test_size
         test_end = n_samples if split == n_splits - 1 else min(n_samples, test_start + test_size)
-        train_end = max(0, test_start - purge)
+        train_end = max(0, test_start - purge - embargo)
         train = tuple(range(train_end))
         test = tuple(range(test_start, test_end))
-        if train and test:
-            folds.append((train, test))
+        if not train or not test:
+            raise ValueError("purge and embargo leave an empty fold")
+        folds.append((train, test))
+    return tuple(folds)
+
+
+def interval_purged_walk_forward(
+    prediction_times: Sequence[datetime],
+    label_end_times: Sequence[datetime],
+    n_splits: int,
+    *,
+    minimum_train: int,
+    embargo: timedelta = timedelta(0),
+    locked_holdout: Collection[int] = (),
+) -> tuple[tuple[tuple[int, ...], tuple[int, ...]], ...]:
+    """Build label-interval-aware expanding walk-forward folds.
+
+    An observation's label interval is inclusive:
+    ``[prediction_time, label_end_time]``.  Training candidates always occur
+    before the test block.  A candidate is purged if its label interval
+    overlaps any test label interval, and the embargo adds a pre-test time
+    gap by requiring ``train prediction_time < test_start - embargo``.
+
+    All timestamps must be timezone-aware.  Prediction times must be strictly
+    increasing (therefore sorted and duplicate-free), label ends may not
+    precede predictions, and locked holdout indices may not touch a fold.
+    """
+    n_samples = len(prediction_times)
+    if (
+        len(label_end_times) != n_samples
+        or minimum_train <= 0
+        or n_samples <= minimum_train
+        or not 1 <= n_splits <= n_samples - minimum_train
+        or embargo < timedelta(0)
+    ):
+        raise ValueError("invalid interval purged walk-forward parameters")
+    all_times = (*prediction_times, *label_end_times)
+    if any(value.tzinfo is None or value.utcoffset() is None for value in all_times):
+        raise ValueError("interval purged walk-forward requires timezone-aware timestamps")
+    if any(current <= previous for previous, current in itertools.pairwise(prediction_times)):
+        raise ValueError("prediction times must be strictly increasing")
+    if any(
+        label_end < prediction
+        for prediction, label_end in zip(prediction_times, label_end_times, strict=True)
+    ):
+        raise ValueError("label end times may not precede prediction times")
+
+    holdout = set(locked_holdout)
+    if any(index < 0 or index >= n_samples for index in holdout):
+        raise ValueError("locked holdout index is out of range")
+
+    test_size = max(1, (n_samples - minimum_train) // n_splits)
+    folds: list[tuple[tuple[int, ...], tuple[int, ...]]] = []
+    for split in range(n_splits):
+        test_start = minimum_train + split * test_size
+        test_end = n_samples if split == n_splits - 1 else min(n_samples, test_start + test_size)
+        test = tuple(range(test_start, test_end))
+        if not test:
+            raise ValueError("interval split contains an empty test fold")
+
+        test_prediction_start = prediction_times[test_start]
+        embargo_cutoff = test_prediction_start - embargo
+
+        train = tuple(
+            index
+            for index in range(test_start)
+            if prediction_times[index] < embargo_cutoff
+            and label_end_times[index] < test_prediction_start
+        )
+        if not train:
+            raise ValueError("purge and embargo leave an empty interval fold")
+        if holdout.intersection(train) or holdout.intersection(test):
+            raise ValueError("validation split touches the locked final holdout")
+        folds.append((train, test))
     return tuple(folds)
 
 

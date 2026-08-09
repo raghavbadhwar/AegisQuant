@@ -7,3 +7,5 @@
 - **Scrapling**: typed isolated-worker boundary only; not installed in core. Any future adoption requires a separate dynamic-worker security review.
 
 Agent Reach is an external narrow CLI adapter, not a Python dependency. Core replay does not require any of these optional systems.
+
+- **skfolio**: evaluated at GitHub/PyPI release `0.20.1` (BSD-3-Clause; Python `>=3.10`; active upstream). Not installed for v3B: its mandatory solver/ML/plotting stack (`cvxpy-base`, Clarabel, scikit-learn, Plotly, SciPy) is disproportionate to the eight deterministic models and would make replay depend on solver/version behavior. A typed adapter seam and equivalence/failure tests remain, but the named dependency-free implementation is authoritative. Reconsider only with a measured capability gap and a pinned isolated extra.
