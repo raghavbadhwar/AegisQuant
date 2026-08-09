@@ -129,6 +129,7 @@ from .strategy import (
     PodPortfolioPolicy,
     PodRiskBudget,
     PodTarget,
+    QuantResearchBundle,
     StrategyComparison,
     StrategyPod,
 )
@@ -229,6 +230,7 @@ __all__ = [
     "Position",
     "PostmortemReport",
     "PromotionDecision",
+    "QuantResearchBundle",
     "RawDocumentReceipt",
     "RawFilingSnapshot",
     "RegimeSnapshot",

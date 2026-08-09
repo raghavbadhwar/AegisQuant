@@ -17,13 +17,19 @@ from .portfolio import PortfolioProposal
 from .quant import (
     PREDECLARED_STRATEGY_IDS,
     BaselinePerformance,
+    BehavioralFeatures,
+    EventStudyResult,
+    FactorEvaluation,
+    GraphFeatures,
     HashedContractModel,
     NonNegativeFloat,
     PortfolioMethod,
     PositiveFloat,
     Probability,
+    RegimeSnapshot,
     SemanticId,
     Sha256,
+    UniverseSnapshot,
 )
 from .risk import RiskPolicy
 
@@ -332,6 +338,79 @@ class MasterPortfolio(HashedContractModel):
             turnover=turnover,
             input_hash=canonical_sha256(payload),
         )
+
+
+class QuantResearchBundle(HashedContractModel):
+    """Hash-bound, point-in-time research inputs for a single strategy cutoff."""
+
+    bundle_id: SemanticId
+    as_of: AwareDatetime
+    universe_snapshot: UniverseSnapshot
+    factor_evaluations: tuple[FactorEvaluation, ...] = Field(min_length=1)
+    event_study_results: tuple[EventStudyResult, ...] = Field(min_length=1)
+    regime_snapshot: RegimeSnapshot
+    behavioral_features: tuple[BehavioralFeatures, ...] = ()
+    graph_features: tuple[GraphFeatures, ...] = ()
+
+    @model_validator(mode="after")
+    def research_is_complete_and_point_in_time(self) -> Self:
+        if self.universe_snapshot.as_of != self.as_of:
+            raise ValueError("research bundle universe snapshot cutoff mismatch")
+
+        evaluation_ids = [evaluation.evaluation_id for evaluation in self.factor_evaluations]
+        if len(set(evaluation_ids)) != len(evaluation_ids):
+            raise ValueError("research bundle factor evaluation IDs must be unique")
+        expected_snapshot_ids = (self.universe_snapshot.snapshot_id,)
+        for evaluation in self.factor_evaluations:
+            if evaluation.as_of != self.as_of:
+                raise ValueError(
+                    "research bundle contains a future or mismatched factor evaluation"
+                )
+            if evaluation.universe_snapshot_ids != expected_snapshot_ids:
+                raise ValueError("factor evaluation must bind exactly the bundle universe snapshot")
+
+        result_ids = [result.result_id for result in self.event_study_results]
+        if len(set(result_ids)) != len(result_ids):
+            raise ValueError("research bundle event study result IDs must be unique")
+        for result in self.event_study_results:
+            if result.as_of != self.as_of:
+                raise ValueError(
+                    "research bundle contains a future or mismatched event study result"
+                )
+            if result.pre_event_leakage_detected:
+                raise ValueError("research bundle cannot contain an event study with leakage")
+
+        if self.regime_snapshot.as_of != self.as_of:
+            raise ValueError("research bundle regime snapshot cutoff mismatch")
+
+        eligible_tickers = {
+            decision.ticker for decision in self.universe_snapshot.decisions if decision.eligible
+        }
+        self._validate_feature_coverage(self.behavioral_features, eligible_tickers, "behavioral")
+        self._validate_feature_coverage(self.graph_features, eligible_tickers, "graph")
+        return self
+
+    def _validate_feature_coverage(
+        self,
+        features: tuple[BehavioralFeatures, ...] | tuple[GraphFeatures, ...],
+        eligible_tickers: set[str],
+        feature_kind: str,
+    ) -> None:
+        feature_ids = [feature.feature_id for feature in features]
+        tickers = [feature.ticker for feature in features]
+        if len(set(feature_ids)) != len(feature_ids) or len(set(tickers)) != len(tickers):
+            raise ValueError(
+                f"research bundle {feature_kind} feature IDs and tickers must be unique"
+            )
+        if any(feature.as_of != self.as_of for feature in features):
+            raise ValueError(
+                f"research bundle contains a future or mismatched {feature_kind} feature"
+            )
+        if set(tickers) != eligible_tickers:
+            raise ValueError(
+                f"research bundle {feature_kind} features must cover exactly eligible "
+                "universe tickers"
+            )
 
 
 class StrategyComparison(HashedContractModel):
