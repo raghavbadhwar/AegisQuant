@@ -8,9 +8,9 @@ supplied experiment is ledgered before any cross-strategy calculation.
 from __future__ import annotations
 
 import math
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from datetime import date, datetime, timedelta
-from typing import Annotated, Any, Self
+from typing import Annotated, Any, Self, cast
 
 import numpy as np
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -19,12 +19,21 @@ from aegis.contracts import (
     PREDECLARED_STRATEGY_IDS,
     BaselinePerformance,
     ExperimentRecord,
+    FundMandate,
     StrategyComparison,
     canonical_sha256,
 )
 from aegis.contracts.quant import StrategyComparisonId
+from aegis.fund.ledger import SQLiteRunLedger
 from aegis.research_lab.experiments import ExperimentLedger
-from aegis.research_lab.receipt_series import ReceiptReturnObservation
+from aegis.research_lab.receipt_series import (
+    ReceiptComparisonSpec,
+    ReceiptReturnObservation,
+    derive_receipt_comparison_from_ledger,
+    receipt_cpcv_folds,
+    receipt_series_hash,
+    receipt_validation_folds,
+)
 from aegis.research_lab.validation import (
     probability_of_backtest_overfitting,
     validation_statistics,
@@ -168,7 +177,7 @@ class StrategyReturnSeries(BaseModel):
         return self
 
 
-def strategy_series_from_receipts(
+def _strategy_series_from_receipts(
     *,
     strategy_id: StrategyComparisonId,
     observations: tuple[ReceiptReturnObservation, ...],
@@ -177,6 +186,7 @@ def strategy_series_from_receipts(
     benchmark_id: str,
     base_cost_bps: float,
     experiment: ExperimentRecord,
+    aligned_observation_ids: tuple[str, ...] | None = None,
 ) -> StrategyReturnSeries:
     """Construct eligibility inputs solely from governed adjacent-receipt observations.
 
@@ -198,7 +208,7 @@ def strategy_series_from_receipts(
     labels = tuple(item.label_time.date() for item in observations)
     if len(set(dates)) != len(dates):
         raise StrategyEvaluationError("receipt comparison needs unique prediction dates")
-    observation_ids = tuple(
+    observation_ids = aligned_observation_ids or tuple(
         canonical_sha256(
             {
                 "prediction_run_id": item.prediction_run_id,
@@ -209,6 +219,12 @@ def strategy_series_from_receipts(
         )
         for item in observations
     )
+    if len(observation_ids) != len(observations) or len(set(observation_ids)) != len(
+        observation_ids
+    ):
+        raise StrategyEvaluationError(
+            "receipt comparison observation IDs must be aligned and unique"
+        )
     horizon_days = next(iter(horizons)).days
     common_hash = common_sample_hash(
         dates=dates,
@@ -248,6 +264,32 @@ def strategy_series_from_receipts(
         benchmark_id=benchmark_id,
         gross_returns=gross_returns,
         turnover=turnover,
+        base_cost_bps=base_cost_bps,
+        experiment=experiment,
+    )
+
+
+def strategy_series_from_receipts(
+    *,
+    strategy_id: StrategyComparisonId,
+    observations: tuple[ReceiptReturnObservation, ...],
+    capital: float,
+    constraints_hash: str,
+    benchmark_id: str,
+    base_cost_bps: float,
+    experiment: ExperimentRecord,
+) -> StrategyReturnSeries:
+    """Construct one series from receipts without accepting return vectors.
+
+    The comparison-level evaluator supplies aligned sample identities only
+    internally after it has loaded all six rows from the cycle ledger.
+    """
+    return _strategy_series_from_receipts(
+        strategy_id=strategy_id,
+        observations=observations,
+        capital=capital,
+        constraints_hash=constraints_hash,
+        benchmark_id=benchmark_id,
         base_cost_bps=base_cost_bps,
         experiment=experiment,
     )
@@ -335,6 +377,248 @@ def _validate_experiment_times(
         raise StrategyEvaluationError("every experiment must follow the comparison declaration")
     if any(series.experiment.created_at > evaluated_at for series in ordered):
         raise StrategyEvaluationError("an experiment cannot be created after evaluation")
+
+
+class ReceiptComparisonValidationEvidence(BaseModel):
+    """Auditable, aligned fold evidence required by receipt-only evaluation."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    receipt_series_hashes: tuple[_SHA256, ...] = Field(min_length=6, max_length=6)
+    walk_forward_folds: tuple[tuple[tuple[int, ...], tuple[int, ...]], ...] = Field(min_length=1)
+    cpcv_folds: tuple[tuple[tuple[int, ...], tuple[int, ...]], ...] = Field(min_length=1)
+    metric_indices: tuple[int, ...] = Field(min_length=4)
+    aligned_observation_ids: tuple[_SHA256, ...] = Field(min_length=4)
+
+
+class ReceiptComparisonEvaluation(BaseModel):
+    """Receipt-only comparison result paired with the evidence that gated it."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    comparison: StrategyComparison
+    validation: ReceiptComparisonValidationEvidence
+
+
+def _receipt_comparison_alignment(
+    spec: ReceiptComparisonSpec,
+    cycle_ledger: SQLiteRunLedger,
+    *,
+    walk_forward_splits: int,
+    minimum_train: int,
+    cpcv_groups: int,
+    cpcv_test_groups: int,
+    embargo: timedelta,
+    locked_holdout: tuple[int, ...],
+) -> tuple[
+    tuple[tuple[StrategyComparisonId, tuple[ReceiptReturnObservation, ...]], ...],
+    tuple[str, ...],
+    tuple[str, ...],
+    tuple[tuple[tuple[int, ...], tuple[int, ...]], ...],
+    tuple[tuple[tuple[int, ...], tuple[int, ...]], ...],
+    tuple[int, ...],
+    float,
+    str,
+    str,
+    float,
+]:
+    """Load and align receipt rows before any return statistic is calculated."""
+    resolved = derive_receipt_comparison_from_ledger(spec, cycle_ledger)
+    ordered = tuple(
+        (
+            next(row for row, _ in resolved if row.strategy_id == strategy_id),
+            next(observations for row, observations in resolved if row.strategy_id == strategy_id),
+        )
+        for strategy_id in PREDECLARED_STRATEGY_IDS
+    )
+    reference = ordered[0][1]
+    receipt_hashes = tuple(
+        receipt_series_hash(observations, row.mandate_hash) for row, observations in ordered
+    )
+    if len(reference) < 4:
+        raise StrategyEvaluationError("receipt comparison needs at least four observations")
+    reference_times = tuple((item.prediction_time, item.label_time) for item in reference)
+    reference_snapshots = tuple(item.snapshot_hash for item in reference)
+    reference_bundles = tuple(item.quant_bundle_hash for item in reference)
+    if len(set(reference_snapshots)) != 1:
+        raise StrategyEvaluationError("receipt comparison requires one sealed data snapshot")
+    for _row, observations in ordered[1:]:
+        if len(observations) != len(reference):
+            raise StrategyEvaluationError("receipt rows must have aligned observation counts")
+        if (
+            tuple((item.prediction_time, item.label_time) for item in observations)
+            != reference_times
+        ):
+            raise StrategyEvaluationError(
+                "receipt rows must have aligned prediction and label intervals"
+            )
+        if tuple(item.snapshot_hash for item in observations) != reference_snapshots:
+            raise StrategyEvaluationError("receipt rows must share the sealed data snapshot")
+        if tuple(item.quant_bundle_hash for item in observations) != reference_bundles:
+            raise StrategyEvaluationError("receipt rows must share sealed quant bundle lineage")
+
+    # These folds are constructed from governed timestamps, not caller indices.
+    walk_forward = receipt_validation_folds(
+        reference,
+        n_splits=walk_forward_splits,
+        minimum_train=minimum_train,
+        embargo=embargo,
+        locked_holdout=locked_holdout,
+    )
+    cpcv = receipt_cpcv_folds(
+        reference,
+        n_groups=cpcv_groups,
+        n_test_groups=cpcv_test_groups,
+        embargo=embargo,
+        locked_holdout=locked_holdout,
+    )
+    walk_forward_oos = {index for _, test in walk_forward for index in test}
+    cpcv_oos = {index for _, test in cpcv for index in test}
+    metric_indices = tuple(sorted(walk_forward_oos.intersection(cpcv_oos)))
+    if len(metric_indices) < 4:
+        raise StrategyEvaluationError(
+            "aligned walk-forward/CPCV evidence leaves fewer than four metric observations"
+        )
+
+    # Read mandate terms from the same verified receipts, rather than accepting
+    # capital, constraints, benchmark, or base costs as evaluator inputs.
+    terms = []
+    for row, _ in ordered:
+        record = cycle_ledger.get(row.run_ids[0])
+        fund = record.fund
+        if not isinstance(fund, FundMandate):
+            raise StrategyEvaluationError("receipt comparison requires institutional mandate terms")
+        terms.append(
+            (
+                float(fund.capital),
+                canonical_sha256(fund.master_risk),
+                fund.benchmark,
+                fund.master_risk.commission_bps + fund.master_risk.slippage_bps,
+            )
+        )
+    if any(term != terms[0] for term in terms[1:]):
+        raise StrategyEvaluationError(
+            "receipt rows must share mandate capital, constraints, benchmark, and costs"
+        )
+    capital, constraints_hash, benchmark_id, base_cost_bps = terms[0]
+
+    # Common identities bind every strategy's actual ledger receipt pair at an
+    # aligned timestamp, while never incorporating a user-supplied return.
+    aligned_ids = tuple(
+        canonical_sha256(
+            {
+                "prediction_time": reference[index].prediction_time,
+                "label_time": reference[index].label_time,
+                "snapshot_hash": reference[index].snapshot_hash,
+                "quant_bundle_hash": reference[index].quant_bundle_hash,
+                "receipt_pairs": tuple(
+                    {
+                        "strategy_id": row.strategy_id,
+                        "prediction_run_id": observations[index].prediction_run_id,
+                        "prediction_digest": observations[index].prediction_digest,
+                        "label_run_id": observations[index].label_run_id,
+                        "label_digest": observations[index].label_digest,
+                    }
+                    for row, observations in ordered
+                ),
+            }
+        )
+        for index in metric_indices
+    )
+    selected = tuple(
+        (
+            cast(StrategyComparisonId, row.strategy_id),
+            tuple(observations[index] for index in metric_indices),
+        )
+        for row, observations in ordered
+    )
+    return (
+        selected,
+        aligned_ids,
+        receipt_hashes,
+        walk_forward,
+        cpcv,
+        metric_indices,
+        capital,
+        constraints_hash,
+        benchmark_id,
+        base_cost_bps,
+    )
+
+
+def evaluate_receipt_comparison(
+    *,
+    spec: ReceiptComparisonSpec,
+    cycle_ledger: SQLiteRunLedger,
+    experiments: Mapping[StrategyComparisonId, ExperimentRecord],
+    experiment_ledger: ExperimentLedger,
+    walk_forward_splits: int,
+    minimum_train: int,
+    cpcv_groups: int,
+    cpcv_test_groups: int,
+    embargo: timedelta = timedelta(0),
+    locked_holdout: tuple[int, ...] = (),
+) -> ReceiptComparisonEvaluation:
+    """Evaluate exactly one declared six-way comparison from governed receipts.
+
+    Fold construction and interval alignment complete before this function
+    builds a ``StrategyReturnSeries`` or invokes any eligibility statistic.
+    Consequently this release path has no parameter for returns, turnover,
+    dates, snapshots, capital, benchmark, constraints, or transaction costs.
+    """
+    if set(experiments) != set(PREDECLARED_STRATEGY_IDS) or len(experiments) != len(
+        PREDECLARED_STRATEGY_IDS
+    ):
+        raise StrategyEvaluationError(
+            "receipt comparison requires one experiment for each predeclared strategy"
+        )
+    (
+        selected,
+        aligned_ids,
+        receipt_hashes,
+        walk_forward,
+        cpcv,
+        metric_indices,
+        capital,
+        constraints_hash,
+        benchmark_id,
+        base_cost_bps,
+    ) = _receipt_comparison_alignment(
+        spec,
+        cycle_ledger,
+        walk_forward_splits=walk_forward_splits,
+        minimum_train=minimum_train,
+        cpcv_groups=cpcv_groups,
+        cpcv_test_groups=cpcv_test_groups,
+        embargo=embargo,
+        locked_holdout=locked_holdout,
+    )
+    built = tuple(
+        _strategy_series_from_receipts(
+            strategy_id=strategy_id,
+            observations=observations,
+            capital=capital,
+            constraints_hash=constraints_hash,
+            benchmark_id=benchmark_id,
+            base_cost_bps=base_cost_bps,
+            experiment=experiments[strategy_id],
+            aligned_observation_ids=aligned_ids,
+        )
+        for strategy_id, observations in selected
+    )
+    evidence = ReceiptComparisonValidationEvidence(
+        receipt_series_hashes=receipt_hashes,
+        walk_forward_folds=walk_forward,
+        cpcv_folds=cpcv,
+        metric_indices=metric_indices,
+        aligned_observation_ids=aligned_ids,
+    )
+    return ReceiptComparisonEvaluation(
+        comparison=evaluate_predeclared_strategies(
+            built, spec.declared_at, spec.evaluated_at, experiment_ledger
+        ),
+        validation=evidence,
+    )
 
 
 def evaluate_predeclared_strategies(

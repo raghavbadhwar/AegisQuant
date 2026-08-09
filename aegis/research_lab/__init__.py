@@ -5,17 +5,23 @@ from .experiments import ExperimentLedger
 from .outcomes import OutcomeIntegrityError, OutcomeLedger, build_postmortem
 from .promotion import authorize_promotion
 from .receipt_series import (
+    ReceiptComparisonRow,
+    ReceiptComparisonSpec,
     ReceiptReturnObservation,
     ReceiptSeriesError,
+    derive_receipt_comparison_from_ledger,
     derive_receipt_observations,
     derive_receipt_observations_from_ledger,
     receipt_series_hash,
 )
 from .strategy_evaluation import (
+    ReceiptComparisonEvaluation,
+    ReceiptComparisonValidationEvidence,
     StrategyEvaluationError,
     StrategyReturnSeries,
     common_sample_hash,
     evaluate_predeclared_strategies,
+    evaluate_receipt_comparison,
     strategy_series_from_receipts,
     strategy_series_hash,
 )
@@ -32,6 +38,10 @@ __all__ = [
     "ExperimentLedger",
     "OutcomeIntegrityError",
     "OutcomeLedger",
+    "ReceiptComparisonEvaluation",
+    "ReceiptComparisonRow",
+    "ReceiptComparisonSpec",
+    "ReceiptComparisonValidationEvidence",
     "ReceiptReturnObservation",
     "ReceiptSeriesError",
     "StrategyEvaluationError",
@@ -40,9 +50,11 @@ __all__ = [
     "build_postmortem",
     "combinatorial_purged_splits",
     "common_sample_hash",
+    "derive_receipt_comparison_from_ledger",
     "derive_receipt_observations",
     "derive_receipt_observations_from_ledger",
     "evaluate_predeclared_strategies",
+    "evaluate_receipt_comparison",
     "interval_combinatorial_purged_splits",
     "interval_purged_walk_forward",
     "purged_walk_forward",

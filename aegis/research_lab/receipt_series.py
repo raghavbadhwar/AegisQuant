@@ -244,3 +244,31 @@ def load_receipt_comparison_spec(path: str | Path) -> ReceiptComparisonSpec:
         return ReceiptComparisonSpec.model_validate_json(Path(path).read_bytes())
     except Exception as exc:
         raise ReceiptSeriesError(f"invalid receipt comparison specification: {path}") from exc
+
+
+def derive_receipt_comparison_from_ledger(
+    spec: ReceiptComparisonSpec, ledger: SQLiteRunLedger
+) -> tuple[tuple[ReceiptComparisonRow, tuple[ReceiptReturnObservation, ...]], ...]:
+    """Resolve every declared comparison row through the verified cycle ledger.
+
+    The specification contains IDs only.  This is deliberately the sole bridge
+    from a receipt-comparison declaration to realized-return observations: no
+    model-constructed ``CycleRecord`` or supplied return vector can enter here.
+    Each label must have been available by the declared evaluation cutoff.
+    """
+    resolved: list[tuple[ReceiptComparisonRow, tuple[ReceiptReturnObservation, ...]]] = []
+    seen_run_ids: set[str] = set()
+    for row in spec.rows:
+        overlapping = seen_run_ids.intersection(row.run_ids)
+        if overlapping:
+            raise ReceiptSeriesError(
+                "receipt comparison cannot reuse a governed run across strategies"
+            )
+        observations = derive_receipt_observations_from_ledger(
+            ledger, row.run_ids, expected_mandate_hash=row.mandate_hash
+        )
+        if any(item.label_time > spec.evaluated_at for item in observations):
+            raise ReceiptSeriesError("receipt label is after the comparison evaluation cutoff")
+        seen_run_ids.update(row.run_ids)
+        resolved.append((row, observations))
+    return tuple(resolved)
