@@ -102,23 +102,22 @@ def interval_purged_walk_forward(
     for split in range(n_splits):
         test_start = minimum_train + split * test_size
         test_end = n_samples if split == n_splits - 1 else min(n_samples, test_start + test_size)
-        test = tuple(range(test_start, test_end))
+        test = tuple(index for index in range(test_start, test_end) if index not in holdout)
         if not test:
-            raise ValueError("interval split contains an empty test fold")
+            raise ValueError("interval split contains an empty unlocked test fold")
 
-        test_prediction_start = prediction_times[test_start]
+        test_prediction_start = prediction_times[test[0]]
         embargo_cutoff = test_prediction_start - embargo
 
         train = tuple(
             index
             for index in range(test_start)
-            if prediction_times[index] < embargo_cutoff
+            if index not in holdout
+            and prediction_times[index] < embargo_cutoff
             and label_end_times[index] < test_prediction_start
         )
         if not train:
             raise ValueError("purge and embargo leave an empty interval fold")
-        if holdout.intersection(train) or holdout.intersection(test):
-            raise ValueError("validation split touches the locked final holdout")
         folds.append((train, test))
     return tuple(folds)
 
