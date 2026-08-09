@@ -106,22 +106,11 @@ def test_v3b_cli_surface_is_offline_typed_and_byte_stable(tmp_path: Path, monkey
         assert result.exit_code == 0, result.output
         assert key in json.loads(result.stdout)
 
-    strategy_outputs = []
     fund_outputs = []
     for index in range(2):
-        strategy = runner.invoke(
-            app,
-            [
-                "strategy",
-                "evaluate",
-                "--fixture",
-                str(ROOT / "data/fixtures/v3b/strategy_returns.json"),
-                "--ledger",
-                str(tmp_path / f"experiment-{index}.sqlite"),
-            ],
-        )
-        assert strategy.exit_code == 0, strategy.output
-        strategy_outputs.append(strategy.stdout)
+        strategy = runner.invoke(app, ["strategy", "evaluate"])
+        assert strategy.exit_code != 0
+        assert "receipt-derived historical" in strategy.output
         fund = runner.invoke(
             app,
             [
@@ -142,17 +131,6 @@ def test_v3b_cli_surface_is_offline_typed_and_byte_stable(tmp_path: Path, monkey
         assert fund.exit_code == 0, fund.output
         fund_outputs.append(fund.stdout)
 
-    assert strategy_outputs[0].encode() == strategy_outputs[1].encode()
-    comparison = json.loads(strategy_outputs[0])
-    assert [row["strategy_id"] for row in comparison["baselines"]] == [
-        "equal-weight-v1",
-        "inverse-vol-v1",
-        "simple-factor-v1",
-        "fundamental-only-v1",
-        "quant-only-v1",
-        "combined-multistrategy-v1",
-    ]
-    assert comparison["combined_status"] == "eligible"
     assert fund_outputs[0].encode() == fund_outputs[1].encode()
     record = json.loads(fund_outputs[0])
     assert record["schema_version"] == "aegis-cycle-v2"

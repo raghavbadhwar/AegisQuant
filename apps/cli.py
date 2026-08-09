@@ -2,15 +2,14 @@
 
 from __future__ import annotations
 
-import json
-from datetime import date, datetime
+from datetime import date
 from pathlib import Path
 from typing import Annotated
 
 import typer
 
 from aegis.brokers import SimBroker
-from aegis.contracts import ExperimentRecord, SourceRequest, canonical_json
+from aegis.contracts import SourceRequest, canonical_json
 from aegis.data import FixtureDataClient
 from aegis.fund.backtest import backtest_fund
 from aegis.fund.ledger import SQLiteRunLedger
@@ -33,22 +32,13 @@ from aegis.harness.agent_loader import load_agent_tree
 from aegis.harness.graph import LangGraphForecastProvider
 from aegis.harness.model_router import ReplayModelProvider
 from aegis.harness.skill_loader import load_skill_tree
-from aegis.observability import local_build_fingerprint
 from aegis.quant_research.demo import (
     demo_event_study,
     demo_factor_diagnostics,
     demo_regime,
     demo_universe,
 )
-from aegis.quant_research.hashing import build_hashed
 from aegis.reporting import dossier_html, dossier_json, dossier_markdown
-from aegis.research_lab import (
-    ExperimentLedger,
-    StrategyReturnSeries,
-    common_sample_hash,
-    evaluate_predeclared_strategies,
-    strategy_series_hash,
-)
 from aegis.sources import RawStore, SourceGateway, SourcePlanner, SourceRegistry
 from aegis.sources.adapters import DirectHTTPConnector
 
@@ -180,85 +170,12 @@ def regimes_show_command() -> None:
 
 
 @strategy_app.command("evaluate")
-def strategy_evaluate_command(
-    fixture: Annotated[
-        Path, typer.Option(help="Frozen six-way common-sample strategy returns")
-    ] = Path("data/fixtures/v3b/strategy_returns.json"),
-    ledger: Annotated[Path, typer.Option(help="Append-only experiment ledger")] = Path(
-        "run_data/v3b-experiments.sqlite"
-    ),
-) -> None:
-    """Compare all six predeclared strategies without promoting a winner."""
-    payload = json.loads(_project_path(fixture).read_text())
-    declared_at = datetime.fromisoformat(payload["declared_at"])
-    evaluated_at = datetime.fromisoformat(payload["evaluated_at"])
-    dates = tuple(date.fromisoformat(value) for value in payload["dates"])
-    base_cost_bps = float(payload["base_cost_bps"])
-    eligible_ids = tuple(payload["eligible_observation_ids"])
-    label_end_dates = tuple(date.fromisoformat(value) for value in payload["label_end_dates"])
-    quant_bundle_hashes = tuple(payload["quant_bundle_hashes"])
-    common_hash = common_sample_hash(
-        dates=dates,
-        data_snapshot_hash=payload["data_snapshot_hash"],
-        eligible_observation_ids=eligible_ids,
-        label_end_dates=label_end_dates,
-        quant_bundle_hashes=quant_bundle_hashes,
-        return_horizon_days=int(payload["return_horizon_days"]),
-        capital=float(payload["capital"]),
-        constraints_hash=payload["constraints_hash"],
-        benchmark_id=payload["benchmark_id"],
-        base_cost_bps=base_cost_bps,
+def strategy_evaluate_command() -> None:
+    """Refuse fixture-vector eligibility until receipt-derived comparison is supplied."""
+    raise typer.BadParameter(
+        "strategy eligibility requires receipt-derived historical comparisons; "
+        "hand-authored return fixtures are not an authority"
     )
-    _, code_tree_hash, _ = local_build_fingerprint(PROJECT_ROOT)
-    rows = []
-    for number, item in enumerate(payload["rows"], start=1):
-        strategy_id = item["strategy_id"]
-        gross_returns = tuple(float(value) for value in item["gross_returns"])
-        turnover = tuple(float(value) for value in item["turnover"])
-        series_hash = strategy_series_hash(
-            common_hash=common_hash, gross_returns=gross_returns, turnover=turnover
-        )
-        experiment = build_hashed(
-            ExperimentRecord,
-            experiment_id=f"experiment-{strategy_id}-{series_hash[:16]}",
-            candidate_id=f"candidate-{strategy_id}",
-            hypothesis_id=f"hypothesis-{strategy_id}",
-            code_revision=f"tree-{code_tree_hash[:16]}",
-            tree_hash=code_tree_hash,
-            data_snapshot_hash=payload["data_snapshot_hash"],
-            parameters={"strategy_id": strategy_id, "series_input_hash": series_hash},
-            dependency_versions={"aegis": "v3b-frozen-fixture"},
-            trial_number=number,
-            status="declared",
-            created_at=declared_at,
-        )
-        rows.append(
-            StrategyReturnSeries(
-                strategy_id=strategy_id,
-                common_sample_hash=common_hash,
-                dates=dates,
-                data_snapshot_hash=payload["data_snapshot_hash"],
-                eligible_observation_ids=eligible_ids,
-                label_end_dates=label_end_dates,
-                quant_bundle_hashes=quant_bundle_hashes,
-                series_input_hash=series_hash,
-                return_horizon_days=int(payload["return_horizon_days"]),
-                capital=float(payload["capital"]),
-                constraints_hash=payload["constraints_hash"],
-                benchmark_id=payload["benchmark_id"],
-                gross_returns=gross_returns,
-                turnover=turnover,
-                base_cost_bps=base_cost_bps,
-                experiment=experiment,
-            )
-        )
-    comparison = evaluate_predeclared_strategies(
-        rows,
-        declared_at,
-        evaluated_at,
-        ExperimentLedger(_project_path(ledger)),
-    )
-    typer.echo(canonical_json(comparison))
 
 
 @fund_app.command("run")
