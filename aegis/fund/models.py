@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Protocol, runtime_checkable
 
@@ -331,6 +332,49 @@ class MultiStrategyFixtureProvider(FixtureForecastProvider):
             base.relation_snapshot_hash,
             self._quant_bundle,
         )
+
+
+class HistoricalMultiStrategyFixtureProvider:
+    """Exact-cutoff router for sealed, local institutional replay artifacts.
+
+    Each historical cutoff has an independently validated forecast, evidence,
+    and quant-bundle triplet. Missing cutoffs fail closed; this class neither
+    extrapolates nor synthesizes research data.
+    """
+
+    network_enabled = False
+
+    def __init__(
+        self,
+        artifacts: Mapping[str, tuple[str | Path, str | Path, str | Path]],
+    ) -> None:
+        if not artifacts:
+            raise ForecastIntegrityError("historical provider requires sealed artifacts")
+        self._providers: dict[str, MultiStrategyFixtureProvider] = {}
+        for cutoff, paths in artifacts.items():
+            if len(paths) != 3:
+                raise ForecastIntegrityError("historical artifact triplet is incomplete")
+            try:
+                # Validate an ISO-aware key without normalizing away precision.
+                from datetime import datetime
+
+                instant = datetime.fromisoformat(cutoff.replace("Z", "+00:00"))
+                if instant.tzinfo is None or instant.utcoffset() is None:
+                    raise ValueError("naive cutoff")
+            except (TypeError, ValueError) as exc:
+                raise ForecastIntegrityError(
+                    "historical artifact cutoff must be ISO-aware"
+                ) from exc
+            self._providers[cutoff] = MultiStrategyFixtureProvider(*paths)
+
+    def research(self, case: ResearchCase, snapshot: MarketSnapshot) -> ResearchDossier:
+        cutoff = case.as_of.isoformat()
+        provider = self._providers.get(cutoff)
+        if provider is None:
+            raise ForecastIntegrityError(
+                "missing sealed historical institutional artifacts for exact case cutoff"
+            )
+        return provider.research(case, snapshot)
 
 
 def load_replay_manifest(path: str | Path) -> ReplayManifest:

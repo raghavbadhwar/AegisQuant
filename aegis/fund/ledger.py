@@ -90,6 +90,12 @@ class CycleRecord(BaseModel):
             payload.pop("master_portfolio")
         if self.quant_research_bundle is None:
             payload.pop("quant_research_bundle")
+        # v1 receipts predate institutional dossiers; omission is required for
+        # their frozen canonical byte representation, not merely a null value.
+        if self.dossier.quant_research_bundle is None:
+            dossier = payload.get("dossier")
+            if isinstance(dossier, dict):
+                dossier.pop("quant_research_bundle", None)
         return payload
 
     def canonical(self) -> str:

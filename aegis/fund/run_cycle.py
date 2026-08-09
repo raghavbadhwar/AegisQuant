@@ -57,7 +57,11 @@ def run_cycle(
         raise RuntimeError(f"network-capable provider forbidden in {case.mode} mode")
     if case.mode in {"replay", "historical"}:
         from aegis.data import FixtureDataClient
-        from aegis.fund.models import FixtureForecastProvider, MultiStrategyFixtureProvider
+        from aegis.fund.models import (
+            FixtureForecastProvider,
+            HistoricalMultiStrategyFixtureProvider,
+            MultiStrategyFixtureProvider,
+        )
         from aegis.harness.graph import LangGraphForecastProvider
         from aegis.quant.models import DeterministicCompositeProvider
 
@@ -66,6 +70,7 @@ def run_cycle(
         sealed_provider_types = {
             FixtureForecastProvider,
             MultiStrategyFixtureProvider,
+            HistoricalMultiStrategyFixtureProvider,
             LangGraphForecastProvider,
             DeterministicCompositeProvider,
         }
