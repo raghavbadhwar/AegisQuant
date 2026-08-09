@@ -135,6 +135,9 @@ class ModelForecastBatch(HashedContractModel):
     batch_id: SemanticId
     pod_id: SemanticId
     model_id: SemanticId
+    quant_bundle_id: SemanticId
+    quant_bundle_hash: Sha256
+    universe_snapshot_id: SemanticId
     as_of: AwareDatetime
     available_at: AwareDatetime
     forecasts: tuple[AlphaForecast, ...] = Field(min_length=1)

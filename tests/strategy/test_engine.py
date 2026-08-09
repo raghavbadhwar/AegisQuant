@@ -115,6 +115,9 @@ def batch(
         batch_id=f"batch-{model_id.removesuffix('-v1')}-v1",
         pod_id=pod_id,
         model_id=model_id,
+        quant_bundle_id="quant-bundle-demo-v1",
+        quant_bundle_hash=SNAPSHOT_HASH,
+        universe_snapshot_id="universe-demo-v1",
         as_of=AS_OF,
         available_at=AS_OF,
         forecasts=tuple(

@@ -104,8 +104,11 @@ def run_cycle(
         from aegis.fund.strategy_inputs import build_model_batches, build_pod_contexts
         from aegis.strategy import build_master_portfolio
 
-        model_batches = build_model_batches(fund, case, forecasts, evidence)
-        pod_contexts = build_pod_contexts(fund, case, model_batches, data_client)
+        quant_bundle = dossier.quant_research_bundle
+        if quant_bundle is None:  # Narrowing guard for strict type checkers.
+            raise DataIntegrityError("institutional cycle requires a sealed quant research bundle")
+        model_batches = build_model_batches(fund, case, forecasts, evidence, quant_bundle)
+        pod_contexts = build_pod_contexts(fund, case, model_batches, data_client, quant_bundle)
         master_portfolio = build_master_portfolio(
             fund, model_batches, pod_contexts, current_weights
         )

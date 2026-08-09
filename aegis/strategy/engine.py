@@ -291,6 +291,19 @@ def build_master_portfolio(
     if len(as_of_values) != 1:
         raise ValueError("all pod market contexts must share one as_of cutoff")
     as_of = next(iter(as_of_values))
+    bundle_hashes = {
+        batch.quant_bundle_hash for pod_batches in batches.values() for batch in pod_batches
+    }
+    bundle_ids = {
+        batch.quant_bundle_id for pod_batches in batches.values() for batch in pod_batches
+    }
+    universe_ids = {
+        batch.universe_snapshot_id for pod_batches in batches.values() for batch in pod_batches
+    }
+    if len(bundle_hashes) != 1 or len(bundle_ids) != 1 or len(universe_ids) != 1:
+        raise ValueError("all strategy batches must bind one sealed quant bundle and universe")
+    if any(context.universe_snapshot_id not in universe_ids for context in contexts.values()):
+        raise ValueError("pod context universe must equal the sealed batch universe")
 
     raw_targets: dict[str, dict[str, float]] = {}
     pod_volatilities: dict[str, float] = {}

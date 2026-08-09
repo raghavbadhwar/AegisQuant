@@ -13,6 +13,7 @@ from aegis.contracts import (
     EvidenceBundle,
     FundMandate,
     ModelForecastBatch,
+    QuantResearchBundle,
     ResearchCase,
     canonical_sha256,
 )
@@ -50,10 +51,18 @@ def build_model_batches(
     case: ResearchCase,
     forecasts: tuple[AlphaForecast, ...],
     evidence: EvidenceBundle,
+    quant_bundle: QuantResearchBundle,
 ) -> dict[str, tuple[ModelForecastBatch, ...]]:
     """Bind flat standard forecasts to exactly the models declared by the mandate."""
     if evidence.case_id != case.case_id or evidence.as_of != case.as_of:
         raise DataIntegrityError("strategy evidence does not match the research case")
+    if quant_bundle.as_of != case.as_of:
+        raise DataIntegrityError("strategy quant bundle does not match the research case")
+    eligible_tickers = {
+        decision.ticker
+        for decision in quant_bundle.universe_snapshot.decisions
+        if decision.eligible
+    }
     evidence_by_id = {item.evidence_id: item for item in evidence.records}
     declared = {model.model_id: pod.pod_id for pod in mandate.pods for model in pod.models}
     if len(declared) != sum(len(pod.models) for pod in mandate.pods):
@@ -65,6 +74,10 @@ def build_model_batches(
     for forecast in forecasts:
         if forecast.as_of != case.as_of or forecast.horizon_days != case.horizon_days:
             raise DataIntegrityError("multi-strategy forecast cutoff/horizon mismatch")
+        if not forecast.abstained and forecast.ticker not in eligible_tickers:
+            raise DataIntegrityError(
+                "non-abstained forecast is outside the sealed eligible universe"
+            )
         by_model[forecast.model_name].append(forecast)
     missing = sorted(model_id for model_id, values in by_model.items() if not values)
     if missing:
@@ -105,6 +118,9 @@ def build_model_batches(
             ),
             pod_id=pod_id,
             model_id=model_id,
+            quant_bundle_id=quant_bundle.bundle_id,
+            quant_bundle_hash=quant_bundle.content_hash,
+            universe_snapshot_id=quant_bundle.universe_snapshot.snapshot_id,
             as_of=case.as_of,
             available_at=available_at,
             forecasts=values,
@@ -125,10 +141,11 @@ def _covariance_context(
     tickers: tuple[str, ...],
     case: ResearchCase,
     data_client: DataClient,
+    quant_bundle: QuantResearchBundle,
 ) -> PodMarketContext:
     if not tickers:
         return PodMarketContext(
-            universe_snapshot_id=_semantic_id("universe", {"case": case.case_id}),
+            universe_snapshot_id=quant_bundle.universe_snapshot.snapshot_id,
             as_of=case.as_of,
             available_at=case.as_of,
             covariance={},
@@ -136,7 +153,10 @@ def _covariance_context(
             covariance_training_start=case.as_of,
             covariance_training_end=case.as_of,
             covariance_observation_hash=canonical_sha256({"case": case.case_id, "empty": pod_id}),
-            input_snapshot_hashes=(canonical_sha256({"case": case.case_id, "empty": pod_id}),),
+            input_snapshot_hashes=(
+                canonical_sha256({"case": case.case_id, "empty": pod_id}),
+                quant_bundle.content_hash,
+            ),
         )
     start = case.as_of - timedelta(days=400)
     returns: dict[str, dict[str, float]] = {}
@@ -178,7 +198,7 @@ def _covariance_context(
     equal = 1.0 / len(tickers)
     observation_hash = canonical_sha256(histories)
     return PodMarketContext(
-        universe_snapshot_id=_semantic_id("universe", {"case": case.case_id, "tickers": tickers}),
+        universe_snapshot_id=quant_bundle.universe_snapshot.snapshot_id,
         as_of=case.as_of,
         available_at=max(available),
         covariance=covariance,
@@ -186,7 +206,7 @@ def _covariance_context(
         covariance_training_start=min(available),
         covariance_training_end=max(available),
         covariance_observation_hash=observation_hash,
-        input_snapshot_hashes=(observation_hash,),
+        input_snapshot_hashes=(observation_hash, quant_bundle.content_hash),
     )
 
 
@@ -195,6 +215,7 @@ def build_pod_contexts(
     case: ResearchCase,
     batches: dict[str, tuple[ModelForecastBatch, ...]],
     data_client: DataClient,
+    quant_bundle: QuantResearchBundle,
 ) -> dict[str, PodMarketContext]:
     """Calculate covariance contexts from sealed PIT price histories."""
     result = {}
@@ -212,5 +233,7 @@ def build_pod_contexts(
                 }
             )
         )
-        result[pod.pod_id] = _covariance_context(pod.pod_id, tickers, case, data_client)
+        result[pod.pod_id] = _covariance_context(
+            pod.pod_id, tickers, case, data_client, quant_bundle
+        )
     return result
