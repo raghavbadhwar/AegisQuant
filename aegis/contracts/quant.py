@@ -351,6 +351,11 @@ class EventStudySpec(HashedContractModel):
             raise ValueError("event study CAR windows must be unique")
         if any(start > end for start, end in self.car_windows):
             raise ValueError("CAR window start cannot follow its end")
+        earliest_test_offset = min(
+            *(start for start, _ in self.car_windows), -self.pre_event_leakage_days
+        )
+        if self.estimation_window_end >= earliest_test_offset:
+            raise ValueError("estimation window must end before CAR and leakage windows")
         return self
 
 
@@ -593,18 +598,21 @@ class BaselinePerformance(HashedContractModel):
     return_horizon_days: int = Field(gt=0)
     capital: PositiveFloat
     constraints_hash: Sha256
-    cost_grid: tuple[FiniteFloat, FiniteFloat, FiniteFloat] = (1.0, 2.0, 5.0)
+    cost_grid: tuple[FiniteFloat, FiniteFloat, FiniteFloat]
     net_annualized_sharpe: FiniteFloat
+    psr: Probability = 0.5
     dsr: Probability
     pbo: Probability
     max_drawdown: Annotated[FiniteFloat, Field(ge=0.0, le=1.0)]
     turnover: NonNegativeFloat
     two_x_cost_sharpe: FiniteFloat
+    five_x_cost_sharpe: FiniteFloat = 0.0
     evaluated_at: AwareDatetime
     contract_version: ContractVersion = "3.1.0"
 
     @model_validator(mode="after")
     def cost_grid_is_predeclared(self) -> Self:
-        if self.cost_grid != (1.0, 2.0, 5.0):
-            raise ValueError("baseline cost grid must be the predeclared base/2x/5x grid")
+        base, double, quintuple = self.cost_grid
+        if base <= 0.0 or double != 2.0 * base or quintuple != 5.0 * base:
+            raise ValueError("baseline cost grid must be the declared base/2x/5x grid")
         return self

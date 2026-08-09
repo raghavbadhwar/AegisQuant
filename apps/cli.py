@@ -31,6 +31,7 @@ from aegis.harness.agent_loader import load_agent_tree
 from aegis.harness.graph import LangGraphForecastProvider
 from aegis.harness.model_router import ReplayModelProvider
 from aegis.harness.skill_loader import load_skill_tree
+from aegis.observability import local_build_fingerprint
 from aegis.quant_research.demo import (
     demo_event_study,
     demo_factor_diagnostics,
@@ -42,7 +43,9 @@ from aegis.reporting import dossier_html, dossier_json, dossier_markdown
 from aegis.research_lab import (
     ExperimentLedger,
     StrategyReturnSeries,
+    common_sample_hash,
     evaluate_predeclared_strategies,
+    strategy_series_hash,
 )
 from aegis.sources import RawStore, SourceGateway, SourcePlanner, SourceRegistry
 from aegis.sources.adapters import DirectHTTPConnector
@@ -192,35 +195,56 @@ def strategy_evaluate_command(
     declared_at = datetime.fromisoformat(payload["declared_at"])
     evaluated_at = datetime.fromisoformat(payload["evaluated_at"])
     dates = tuple(date.fromisoformat(value) for value in payload["dates"])
+    base_cost_bps = float(payload["base_cost_bps"])
+    eligible_ids = tuple(payload["eligible_observation_ids"])
+    common_hash = common_sample_hash(
+        dates=dates,
+        data_snapshot_hash=payload["data_snapshot_hash"],
+        eligible_observation_ids=eligible_ids,
+        return_horizon_days=int(payload["return_horizon_days"]),
+        capital=float(payload["capital"]),
+        constraints_hash=payload["constraints_hash"],
+        benchmark_id=payload["benchmark_id"],
+        base_cost_bps=base_cost_bps,
+    )
+    _, code_tree_hash, _ = local_build_fingerprint(PROJECT_ROOT)
     rows = []
     for number, item in enumerate(payload["rows"], start=1):
         strategy_id = item["strategy_id"]
+        gross_returns = tuple(float(value) for value in item["gross_returns"])
+        turnover = tuple(float(value) for value in item["turnover"])
+        series_hash = strategy_series_hash(
+            common_hash=common_hash, gross_returns=gross_returns, turnover=turnover
+        )
         experiment = build_hashed(
             ExperimentRecord,
-            experiment_id=f"experiment-{strategy_id}",
+            experiment_id=f"experiment-{strategy_id}-{series_hash[:16]}",
             candidate_id=f"candidate-{strategy_id}",
             hypothesis_id=f"hypothesis-{strategy_id}",
-            code_revision="v3b-frozen-demo",
-            tree_hash=payload["tree_hash"],
+            code_revision=f"tree-{code_tree_hash[:16]}",
+            tree_hash=code_tree_hash,
             data_snapshot_hash=payload["data_snapshot_hash"],
-            parameters={"strategy_id": strategy_id},
-            dependency_versions={"aegis": "v3b"},
+            parameters={"strategy_id": strategy_id, "series_input_hash": series_hash},
+            dependency_versions={"aegis": "v3b-frozen-fixture"},
             trial_number=number,
-            status="passed",
+            status="declared",
             created_at=declared_at,
         )
         rows.append(
             StrategyReturnSeries(
                 strategy_id=strategy_id,
-                common_sample_hash=payload["common_sample_hash"],
+                common_sample_hash=common_hash,
                 dates=dates,
                 data_snapshot_hash=payload["data_snapshot_hash"],
-                return_horizon_days=20,
-                capital=100_000.0,
+                eligible_observation_ids=eligible_ids,
+                series_input_hash=series_hash,
+                return_horizon_days=int(payload["return_horizon_days"]),
+                capital=float(payload["capital"]),
                 constraints_hash=payload["constraints_hash"],
-                benchmark_id="benchmark-spy-v1",
-                gross_returns=tuple(item["gross_returns"]),
-                turnover=tuple(item["turnover"]),
+                benchmark_id=payload["benchmark_id"],
+                gross_returns=gross_returns,
+                turnover=turnover,
+                base_cost_bps=base_cost_bps,
                 experiment=experiment,
             )
         )

@@ -63,6 +63,14 @@ def _event_fixture() -> tuple[MarketEvent, list[ReturnObservation]]:
     return event, observations
 
 
+def test_event_spec_rejects_estimation_overlap_with_car_or_leakage() -> None:
+    values = _event_spec().model_dump(exclude={"content_hash"})
+    with pytest.raises(ValueError, match="estimation window"):
+        build_hashed(EventStudySpec, **{**values, "estimation_window_end": -1})
+    with pytest.raises(ValueError, match="estimation window"):
+        build_hashed(EventStudySpec, **{**values, "car_windows": ((-3, -3),)})
+
+
 def test_event_study_has_golden_car_seeded_interval_and_stable_ids() -> None:
     event, observations = _event_fixture()
     result = run_event_study(_event_spec(), [event], observations, as_of=NOW, seed=7)

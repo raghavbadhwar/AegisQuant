@@ -157,25 +157,32 @@ def validation_statistics(returns: list[float], *, trial_sharpes: list[float]) -
     std = float(np.std(values, ddof=1))
     if std <= 0:
         raise ValueError("validation returns require nonzero variance")
-    sharpe = mean / std * math.sqrt(252)
+    # PSR/DSR are sampling statistics of the *period* Sharpe.  Annualizing it
+    # before inserting it into the higher-moment denominator materially
+    # overstates significance (particularly for short-horizon research).
+    period_sharpe = mean / std
+    annualized_sharpe = period_sharpe * math.sqrt(252)
     centered = (values - mean) / std
     skew = float(np.mean(centered**3))
     kurtosis = float(np.mean(centered**4))
     denominator = max(
         1e-12,
-        1 - skew * sharpe + ((kurtosis - 1) / 4) * sharpe**2,
+        1 - skew * period_sharpe + ((kurtosis - 1) / 4) * period_sharpe**2,
     )
-    psr = NormalDist().cdf(sharpe * math.sqrt(len(values) - 1) / math.sqrt(denominator))
+    psr = NormalDist().cdf(period_sharpe * math.sqrt(len(values) - 1) / math.sqrt(denominator))
     trials = max(1, len(trial_sharpes))
-    trial_std = float(np.std(trial_sharpes, ddof=1)) if trials > 1 else 0.0
-    deflated_benchmark = max(trial_sharpes, default=0.0) - trial_std * math.sqrt(
+    # Evaluation callers record comparable trial Sharpes as annualized display
+    # values; convert them back to the statistic's period units here.
+    trial_period_sharpes = [value / math.sqrt(252) for value in trial_sharpes]
+    trial_std = float(np.std(trial_period_sharpes, ddof=1)) if trials > 1 else 0.0
+    deflated_benchmark = max(trial_period_sharpes, default=0.0) - trial_std * math.sqrt(
         2 * math.log(trials)
     )
     dsr = NormalDist().cdf(
-        (sharpe - deflated_benchmark) * math.sqrt(len(values) - 1) / math.sqrt(denominator)
+        (period_sharpe - deflated_benchmark) * math.sqrt(len(values) - 1) / math.sqrt(denominator)
     )
     return {
-        "annualized_sharpe": sharpe,
+        "annualized_sharpe": annualized_sharpe,
         "probabilistic_sharpe_ratio": psr,
         "deflated_sharpe_ratio": dsr,
         "effective_trials": float(trials),

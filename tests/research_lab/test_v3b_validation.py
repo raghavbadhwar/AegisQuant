@@ -80,7 +80,17 @@ def test_cpcv_and_overfitting_statistics_have_frozen_goldens() -> None:
         {
             "annualized_sharpe": 0.0,
             "probabilistic_sharpe_ratio": 0.5,
-            "deflated_sharpe_ratio": 0.5853864007776856,
+            "deflated_sharpe_ratio": 0.5054204097866952,
             "effective_trials": 3.0,
         }
     )
+
+
+def test_probability_statistics_use_period_sharpe_not_double_annualization() -> None:
+    returns = [0.01, -0.0099] * 126
+    stats = validation_statistics(returns, trial_sharpes=[0.1, 0.2])
+    mean = sum(returns) / len(returns)
+    variance = sum((value - mean) ** 2 for value in returns) / (len(returns) - 1)
+    period_sharpe = mean / variance**0.5
+    assert stats["probabilistic_sharpe_ratio"] < 0.7
+    assert stats["annualized_sharpe"] == pytest.approx(period_sharpe * 252**0.5)

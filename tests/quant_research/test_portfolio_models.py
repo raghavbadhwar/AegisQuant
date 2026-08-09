@@ -169,8 +169,8 @@ def test_skfolio_absence_is_explicit_and_can_use_named_fallback(
         SkfolioAdapter().propose(request)
 
     result = SkfolioAdapter(fallback=EqualWeightModel()).propose(request)
-    assert result.adapter == "skfolio"
-    assert result.fallback_model_id == EqualWeightModel.model_id
+    assert result.adapter == "dependency_free"
+    assert result.fallback_model_id is None
     assert result.model_id == request.model_id
     assert result.input_hash == request.content_hash
     assert result.gross_exposure == pytest.approx(1.0)

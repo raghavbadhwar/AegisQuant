@@ -300,30 +300,42 @@ def compute_factor_diagnostics(
         selected_adv.extend(row.average_daily_dollar_volume for row in (*buckets[0], *buckets[-1]))
     capacity = min(selected_adv) * capacity_participation_rate if selected_adv else 0.0
 
+    # Decay and cross-factor crowding, like IC, are cross-sectional statistics:
+    # calculate within each as-of date then average so time-level shifts cannot
+    # manufacture a Simpson's-paradox correlation.
     decay_lags = sorted({lag for row in observations for lag, _ in row.decay_returns})
     decay: dict[int, float] = {}
     for lag in decay_lags:
-        eligible = [
-            (row.factor_value, dict(row.decay_returns)[lag])
-            for row in observations
-            if lag in dict(row.decay_returns)
-        ]
-        decay[lag] = _pearson((item[0] for item in eligible), (item[1] for item in eligible))
+        by_date = []
+        for rows in grouped.values():
+            eligible = [row for row in rows if lag in dict(row.decay_returns)]
+            if len(eligible) >= 2:
+                by_date.append(
+                    _pearson(
+                        (row.factor_value for row in eligible),
+                        (dict(row.decay_returns)[lag] for row in eligible),
+                    )
+                )
+        if by_date:
+            decay[lag] = _mean(by_date)
 
     comparison_ids = sorted(
         {factor_id for row in observations for factor_id, _ in row.comparison_factors}
     )
     factor_correlations: dict[str, float] = {}
     for factor_id in comparison_ids:
-        eligible_comparisons = [
-            (row.factor_value, dict(row.comparison_factors)[factor_id])
-            for row in observations
-            if factor_id in dict(row.comparison_factors)
-        ]
-        factor_correlations[factor_id] = _pearson(
-            (item[0] for item in eligible_comparisons),
-            (item[1] for item in eligible_comparisons),
-        )
+        by_date = []
+        for rows in grouped.values():
+            eligible = [row for row in rows if factor_id in dict(row.comparison_factors)]
+            if len(eligible) >= 2:
+                by_date.append(
+                    _pearson(
+                        (row.factor_value for row in eligible),
+                        (dict(row.comparison_factors)[factor_id] for row in eligible),
+                    )
+                )
+        if by_date:
+            factor_correlations[factor_id] = _mean(by_date)
     crowding_score = _mean(abs(value) for value in factor_correlations.values())
 
     return FactorDiagnostics(

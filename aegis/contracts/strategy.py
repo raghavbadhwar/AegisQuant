@@ -93,7 +93,8 @@ class FundAllocatorPolicy(HashedContractModel):
     policy_id: SemanticId
     method: Literal["static", "inverse_volatility"] = "static"
     maximum_pod_weight: Fraction = 1.0
-    preserve_unallocated_cash: bool = True
+    # v3B deliberately does not permit redistribution of an abstaining pod's budget.
+    preserve_unallocated_cash: Literal[True] = True
 
 
 class FundMandate(HashedContractModel):

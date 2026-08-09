@@ -1,5 +1,7 @@
 {
-  "common_sample_hash": "c92822df52371840ff32c48da599c932c938935cdee1e2f2ecfad3f6fb3c4089",
+  "base_cost_bps": 10.0,
+  "benchmark_id": "benchmark-spy-v1",
+  "capital": 100000.0,
   "constraints_hash": "84a7c0b8698852932ad6eeb2598e3f675632f1ef645c452b85b1f7f41adab7c1",
   "data_snapshot_hash": "620bd9074a4d56aed6cdc7417c7145f9dafbf1dc39bf27771a9214c541a2f92e",
   "dates": [
@@ -13,7 +15,18 @@
     "2025-01-09"
   ],
   "declared_at": "2025-01-01T00:00:00+00:00",
+  "eligible_observation_ids": [
+    "eligible-observation-0-v1",
+    "eligible-observation-1-v1",
+    "eligible-observation-2-v1",
+    "eligible-observation-3-v1",
+    "eligible-observation-4-v1",
+    "eligible-observation-5-v1",
+    "eligible-observation-6-v1",
+    "eligible-observation-7-v1"
+  ],
   "evaluated_at": "2025-02-01T00:00:00+00:00",
+  "return_horizon_days": 20,
   "rows": [
     {
       "gross_returns": [
@@ -153,6 +166,5 @@
         0.05
       ]
     }
-  ],
-  "tree_hash": "015100d8eef8c09c322013d3d81f03853a3e709296546b2c509ffef5522fe963"
+  ]
 }

@@ -34,6 +34,8 @@ class PodMarketContext(FrozenContractModel):
     available_at: AwareDatetime
     covariance: dict[str, dict[str, FiniteFloat]] = Field(default_factory=dict)
     benchmark_weights: dict[str, FiniteFloat] = Field(default_factory=dict)
+    attributed_drawdown: FiniteFloat | None = Field(default=None, ge=0.0, le=1.0)
+    attributed_nav_hash: Sha256 | None = None
     input_snapshot_hashes: tuple[Sha256, ...] = Field(min_length=1)
 
     @field_validator("covariance", mode="before")
@@ -68,6 +70,15 @@ class PodMarketContext(FrozenContractModel):
                     raise ValueError("pod covariance must be symmetric")
         if len(set(self.input_snapshot_hashes)) != len(self.input_snapshot_hashes):
             raise ValueError("pod input snapshot hashes must be unique")
+        if (self.attributed_drawdown is None) != (self.attributed_nav_hash is None):
+            raise ValueError(
+                "attributed drawdown and attributed NAV hash must be supplied together"
+            )
+        if (
+            self.attributed_nav_hash is not None
+            and self.attributed_nav_hash not in self.input_snapshot_hashes
+        ):
+            raise ValueError("attributed NAV hash must be among point-in-time inputs")
         return self
 
 
@@ -125,6 +136,12 @@ def _pod_request(
     blended: tuple[BlendedForecast, ...],
 ) -> tuple[dict[str, float], float]:
     if not blended:
+        return {}, 0.0
+    # Only a reconciled, hash-bound attributed NAV input may exercise a pod cap.
+    if (
+        context.attributed_drawdown is not None
+        and context.attributed_drawdown >= pod.risk_budget.maximum_drawdown
+    ):
         return {}, 0.0
     if any(item.as_of != context.as_of for item in blended):
         raise ValueError(f"pod {pod.pod_id} forecasts and market context must share one as_of")

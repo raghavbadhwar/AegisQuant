@@ -460,11 +460,13 @@ class SkfolioAdapter:
         payload = fallback_result.model_dump(
             exclude={"content_hash", "adapter", "fallback_model_id"}
         )
+        # The fallback, not skfolio, produced these weights.  Preserve that
+        # fact in the result rather than stamping an adapter that never ran.
         return build_hashed(
             PortfolioModelResult,
             **payload,
-            adapter="skfolio",
-            fallback_model_id=fallback_model_id,
+            adapter="dependency_free",
+            fallback_model_id=None,
         )
 
 

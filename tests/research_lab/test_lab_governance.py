@@ -143,11 +143,17 @@ def test_experiment_ledger_is_append_only_and_tamper_detecting(tmp_path: Path) -
     ledger.append(record)
     assert ledger.get(record.experiment_id) == record
     with sqlite3.connect(ledger.path) as connection:
+        with pytest.raises(sqlite3.IntegrityError, match="append-only"):
+            connection.execute(
+                "UPDATE experiments SET record_hash = ? WHERE experiment_id = ?",
+                ("0" * 64, record.experiment_id),
+            )
+        connection.execute("DROP TRIGGER experiments_no_update")
         connection.execute(
             "UPDATE experiments SET record_hash = ? WHERE experiment_id = ?",
             ("0" * 64, record.experiment_id),
         )
-    with pytest.raises(ExperimentIntegrityError):
+    with pytest.raises(ExperimentIntegrityError, match="missing or replaced"):
         ledger.get(record.experiment_id)
 
 
@@ -389,3 +395,30 @@ def test_candidate_patch_cannot_hide_a_locked_file_change() -> None:
     )
     with pytest.raises(CandidateBoundaryError, match=r"undeclared path|declared target"):
         validate_patch_scope(malicious, "skills/candidates/declared-safe.md")
+
+
+def test_experiment_commitment_chain_rejects_direct_deletion(tmp_path: Path) -> None:
+    record = build_experiment(
+        experiment_id="experiment-delete-v1",
+        candidate_id="candidate-delete-v1",
+        hypothesis_id="hypothesis-delete-v1",
+        code_revision="abc123",
+        tree_hash="a" * 64,
+        data_snapshot_hash="b" * 64,
+        trial_number=1,
+        status="declared",
+        created_at=NOW,
+    )
+    ledger = ExperimentLedger(tmp_path / "chain.sqlite")
+    ledger.append(record)
+    with sqlite3.connect(ledger.path) as connection:
+        with pytest.raises(sqlite3.IntegrityError, match="append-only"):
+            connection.execute(
+                "DELETE FROM experiments WHERE experiment_id = ?", (record.experiment_id,)
+            )
+        connection.execute("DROP TRIGGER experiments_no_delete")
+        connection.execute(
+            "DELETE FROM experiments WHERE experiment_id = ?", (record.experiment_id,)
+        )
+    with pytest.raises(ExperimentIntegrityError, match="missing or replaced"):
+        ledger.get(record.experiment_id)

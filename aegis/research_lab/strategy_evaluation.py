@@ -39,6 +39,41 @@ _SIMPLE_STRATEGY_IDS: tuple[StrategyComparisonId, ...] = (
 _COMBINED_STRATEGY_ID: StrategyComparisonId = "combined-multistrategy-v1"
 
 
+def common_sample_hash(
+    *,
+    dates: tuple[date, ...],
+    data_snapshot_hash: str,
+    eligible_observation_ids: tuple[str, ...],
+    return_horizon_days: int,
+    capital: float,
+    constraints_hash: str,
+    benchmark_id: str,
+    base_cost_bps: float,
+) -> str:
+    """Content hash for the PIT sample shared by all six strategy rows."""
+    return canonical_sha256(
+        {
+            "dates": dates,
+            "data_snapshot_hash": data_snapshot_hash,
+            "eligible_observation_ids": eligible_observation_ids,
+            "return_horizon_days": return_horizon_days,
+            "capital": capital,
+            "constraints_hash": constraints_hash,
+            "benchmark_id": benchmark_id,
+            "base_cost_bps": base_cost_bps,
+        }
+    )
+
+
+def strategy_series_hash(
+    *, common_hash: str, gross_returns: tuple[float, ...], turnover: tuple[float, ...]
+) -> str:
+    """Content hash for a particular model's immutable realized return row."""
+    return canonical_sha256(
+        {"common_sample_hash": common_hash, "gross_returns": gross_returns, "turnover": turnover}
+    )
+
+
 class StrategyEvaluationError(ValueError):
     """The supplied trials do not form the predeclared common-sample test."""
 
@@ -57,6 +92,8 @@ class StrategyReturnSeries(BaseModel):
     common_sample_hash: _SHA256
     dates: tuple[date, ...] = Field(min_length=4)
     data_snapshot_hash: _SHA256
+    eligible_observation_ids: tuple[str, ...] = Field(min_length=4)
+    series_input_hash: _SHA256
     return_horizon_days: int = Field(gt=0)
     capital: Annotated[float, Field(gt=0.0)]
     constraints_hash: _SHA256
@@ -64,14 +101,16 @@ class StrategyReturnSeries(BaseModel):
     gross_returns: tuple[float, ...] = Field(min_length=4)
     turnover: tuple[Annotated[float, Field(ge=0.0)], ...] = Field(min_length=4)
     experiment: ExperimentRecord
-    cost_grid_bps: tuple[float, float, float] = _COST_GRID_BPS
+    base_cost_bps: Annotated[float, Field(gt=0.0)] = 10.0
 
     @model_validator(mode="after")
     def inputs_are_aligned_and_bound(self) -> Self:
         if self.strategy_id not in PREDECLARED_STRATEGY_IDS:
             raise ValueError("strategy is not one of the six predeclared strategy IDs")
-        if self.cost_grid_bps != _COST_GRID_BPS:
-            raise ValueError("cost grid must be the predeclared base/2x/5x grid")
+        if len(set(self.eligible_observation_ids)) != len(self.eligible_observation_ids):
+            raise ValueError("eligible observation IDs must be unique")
+        if len(self.eligible_observation_ids) != len(self.dates):
+            raise ValueError("eligible observation IDs must align to the common sample")
         if len(self.gross_returns) != len(self.dates) or len(self.turnover) != len(self.dates):
             raise ValueError("dates, gross returns, and turnover must have equal lengths")
         if any(
@@ -79,7 +118,7 @@ class StrategyReturnSeries(BaseModel):
             for previous, current in zip(self.dates, self.dates[1:], strict=False)
         ):
             raise ValueError("strategy dates must be strictly increasing")
-        numeric = (*self.gross_returns, *self.turnover, self.capital, *self.cost_grid_bps)
+        numeric = (*self.gross_returns, *self.turnover, self.capital, self.base_cost_bps)
         if not all(math.isfinite(value) for value in numeric):
             raise ValueError("strategy evaluation inputs must be finite")
         if any(value <= -1.0 for value in self.gross_returns):
@@ -89,6 +128,27 @@ class StrategyReturnSeries(BaseModel):
         recorded_strategy = self.experiment.parameters.get("strategy_id")
         if recorded_strategy != self.strategy_id:
             raise ValueError("experiment record is not bound to the strategy ID")
+        expected_common_hash = common_sample_hash(
+            dates=self.dates,
+            data_snapshot_hash=self.data_snapshot_hash,
+            eligible_observation_ids=self.eligible_observation_ids,
+            return_horizon_days=self.return_horizon_days,
+            capital=self.capital,
+            constraints_hash=self.constraints_hash,
+            benchmark_id=self.benchmark_id,
+            base_cost_bps=self.base_cost_bps,
+        )
+        if self.common_sample_hash != expected_common_hash:
+            raise ValueError("common sample hash does not bind the supplied PIT sample")
+        expected_series_hash = strategy_series_hash(
+            common_hash=self.common_sample_hash,
+            gross_returns=self.gross_returns,
+            turnover=self.turnover,
+        )
+        if self.series_input_hash != expected_series_hash:
+            raise ValueError("series input hash does not bind returns and turnover")
+        if self.experiment.parameters.get("series_input_hash") != self.series_input_hash:
+            raise ValueError("experiment record is not bound to the return series")
         return self
 
     @property
@@ -130,7 +190,7 @@ def _common_split_performance(
     split_indices = np.array_split(np.arange(len(ordered[0].dates)), 4)
     matrix: list[list[float]] = []
     for series in ordered:
-        base_returns = _net_returns(series, _COST_GRID_BPS[0])
+        base_returns = _net_returns(series, series.base_cost_bps)
         # Mean net return is deliberately used as the split score: unlike a
         # one-observation Sharpe it remains defined for every valid split.
         matrix.append(
@@ -158,7 +218,7 @@ def _validate_common_comparison(ordered: Sequence[StrategyReturnSeries]) -> None
         "capital",
         "constraints_hash",
         "benchmark_id",
-        "cost_grid_bps",
+        "base_cost_bps",
     )
     for series in ordered[1:]:
         mismatched = [name for name in fields if getattr(series, name) != getattr(reference, name)]
@@ -219,7 +279,7 @@ def evaluate_predeclared_strategies(
     ordered = [by_id[strategy_id] for strategy_id in PREDECLARED_STRATEGY_IDS]
     _validate_common_comparison(ordered)
 
-    base_returns = {item.strategy_id: _net_returns(item, _COST_GRID_BPS[0]) for item in ordered}
+    base_returns = {item.strategy_id: _net_returns(item, item.base_cost_bps) for item in ordered}
     trial_sharpes = [
         validation_statistics(values, trial_sharpes=[])["annualized_sharpe"]
         for values in base_returns.values()
@@ -234,11 +294,13 @@ def evaluate_predeclared_strategies(
         )
         statistics_by_id[item.strategy_id] = statistics
         two_x_statistics = validation_statistics(
-            _net_returns(item, _COST_GRID_BPS[1]), trial_sharpes=trial_sharpes
+            _net_returns(item, item.base_cost_bps * 2.0), trial_sharpes=trial_sharpes
         )
         # Evaluate the full declared stress grid even though the current
         # BaselinePerformance contract exposes only base and 2x Sharpe.
-        validation_statistics(_net_returns(item, _COST_GRID_BPS[2]), trial_sharpes=trial_sharpes)
+        five_x_statistics = validation_statistics(
+            _net_returns(item, item.base_cost_bps * 5.0), trial_sharpes=trial_sharpes
+        )
         values = {
             "strategy_id": item.strategy_id,
             "common_sample_hash": item.common_sample_hash,
@@ -246,13 +308,15 @@ def evaluate_predeclared_strategies(
             "return_horizon_days": item.return_horizon_days,
             "capital": item.capital,
             "constraints_hash": item.constraints_hash,
-            "cost_grid": _COST_GRID_BPS,
+            "cost_grid": (item.base_cost_bps, item.base_cost_bps * 2.0, item.base_cost_bps * 5.0),
             "net_annualized_sharpe": statistics["annualized_sharpe"],
+            "psr": statistics["probabilistic_sharpe_ratio"],
             "dsr": statistics["deflated_sharpe_ratio"],
             "pbo": pbo,
             "max_drawdown": _max_drawdown(base_returns[item.strategy_id]),
             "turnover": float(np.mean(item.turnover)),
             "two_x_cost_sharpe": two_x_statistics["annualized_sharpe"],
+            "five_x_cost_sharpe": five_x_statistics["annualized_sharpe"],
             "evaluated_at": evaluated_at,
         }
         baselines.append(_hashed_contract(BaselinePerformance, values))
@@ -277,6 +341,7 @@ def evaluate_predeclared_strategies(
         {
             "common_sample_hash": ordered[0].common_sample_hash,
             "experiment_ids": [item.experiment.experiment_id for item in ordered],
+            "series_input_hashes": [item.series_input_hash for item in ordered],
             "declared_at": declared_at,
             "evaluated_at": evaluated_at,
         }
@@ -284,7 +349,11 @@ def evaluate_predeclared_strategies(
     comparison_values = {
         "comparison_id": f"strategy-comparison-{comparison_fingerprint[:16]}-v1",
         "common_sample_hash": ordered[0].common_sample_hash,
-        "cost_grid_bps": _COST_GRID_BPS,
+        "cost_grid_bps": (
+            ordered[0].base_cost_bps,
+            ordered[0].base_cost_bps * 2.0,
+            ordered[0].base_cost_bps * 5.0,
+        ),
         "declared_at": declared_at,
         "evaluated_at": evaluated_at,
         "baselines": tuple(baselines),

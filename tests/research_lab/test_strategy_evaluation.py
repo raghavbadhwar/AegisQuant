@@ -11,7 +11,9 @@ from aegis.research_lab.experiments import ExperimentLedger
 from aegis.research_lab.strategy_evaluation import (
     StrategyEvaluationError,
     StrategyReturnSeries,
+    common_sample_hash,
     evaluate_predeclared_strategies,
+    strategy_series_hash,
 )
 
 DECLARED = datetime(2025, 1, 1, tzinfo=UTC)
@@ -29,7 +31,7 @@ def hashed[T: BaseModel](contract: type[T], /, **values: Any) -> T:
     )
 
 
-def experiment(strategy_id: str, number: int) -> ExperimentRecord:
+def experiment(strategy_id: str, number: int, series_hash: str) -> ExperimentRecord:
     return hashed(
         ExperimentRecord,
         experiment_id=f"experiment-{strategy_id}",
@@ -38,7 +40,7 @@ def experiment(strategy_id: str, number: int) -> ExperimentRecord:
         code_revision="0a45af0",
         tree_hash=TREE,
         data_snapshot_hash=SNAPSHOT,
-        parameters={"strategy_id": strategy_id},
+        parameters={"strategy_id": strategy_id, "series_input_hash": series_hash},
         dependency_versions={"aegis": "v3b"},
         trial_number=number,
         status="passed",
@@ -59,21 +61,39 @@ def series(*, combined_return: float = 0.02) -> tuple[StrategyReturnSeries, ...]
         ),
     }
     output = []
+    eligible_ids = tuple(f"eligible-observation-{index}-v1" for index in range(len(DATES)))
+    common_hash = common_sample_hash(
+        dates=DATES,
+        data_snapshot_hash=SNAPSHOT,
+        eligible_observation_ids=eligible_ids,
+        return_horizon_days=20,
+        capital=100_000.0,
+        constraints_hash=CONSTRAINTS,
+        benchmark_id="benchmark-spy-v1",
+        base_cost_bps=10.0,
+    )
     for number, strategy_id in enumerate(PREDECLARED_STRATEGY_IDS, start=1):
         turnover = 0.05 if strategy_id == "combined-multistrategy-v1" else 0.1
+        turnovers = (turnover,) * 8
+        series_hash = strategy_series_hash(
+            common_hash=common_hash, gross_returns=returns[strategy_id], turnover=turnovers
+        )
         output.append(
             StrategyReturnSeries(
                 strategy_id=strategy_id,
-                common_sample_hash=SNAPSHOT,
+                common_sample_hash=common_hash,
                 dates=DATES,
                 data_snapshot_hash=SNAPSHOT,
+                eligible_observation_ids=eligible_ids,
+                series_input_hash=series_hash,
                 return_horizon_days=20,
                 capital=100_000.0,
                 constraints_hash=CONSTRAINTS,
                 benchmark_id="benchmark-spy-v1",
                 gross_returns=returns[strategy_id],
-                turnover=(turnover,) * 8,
-                experiment=experiment(strategy_id, number),
+                turnover=turnovers,
+                base_cost_bps=10.0,
+                experiment=experiment(strategy_id, number, series_hash),
             )
         )
     return tuple(output)

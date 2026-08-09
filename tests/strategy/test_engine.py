@@ -126,13 +126,15 @@ def batch(
     )
 
 
-def context() -> PodMarketContext:
+def context(*, attributed_drawdown: float | None = None) -> PodMarketContext:
     return PodMarketContext(
         universe_snapshot_id="universe-demo-v1",
         as_of=AS_OF,
         available_at=AS_OF,
         covariance={"AAPL": {"AAPL": 0.04, "MSFT": 0.01}, "MSFT": {"AAPL": 0.01, "MSFT": 0.09}},
         benchmark_weights={"AAPL": 0.5, "MSFT": 0.5},
+        attributed_drawdown=attributed_drawdown,
+        attributed_nav_hash=SNAPSHOT_HASH if attributed_drawdown is not None else None,
         input_snapshot_hashes=(SNAPSHOT_HASH,),
     )
 
@@ -207,3 +209,17 @@ def test_all_pod_abstention_preserves_capital_as_cash_without_redistribution() -
     assert master.allocator_weights == {"pod-alpha-v1": 0.5, "pod-beta-v1": 0.5}
     with pytest.raises(ValueError, match="exactly the declared pod IDs"):
         build_master_portfolio(mandate(), {"pod-alpha-v1": batches["pod-alpha-v1"]}, contexts, {})
+
+
+def test_drawdown_breaching_pod_abstains_to_cash_without_redistribution() -> None:
+    batches, contexts = inputs()
+    contexts["pod-alpha-v1"] = context(attributed_drawdown=0.2)
+    master = build_master_portfolio(mandate(), batches, contexts, {})
+    alpha = next(item for item in master.pod_targets if item.pod_id == "pod-alpha-v1")
+    beta = next(item for item in master.pod_targets if item.pod_id == "pod-beta-v1")
+    assert alpha.target_weights == {}
+    assert alpha.cash_weight == 1.0
+    assert master.allocator_weights["pod-alpha-v1"] == 0.5
+    assert master.allocator_weights["pod-beta-v1"] == 0.5
+    assert all(item.pod_id == "pod-beta-v1" for item in master.contributions)
+    assert master.gross_exposure == pytest.approx(beta.gross_exposure * 0.5)
