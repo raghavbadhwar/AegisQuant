@@ -272,7 +272,7 @@ class MasterPortfolio(HashedContractModel):
     net_exposure: FiniteFloat
     allocator_weights: dict[SemanticId, Fraction]
     pod_targets: tuple[PodTarget, ...] = Field(min_length=1)
-    contributions: tuple[PodContribution, ...] = Field(min_length=1)
+    contributions: tuple[PodContribution, ...] = ()
     input_hash: Sha256
 
     @field_validator("target_weights", mode="before")

@@ -7,7 +7,11 @@ from aegis.research_lab.static_checks import BuiltInQuantChecker, QTypeAdapter
 ROOT = Path(__file__).resolve().parents[2]
 MODULES = tuple(
     sorted(
-        (*((ROOT / "aegis/quant_research").glob("*.py")), *((ROOT / "aegis/strategy").glob("*.py")))
+        (
+            *((ROOT / "aegis/quant_research").glob("*.py")),
+            *((ROOT / "aegis/strategy").glob("*.py")),
+            ROOT / "aegis/research_lab/strategy_evaluation.py",
+        )
     )
 )
 
