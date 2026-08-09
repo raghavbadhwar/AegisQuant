@@ -429,6 +429,12 @@ def backtest(
         Path | None,
         typer.Option("--historical-artifacts", help="Sealed local institutional artifact manifest"),
     ] = None,
+    data_root: Annotated[
+        Path,
+        typer.Option(
+            "--data-root", help="Local sealed fixture directory; network is always forbidden"
+        ),
+    ] = Path("data/fixtures"),
     ledger: Annotated[Path, typer.Option(help="Append-only SQLite run ledger")] = Path(
         "run_data/aegisquant.sqlite"
     ),
@@ -448,7 +454,7 @@ def backtest(
         universe,
         date.fromisoformat(start),
         date.fromisoformat(end),
-        FixtureDataClient(PROJECT_ROOT / "data/fixtures"),
+        FixtureDataClient(_project_path(data_root)),
         SQLiteRunLedger(_project_path(ledger)),
         provider,
     )
