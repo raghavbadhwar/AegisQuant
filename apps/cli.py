@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 from typing import Annotated
 
@@ -32,6 +32,10 @@ from aegis.harness.agent_loader import load_agent_tree
 from aegis.harness.graph import LangGraphForecastProvider
 from aegis.harness.model_router import ReplayModelProvider
 from aegis.harness.skill_loader import load_skill_tree
+from aegis.pit_data.builder import bootstrap as bootstrap_pit
+from aegis.pit_data.builder import ingest_sec
+from aegis.pit_data.ledger import PITAvailabilityLedger
+from aegis.pit_data.models import PITArtifact
 from aegis.quant_research.demo import (
     demo_event_study,
     demo_factor_diagnostics,
@@ -54,17 +58,94 @@ demo_app = typer.Typer(
 )
 strategy_app = typer.Typer(help="Honest predeclared strategy evaluation.")
 fund_app = typer.Typer(help="Multi-strategy simulated fund workflows.")
+pit_app = typer.Typer(help="Real-source, availability-gated historical PIT dataset builder.")
 app.add_typer(source_app, name="sources")
 app.add_typer(research_app, name="research")
 app.add_typer(demo_app, name="demo")
 app.add_typer(strategy_app, name="strategy")
 app.add_typer(fund_app, name="fund")
+app.add_typer(pit_app, name="pit")
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 def _project_path(value: str | Path) -> Path:
     path = Path(value)
     return path.resolve() if path.is_absolute() else (PROJECT_ROOT / path).resolve()
+
+
+@pit_app.command("bootstrap")
+def pit_bootstrap(
+    root: Annotated[Path, typer.Option("--root", help="Local PIT lake directory")] = Path(
+        "data/pit"
+    ),
+) -> None:
+    """Initialize an empty local PIT lake without acquiring data."""
+    typer.echo(str(bootstrap_pit(_project_path(root))))
+
+
+@pit_app.command("ingest-sec")
+def pit_ingest_sec(
+    tickers: Annotated[list[str], typer.Argument(help="SEC-listed tickers to ingest")],
+    user_agent: Annotated[
+        str, typer.Option("--sec-user-agent", help="SEC-compliant contact-bearing User-Agent")
+    ],
+    root: Annotated[Path, typer.Option("--root", help="Local PIT lake directory")] = Path(
+        "data/pit"
+    ),
+) -> None:
+    """Acquire official SEC filing artifacts; records are content-addressed and immutable."""
+    artifacts = ingest_sec(_project_path(root), user_agent, tuple(tickers))
+    typer.echo(
+        canonical_json(
+            {
+                "artifact_count": len(artifacts),
+                "artifact_ids": [item.artifact_id for item in artifacts],
+            }
+        )
+    )
+
+
+@pit_app.command("build-snapshot")
+def pit_build_snapshot(
+    at: Annotated[
+        datetime, typer.Option("--at", help="Timezone-aware ISO-8601 simulation timestamp")
+    ],
+    universe: Annotated[list[str], typer.Option("--universe", help="Ticker/entity universe")],
+    root: Annotated[Path, typer.Option("--root", help="Local PIT lake directory")] = Path(
+        "data/pit"
+    ),
+) -> None:
+    """Seal an offline historical information world from only previously available artifacts."""
+    lake = _project_path(root)
+    ledger_path = lake / "normalized" / "artifact_ledger.jsonl"
+    if not ledger_path.exists():
+        raise typer.BadParameter("PIT artifact ledger does not exist; run pit ingest-sec first")
+    artifacts = tuple(
+        PITArtifact.model_validate_json(row) for row in ledger_path.read_text().splitlines() if row
+    )
+    snapshot = PITAvailabilityLedger(artifacts).write_snapshot(
+        lake / "snapshots", at, tuple(universe), dataset_version="sec-edgar-v1"
+    )
+    typer.echo(str(snapshot))
+
+
+@pit_app.command("verify-snapshot")
+def pit_verify_snapshot(
+    path: Annotated[Path, typer.Argument(help="Local immutable snapshot directory")],
+) -> None:
+    """Verify the central no-future-artifact and manifest-lineage release checks."""
+    from aegis.pit_data.ledger import load_snapshot
+
+    manifest, artifacts = load_snapshot(_project_path(path))
+    typer.echo(
+        canonical_json(
+            {
+                "simulation_at": manifest.simulation_at,
+                "artifact_count": len(artifacts),
+                "manifest_hash": manifest.manifest_hash,
+            }
+        )
+    )
 
 
 @source_app.command("plan")
