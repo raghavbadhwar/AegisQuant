@@ -67,6 +67,7 @@ def series(*, combined_return: float = 0.02) -> tuple[StrategyReturnSeries, ...]
         data_snapshot_hash=SNAPSHOT,
         eligible_observation_ids=eligible_ids,
         label_end_dates=tuple(value + timedelta(days=20) for value in DATES),
+        quant_bundle_hashes=("a" * 64,) * len(DATES),
         return_horizon_days=20,
         capital=100_000.0,
         constraints_hash=CONSTRAINTS,
@@ -87,6 +88,7 @@ def series(*, combined_return: float = 0.02) -> tuple[StrategyReturnSeries, ...]
                 data_snapshot_hash=SNAPSHOT,
                 eligible_observation_ids=eligible_ids,
                 label_end_dates=tuple(value + timedelta(days=20) for value in DATES),
+                quant_bundle_hashes=("a" * 64,) * len(DATES),
                 series_input_hash=series_hash,
                 return_horizon_days=20,
                 capital=100_000.0,
@@ -157,4 +159,15 @@ def test_label_interval_is_hash_bound_and_must_match_all_six(tmp_path: Any) -> N
     with pytest.raises(StrategyEvaluationError, match="common sample"):
         evaluate_predeclared_strategies(
             attempted, DECLARED, EVALUATED, ExperimentLedger(tmp_path / "labels.sqlite")
+        )
+
+
+def test_quant_bundle_hashes_are_part_of_the_six_way_common_sample(tmp_path: Any) -> None:
+    attempted = list(series())
+    attempted[-1] = attempted[-1].model_copy(
+        update={"quant_bundle_hashes": ("b" * 64,) * len(DATES)}
+    )
+    with pytest.raises(StrategyEvaluationError, match="common sample"):
+        evaluate_predeclared_strategies(
+            attempted, DECLARED, EVALUATED, ExperimentLedger(tmp_path / "bundles.sqlite")
         )
