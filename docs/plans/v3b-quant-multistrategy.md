@@ -51,6 +51,18 @@ Failure yields a typed `rejected` or `abstained` comparison; it does not block r
 
 Exact demo pod weights are illustrative. Robust CVaR and adaptive allocators are deferred unless independently justified. `skfolio` is evaluated behind an adapter but is not a mandatory runtime dependency; absence must select a named simple fallback rather than silently changing models.
 
+## Independent-audit remediation architecture
+
+The failed initial candidate must be replaced, not status-washed. The next implementation slice is ordered as follows:
+
+1. Add a hash-bound `QuantResearchBundle` carrying one PIT `UniverseSnapshot`, factor evaluations bound to that snapshot, non-leaking event studies, one regime snapshot, and exact-eligible-universe behavioral/graph features. A v3B model batch, pod market context, master-input hash, `aegis-cycle-v2` record, and every non-abstained forecast must bind the same bundle. Legacy v1 cycles remain bundle-free and byte-compatible.
+2. Add a sealed local historical mandate provider and generalize only the existing backtest loop to `FundConfiguration`; it must call the one existing `run_cycle` path. Missing local history yields typed data failure/abstention, never synthetic research artifacts.
+3. Build six comparison rows from aligned cycle receipts, not hand-authored return vectors. Content hashes cover eligible IDs, quant-bundle hashes, prediction and label-end times, returns, turnover, cost assumptions, constraints, capital, and fold plan.
+4. Run interval-purged walk-forward plus label-aware CPCV from those receipt rows before PBO/PSR/DSR/cost eligibility. Base/2x/5x outcomes must all be stored and visible. A missing fold, label overlap, embargo violation, or holdout touch is a typed non-eligibility result.
+5. Pod drawdown is allowed to reduce exposure only when supplied by an authoritative, reconciled, hash-bound attributed-NAV history. A current-ticker equal-weight proxy is prohibited; persistent attribution belongs to v3C.
+
+Release evidence must include mutation probes for each binding, a mandate historical backtest proving the same `run_cycle` seam, six receipt-derived common-sample rows, and a new immutable-tree independent audit.
+
 ## Status
 
 **REMEDIATION IN PROGRESS — NOT ACCEPTED.** The initial v3B candidate failed independent safety, quant, final-capability, and Ponytail review. Local remediation and regression gates do not substitute for unresolved end-to-end research binding, honest historical v3B backtesting, complete validation, and a fresh clean-tree re-audit. No v3B implementation or combined strategy is accepted. A quantitatively eligible fixture row means only eligible for later human review; it is not selected or promoted.
