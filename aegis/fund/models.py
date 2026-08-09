@@ -379,7 +379,9 @@ def load_historical_artifact_manifest(
     try:
         manifest = HistoricalArtifactManifest.model_validate_json(manifest_path.read_bytes())
     except Exception as exc:
-        raise ForecastIntegrityError(f"invalid historical artifact manifest: {path}") from exc
+        raise ForecastIntegrityError(
+            f"invalid historical artifact manifest: {path}: {exc}"
+        ) from exc
     root = manifest_path.parent
 
     def resolve_local(value: str) -> Path:
