@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import pytest
@@ -50,6 +50,9 @@ def _request(method: str, **overrides: Any) -> PortfolioModelRequest:
         "upper_bound": 0.8,
         "gross_target": 1.0,
         "constraints_hash": canonical_sha256({"lower": 0.05, "upper": 0.8}),
+        "covariance_training_start": datetime(2024, 1, 1, tzinfo=UTC),
+        "covariance_training_end": datetime(2024, 1, 30, tzinfo=UTC),
+        "covariance_observation_hash": canonical_sha256({"snapshot": 1}),
         "input_snapshot_hashes": (canonical_sha256({"snapshot": 1}),),
         "as_of": datetime(2024, 1, 31, tzinfo=UTC),
         "available_at": datetime(2024, 1, 30, tzinfo=UTC),
@@ -174,3 +177,11 @@ def test_skfolio_absence_is_explicit_and_can_use_named_fallback(
     assert result.model_id == request.model_id
     assert result.input_hash == request.content_hash
     assert result.gross_exposure == pytest.approx(1.0)
+
+
+def test_covariance_requires_declared_train_only_lineage() -> None:
+    as_of = datetime(2024, 1, 31, tzinfo=UTC)
+    with pytest.raises(ValueError, match="cannot extend past"):
+        _request("equal_weight", covariance_training_end=as_of + timedelta(seconds=1))
+    with pytest.raises(ValueError, match="must be a declared input"):
+        _request("equal_weight", covariance_observation_hash=canonical_sha256({"undeclared": True}))

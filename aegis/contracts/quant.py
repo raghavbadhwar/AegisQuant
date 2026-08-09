@@ -472,6 +472,9 @@ class PortfolioModelRequest(PointInTimeContract):
     upper_bound: FiniteFloat = 1.0
     gross_target: PositiveFloat = 1.0
     constraints_hash: Sha256
+    covariance_training_start: AwareDatetime
+    covariance_training_end: AwareDatetime
+    covariance_observation_hash: Sha256
     input_snapshot_hashes: tuple[Sha256, ...] = Field(min_length=1)
     contract_version: ContractVersion = "3.1.0"
 
@@ -524,6 +527,12 @@ class PortfolioModelRequest(PointInTimeContract):
                 for right in names:
                     if abs(self.covariance[left][right] - self.covariance[right][left]) > 1e-12:
                         raise ValueError("portfolio covariance must be symmetric")
+        if self.covariance_training_start > self.covariance_training_end:
+            raise ValueError("covariance training start cannot follow training end")
+        if self.covariance_training_end > self.as_of:
+            raise ValueError("covariance training cannot extend past portfolio cutoff")
+        if self.covariance_observation_hash not in self.input_snapshot_hashes:
+            raise ValueError("covariance observation hash must be a declared input")
         if len(set(self.input_snapshot_hashes)) != len(self.input_snapshot_hashes):
             raise ValueError("portfolio input snapshot hashes must be unique")
         return self

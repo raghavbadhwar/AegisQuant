@@ -133,6 +133,9 @@ def _covariance_context(
             available_at=case.as_of,
             covariance={},
             benchmark_weights={},
+            covariance_training_start=case.as_of,
+            covariance_training_end=case.as_of,
+            covariance_observation_hash=canonical_sha256({"case": case.case_id, "empty": pod_id}),
             input_snapshot_hashes=(canonical_sha256({"case": case.case_id, "empty": pod_id}),),
         )
     start = case.as_of - timedelta(days=400)
@@ -173,13 +176,17 @@ def _covariance_context(
         for left_index, left in enumerate(tickers)
     }
     equal = 1.0 / len(tickers)
+    observation_hash = canonical_sha256(histories)
     return PodMarketContext(
         universe_snapshot_id=_semantic_id("universe", {"case": case.case_id, "tickers": tickers}),
         as_of=case.as_of,
         available_at=max(available),
         covariance=covariance,
         benchmark_weights={ticker: equal for ticker in tickers},
-        input_snapshot_hashes=(canonical_sha256(histories),),
+        covariance_training_start=min(available),
+        covariance_training_end=max(available),
+        covariance_observation_hash=observation_hash,
+        input_snapshot_hashes=(observation_hash,),
     )
 
 

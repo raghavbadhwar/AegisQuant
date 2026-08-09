@@ -34,6 +34,9 @@ class PodMarketContext(FrozenContractModel):
     available_at: AwareDatetime
     covariance: dict[str, dict[str, FiniteFloat]] = Field(default_factory=dict)
     benchmark_weights: dict[str, FiniteFloat] = Field(default_factory=dict)
+    covariance_training_start: AwareDatetime
+    covariance_training_end: AwareDatetime
+    covariance_observation_hash: Sha256
     attributed_drawdown: FiniteFloat | None = Field(default=None, ge=0.0, le=1.0)
     attributed_nav_hash: Sha256 | None = None
     input_snapshot_hashes: tuple[Sha256, ...] = Field(min_length=1)
@@ -61,6 +64,10 @@ class PodMarketContext(FrozenContractModel):
     def context_is_point_in_time_and_complete(self) -> Self:
         if self.available_at > self.as_of:
             raise ValueError("pod market context available_at must not be after as_of")
+        if self.covariance_training_start > self.covariance_training_end:
+            raise ValueError("pod covariance training start cannot follow training end")
+        if self.covariance_training_end > self.as_of:
+            raise ValueError("pod covariance training cannot extend past cutoff")
         names = set(self.covariance)
         if self.covariance and any(set(row) != names for row in self.covariance.values()):
             raise ValueError("pod covariance must be a complete square ticker matrix")
@@ -198,6 +205,9 @@ def _pod_request(
         upper_bound=1.0,
         gross_target=pod.portfolio_policy.gross_target,
         constraints_hash=constraints_hash,
+        covariance_training_start=context.covariance_training_start,
+        covariance_training_end=context.covariance_training_end,
+        covariance_observation_hash=context.covariance_observation_hash,
         input_snapshot_hashes=snapshots,
         as_of=context.as_of,
         available_at=max(context.available_at, *(batch.available_at for batch in batches)),
