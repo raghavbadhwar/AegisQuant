@@ -12,9 +12,9 @@ Status is `PLANNED`, `IN PROGRESS`, or `PASS`; only named deterministic tests ma
 | 4 | Agents use verified calculations | `test_graph_rejects_missing_specialist_and_evidence_widening`, `test_specialist_conclusions_are_calculation_first_and_all_abstain_is_typed`, `test_approved_graph_computes_numeric_core_once` | PASS |
 | 5 | Personas optional, not voters | `test_fundamental_graph_is_deterministic_and_binds_driver_proposer`; specialist roles contain no persona/voting path | PASS |
 | 6 | Backtestable calibrated fundamental forecast | `test_all_golden_cases_are_deterministic_and_safely_routed`, `test_public_api_and_verified_forecast_enforce_committee_authority`; typed committee-bound forecast | PASS |
-| 7 | Factor/event/regime/portfolio evaluation | v3B diagnostics tests | PLANNED |
-| 8 | Visible competitive simple baselines | model comparison tests | PLANNED |
-| 9 | Pods net to deterministic fund book | pod netting/attribution tests | PLANNED |
+| 7 | Factor/event/regime/portfolio evaluation | v3B diagnostics tests | IN PROGRESS |
+| 8 | Visible competitive simple baselines | model comparison tests | IN PROGRESS |
+| 9 | Pods net to deterministic fund book | pod netting/attribution tests | IN PROGRESS |
 | 10 | Replay/backtest/current/paper coherence | cross-mode acceptance | PLANNED |
 | 11 | Historical evidence/memory PIT | temporal adversarial tests | PLANNED |
 | 12 | Every candidate recorded/evaluated | experiment-ledger tests | PLANNED |
