@@ -22,6 +22,7 @@ from aegis.contracts import (
     EvidenceBundle,
     EvidenceRecord,
     MemoryHit,
+    QuantResearchBundle,
     ResearchArtifact,
     ResearchCase,
     canonical_sha256,
@@ -75,6 +76,7 @@ class ResearchDossier(BaseModel):
     memory_hits: tuple[MemoryHit, ...] = ()
     memory_snapshot_hash: str = canonical_sha256([])
     relation_snapshot_hash: str = canonical_sha256([])
+    quant_research_bundle: QuantResearchBundle | None = None
     content_hash: str
 
     def hash_payload(self) -> dict[str, object]:
@@ -90,6 +92,11 @@ class ResearchDossier(BaseModel):
             "memory_hits": self.memory_hits,
             "memory_snapshot_hash": self.memory_snapshot_hash,
             "relation_snapshot_hash": self.relation_snapshot_hash,
+            **(
+                {"quant_research_bundle": self.quant_research_bundle}
+                if self.quant_research_bundle is not None
+                else {}
+            ),
         }
 
     @model_validator(mode="after")
@@ -129,6 +136,7 @@ def build_dossier(
     memory_hits: tuple[MemoryHit, ...] = (),
     memory_snapshot_hash: str = canonical_sha256([]),
     relation_snapshot_hash: str = canonical_sha256([]),
+    quant_research_bundle: QuantResearchBundle | None = None,
 ) -> ResearchDossier:
     payload = {
         "case_id": case.case_id,
@@ -142,6 +150,11 @@ def build_dossier(
         "memory_hits": memory_hits,
         "memory_snapshot_hash": memory_snapshot_hash,
         "relation_snapshot_hash": relation_snapshot_hash,
+        **(
+            {"quant_research_bundle": quant_research_bundle}
+            if quant_research_bundle is not None
+            else {}
+        ),
     }
     return ResearchDossier(
         case_id=case.case_id,
@@ -155,6 +168,7 @@ def build_dossier(
         memory_hits=memory_hits,
         memory_snapshot_hash=memory_snapshot_hash,
         relation_snapshot_hash=relation_snapshot_hash,
+        quant_research_bundle=quant_research_bundle,
         content_hash=canonical_sha256(payload),
     )
 
