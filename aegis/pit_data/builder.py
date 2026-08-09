@@ -124,8 +124,23 @@ def ingest_sec(
                 "".join(item + "\n" for item in new_fact_rows if item not in known_fact_versions)
             )
     security_path = lake / "normalized" / "security_master.jsonl"
-    if not security_path.exists():
-        security_path.write_text("".join(canonical_json(item) + "\n" for item in securities))
+    known_security_ids = (
+        {
+            SecurityMasterRecord.model_validate_json(row).canonical_security_id
+            for row in security_path.read_text().splitlines()
+            if row
+        }
+        if security_path.exists()
+        else set()
+    )
+    security_additions = [
+        canonical_json(item)
+        for item in securities
+        if item.canonical_security_id not in known_security_ids
+    ]
+    if security_additions:
+        with security_path.open("a") as handle:
+            handle.write("".join(item + "\n" for item in security_additions))
     return tuple(built)
 
 
