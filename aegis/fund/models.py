@@ -388,9 +388,10 @@ class HistoricalMultiStrategyFixtureProvider:
         # is synthesized or altered by this adaptation.
         replay_case = case.model_copy(update={"mode": "replay"})
         base = provider.research(replay_case, snapshot)
+        evidence = base.evidence.model_copy(update={"mode": "historical"})
         return build_dossier(
             case,
-            base.evidence,
+            evidence,
             base.artifacts,
             base.forecasts,
             base.graph_events,

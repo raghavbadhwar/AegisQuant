@@ -230,6 +230,8 @@ def test_historical_mandate_cycle_uses_exact_sealed_artifact_triplet(tmp_path: P
         SQLiteRunLedger(tmp_path / "historical.sqlite"),
     )
     assert record.schema_version == "aegis-cycle-v2"
+    assert record.evidence.mode == "historical"
+    assert record.dossier.evidence.mode == "historical"
     assert record.quant_research_bundle is not None
 
 
