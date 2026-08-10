@@ -20,6 +20,13 @@ class CounterfactualStatus(StrEnum):
     COUNTERFACTUAL_NOT_SIMULATED = "COUNTERFACTUAL_NOT_SIMULATED"
 
 
+class CounterfactualPostMortemStatus(StrEnum):
+    """A post-mortem preserves abstention; it never infers a causal result."""
+
+    ABSTAINED_INSUFFICIENT_SUPPORT = "abstained_insufficient_support"
+    ABSTAINED_NOT_SIMULATED = "abstained_not_simulated"
+
+
 class CausalMechanismApproval(CandidateContractModel):
     """Content-addressed candidate attestation; it is not authenticated human approval."""
 
@@ -96,6 +103,59 @@ class CounterfactualOutcome(CandidateContractModel):
     outcome_variables: tuple[str, ...] = ()
     simulated: Literal[False] = False
     authority: Literal["candidate_only"] = "candidate_only"
+
+    @model_validator(mode="after")
+    def is_a_bound_abstention_without_conclusions(self) -> CounterfactualOutcome:
+        if self.world_snapshot_hash is None:
+            raise ValueError("counterfactual abstention requires a bound world snapshot hash")
+        if self.outcome_variables:
+            raise ValueError("counterfactual abstention cannot include outcome variables")
+        if any(not assumption_id for assumption_id in self.assumption_ids) or len(
+            self.assumption_ids
+        ) != len(set(self.assumption_ids)):
+            raise ValueError("counterfactual abstention assumptions must be nonempty and unique")
+        return self
+
+
+class CounterfactualPostMortem(CandidateContractModel):
+    """A sealed record of an abstention, never a counterfactual conclusion."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    post_mortem_id: str = Field(min_length=1)
+    counterfactual_outcome: CounterfactualOutcome
+    counterfactual_outcome_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
+    status: CounterfactualPostMortemStatus
+    reason: str = Field(min_length=1)
+    authority: Literal["candidate_only"] = "candidate_only"
+    content_hash: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+
+    @model_validator(mode="after")
+    def preserves_the_bound_abstention(self) -> CounterfactualPostMortem:
+        outcome = CounterfactualOutcome.model_validate(
+            self.counterfactual_outcome.model_dump(mode="json")
+        )
+        outcome_hash = canonical_sha256(outcome.model_dump(mode="json"))
+        expected_status = (
+            CounterfactualPostMortemStatus.ABSTAINED_INSUFFICIENT_SUPPORT
+            if outcome.status == CounterfactualStatus.COUNTERFACTUAL_NOT_IDENTIFIED
+            else CounterfactualPostMortemStatus.ABSTAINED_NOT_SIMULATED
+        )
+        if (
+            self.counterfactual_outcome_hash != outcome_hash
+            or self.status != expected_status
+            or self.reason != outcome.reason
+        ):
+            raise ValueError("counterfactual post-mortem must preserve its source abstention")
+        expected = canonical_sha256(self.model_dump(mode="json", exclude={"content_hash"}))
+        if self.content_hash is not None and self.content_hash != expected:
+            raise ValueError("counterfactual post-mortem content hash mismatch")
+        return self
+
+    def sealed(self) -> CounterfactualPostMortem:
+        payload = self.model_dump(mode="json", exclude={"content_hash"})
+        validated = CounterfactualPostMortem.model_validate(payload)
+        return validated.model_copy(update={"content_hash": canonical_sha256(payload)})
 
 
 def _has_identified_approved_inputs(request: CounterfactualRequest) -> bool:
@@ -196,3 +256,22 @@ def resolve_counterfactual(request: CounterfactualRequest) -> CounterfactualOutc
         intervention_id=request.intervention.intervention_id,
         assumption_ids=request.assumption_ids,
     )
+
+
+def create_counterfactual_post_mortem(
+    post_mortem_id: str, outcome: CounterfactualOutcome
+) -> CounterfactualPostMortem:
+    """Bind one candidate post-mortem to the original no-conclusion outcome."""
+    validated = CounterfactualOutcome.model_validate(outcome.model_dump(mode="json"))
+    status = (
+        CounterfactualPostMortemStatus.ABSTAINED_INSUFFICIENT_SUPPORT
+        if validated.status == CounterfactualStatus.COUNTERFACTUAL_NOT_IDENTIFIED
+        else CounterfactualPostMortemStatus.ABSTAINED_NOT_SIMULATED
+    )
+    return CounterfactualPostMortem(
+        post_mortem_id=post_mortem_id,
+        counterfactual_outcome=validated,
+        counterfactual_outcome_hash=canonical_sha256(validated.model_dump(mode="json")),
+        status=status,
+        reason=validated.reason,
+    ).sealed()

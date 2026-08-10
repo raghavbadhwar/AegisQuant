@@ -10,6 +10,14 @@ counterfactual abstentions, and research value-of-information. They do not
 provide broker, order, portfolio, pricing, factual, promotion, or release
 authority.
 
+The v4D investor-response and portfolio-scenario contracts are likewise
+candidate-only. Their response provenance is always `not_calibrated`; their
+portfolio linkage accepts only hash-only v3 engineering run-receipt references;
+and their reports contain candidate impact/exposure units, never weights,
+orders, risk decisions, approvals, or promotion output. Event calibration,
+baseline comparison, and any outperformance assertion remain release-gated
+until governed survivorship-safe PIT evidence and retained receipts exist.
+
 `aegis.reporting.traceability.EngineeringTraceabilityReport` is the governed,
 read-only projection for the engineering evidence that accompanies this work.
 It records hash references only; it neither reads external sources nor emits a

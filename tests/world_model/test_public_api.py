@@ -38,3 +38,12 @@ def test_world_model_exports_candidate_only_v4c_contracts() -> None:
     assert world_model.ComputedUncertaintyDecomposition
     assert world_model.ScenarioGridPoint
     assert world_model.OptionalAdapterAbstention
+
+
+def test_world_model_exports_candidate_only_v4d_contracts() -> None:
+    assert world_model.InvestorArchetypeState
+    assert world_model.MarketResponseRequest
+    assert world_model.MarketResponseOutcome
+    assert world_model.PortfolioScenarioImpactReport
+    assert world_model.CausalExposureReport
+    assert world_model.CounterfactualPostMortem

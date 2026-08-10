@@ -22,8 +22,11 @@ from aegis.world_model.contracts import (
 )
 from aegis.world_model.counterfactual import (
     CausalMechanismApproval,
+    CounterfactualOutcome,
+    CounterfactualPostMortemStatus,
     CounterfactualRequest,
     CounterfactualStatus,
+    create_counterfactual_post_mortem,
     resolve_counterfactual,
 )
 
@@ -70,6 +73,12 @@ def test_resolver_fails_closed_without_identified_graph_or_approved_mechanisms()
     assert outcome.authority == "candidate_only"
     assert outcome.simulated is False
     assert outcome.outcome_variables == ()
+
+    post_mortem = create_counterfactual_post_mortem("post-mortem-1", outcome)
+
+    assert post_mortem.status == CounterfactualPostMortemStatus.ABSTAINED_INSUFFICIENT_SUPPORT
+    assert post_mortem.authority == "candidate_only"
+    assert post_mortem.content_hash
 
     payload = request.model_dump()
     payload["approved_mechanism_ids"] = ("mechanism-1",)
@@ -217,3 +226,16 @@ def test_resolver_requires_sealed_mechanism_approval_artifacts() -> None:
         resolve_counterfactual(approved_request).status
         == CounterfactualStatus.COUNTERFACTUAL_NOT_SIMULATED
     )
+
+
+def test_counterfactual_post_mortem_rejects_a_forged_abstention_conclusion() -> None:
+    with pytest.raises(ValueError, match="cannot include outcome variables"):
+        CounterfactualOutcome(
+            request_id="counterfactual-forged-1",
+            status=CounterfactualStatus.COUNTERFACTUAL_NOT_IDENTIFIED,
+            reason="Causal support is insufficient.",
+            world_snapshot_hash="a" * 64,
+            intervention_id="demand-shock",
+            assumption_ids=("assumption-1",),
+            outcome_variables=("forged.conclusion",),
+        )

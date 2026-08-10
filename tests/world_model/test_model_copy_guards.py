@@ -48,6 +48,7 @@ from aegis.world_model.contributions import (
 from aegis.world_model.counterfactual import (
     CausalMechanismApproval,
     CounterfactualOutcome,
+    CounterfactualPostMortem,
     CounterfactualRequest,
 )
 from aegis.world_model.domain_pack import DomainPackManifest
@@ -58,7 +59,18 @@ from aegis.world_model.experiments import (
     WorldModelExperimentManifest,
 )
 from aegis.world_model.fcff_adapter import TwinOperatingDriver, TwinOperatingOutput
+from aegis.world_model.market_response import (
+    InvestorArchetypeState,
+    MarketResponseOutcome,
+    MarketResponseRequest,
+)
 from aegis.world_model.optional_adapters import OptionalAdapterAbstention
+from aegis.world_model.portfolio_intelligence import (
+    CausalExposureReport,
+    CausalPathExposure,
+    PortfolioScenarioImpactReport,
+    ScenarioImpactContribution,
+)
 from aegis.world_model.probabilistic import (
     BoundedOutcomeModel,
     ComputedUncertaintyDecomposition,
@@ -167,6 +179,13 @@ def test_every_public_v4_candidate_contract_uses_the_revalidating_base() -> None
         HistoricalReplayEvaluation,
         TwinOperatingDriver,
         TwinOperatingOutput,
+        InvestorArchetypeState,
+        MarketResponseRequest,
+        MarketResponseOutcome,
+        ScenarioImpactContribution,
+        PortfolioScenarioImpactReport,
+        CausalPathExposure,
+        CausalExposureReport,
         FrozenParameterArtifact,
         OutcomeParameterTerm,
         BoundedOutcomeModel,
@@ -186,6 +205,7 @@ def test_every_public_v4_candidate_contract_uses_the_revalidating_base() -> None
         CausalMechanismApproval,
         CounterfactualRequest,
         CounterfactualOutcome,
+        CounterfactualPostMortem,
         ResearchAction,
         ValueOfInformationResult,
         MonteCarloVOISample,
