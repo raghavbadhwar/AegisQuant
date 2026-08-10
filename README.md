@@ -52,6 +52,24 @@ The `demo` commands are frozen no-network illustrations, not production research
 
 `uv run aegisquant fund backtest --help` exposes the historical same-cycle backtest command. The frozen six-strategy v3B evaluation is an implementation fixture, not release authority, until the remaining independent-audit remediation and clean-tree re-audit pass.
 
+### Candidate-only v4 world-model library
+
+The v4 API is an engineering-only, offline Python library; it has no CLI, broker, portfolio,
+risk, pricing, promotion, or release authority. Its first reference slice compiles a sealed
+PIT stress on `hyperscaler.ai_capex_growth`, runs a deterministic supplier-revenue twin, and
+reports a candidate transition or an explicit refusal. Run the worked example locally:
+
+```bash
+env -u PYTHONPATH uv run pytest -q \
+  tests/world_model/test_ai_infrastructure_twin.py::test_capex_twin_creates_a_byte_identical_sealed_candidate_transition
+```
+
+The test is self-contained and uses no network I/O. It constructs the sealed snapshot,
+compiled intervention, versioned registry, and bounded parameters before asserting two
+byte-identical `candidate_only` transitions. See [v4 traceability and release disposition](docs/V4_TRACEABILITY.md)
+for the governing evidence limits; it does not establish calibration, investment, performance,
+or release evidence.
+
 ### No-key deterministic replay
 
 ```bash

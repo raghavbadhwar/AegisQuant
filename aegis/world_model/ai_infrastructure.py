@@ -1,15 +1,17 @@
 """One deterministic, candidate-only AI-infrastructure business-clock twin.
 
-All monetary variables use ``usd_millions`` per fixed 30-day business step.
-``capex_to_revenue_ratio`` and ``cash_conversion_ratio`` are bounded [0, 1]
-candidate parameters, never pricing, portfolio, promotion, or execution inputs.
+Monetary variables use ``usd_millions`` per fixed 30-day business step;
+``hyperscaler.ai_capex_growth`` uses the dimensionless ``ratio`` unit.
+The bounded elasticity and cash-conversion ratio are candidate parameters, never
+pricing, portfolio, promotion, or execution inputs.
 """
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from datetime import timedelta
 from math import isclose, isfinite
-from typing import Literal, Protocol, runtime_checkable
+from typing import Literal
 
 from pydantic import ConfigDict, Field, model_validator
 
@@ -31,12 +33,14 @@ TWIN_ID = "capex-to-supplier-revenue-twin"
 BUSINESS_TIME_STEP = timedelta(days=30)
 ACCOUNTING_TOLERANCE_USD_MILLIONS = 0.000001
 
-CAPEX_VARIABLE = "hyperscaler.ai_capex"
+CAPEX_GROWTH_VARIABLE = "hyperscaler.ai_capex_growth"
 REVENUE_VARIABLE = "supplier.revenue"
 CASH_FROM_REVENUE_VARIABLE = "supplier.cash_from_revenue"
 REVENUE_CAPACITY_VARIABLE = "supplier.revenue_capacity"
+CAPEX_GROWTH_MIN = -1.0
+CAPEX_GROWTH_MAX = 1.0
 _VARIABLE_UNITS = {
-    CAPEX_VARIABLE: "usd_millions",
+    CAPEX_GROWTH_VARIABLE: "ratio",
     REVENUE_VARIABLE: "usd_millions",
     CASH_FROM_REVENUE_VARIABLE: "usd_millions",
     REVENUE_CAPACITY_VARIABLE: "usd_millions",
@@ -163,7 +167,7 @@ class CapexToSupplierRevenueParameters(CandidateContractModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     parameter_draw_id: str = Field(pattern=_STABLE_ID)
-    capex_to_revenue_ratio: float = Field(ge=0.0, le=1.0)
+    capex_growth_to_revenue_elasticity: float = Field(ge=0.0, le=1.0)
     cash_conversion_ratio: float = Field(ge=0.0, le=1.0)
     domain_pack_id: Literal["ai-infrastructure"] = DOMAIN_PACK_ID
     domain_pack_version: Literal["1.0.0"] = DOMAIN_PACK_VERSION
@@ -174,42 +178,27 @@ class CapexToSupplierRevenueParameters(CandidateContractModel):
     @model_validator(mode="after")
     def ratios_are_finite(self) -> CapexToSupplierRevenueParameters:
         if not all(
-            isfinite(value) for value in (self.capex_to_revenue_ratio, self.cash_conversion_ratio)
+            isfinite(value)
+            for value in (self.capex_growth_to_revenue_elasticity, self.cash_conversion_ratio)
         ):
             raise ValueError("candidate mechanism parameters must be finite")
         return self
 
 
-@runtime_checkable
-class CompiledScenarioTwin(Protocol):
-    """Candidate-only twin boundary for compiled scenarios and sealed registries."""
-
-    @property
-    def twin_id(self) -> str: ...
-
-    def initial_state(self, snapshot: WorldSnapshot) -> TwinState: ...
-
-    def transition(
-        self,
-        snapshot: WorldSnapshot,
-        compiled_intervention: CompiledScenario,
-        mechanism_registry: MechanismRegistry,
-    ) -> TwinTransition: ...
-
-    def observe(self, state: TwinState) -> dict[str, float]: ...
-
-    def validate(self, state: TwinState) -> tuple[InvariantViolation, ...]: ...
-
-
 class CapexToSupplierRevenueTwin:
-    """Pure candidate twin for one 30-day capex shock to supplier revenue and cash."""
+    """Pure 30-day candidate twin with capex growth bounded to [-1.0, 1.0]."""
 
     twin_id = TWIN_ID
 
-    def __init__(self, parameters: CapexToSupplierRevenueParameters) -> None:
+    def __init__(
+        self,
+        parameters: CapexToSupplierRevenueParameters,
+        mechanism_registry: MechanismRegistry,
+    ) -> None:
         self._parameters = CapexToSupplierRevenueParameters.model_validate(
             parameters.model_dump(mode="json")
         )
+        self._mechanism_registry = _validated_sealed_registry(mechanism_registry)
 
     def initial_state(self, snapshot: WorldSnapshot) -> TwinState:
         """Create the deterministic PIT-safe source state from one sealed snapshot."""
@@ -231,14 +220,29 @@ class CapexToSupplierRevenueTwin:
 
     def transition(
         self,
-        snapshot: WorldSnapshot,
-        compiled_intervention: CompiledScenario,
-        mechanism_registry: MechanismRegistry,
+        state: TwinState,
+        inputs: Mapping[str, float],
+        parameter_draw_id: str,
+        time_step: timedelta,
     ) -> TwinTransition:
-        """Apply exactly one compiled capex intervention without I/O or fallback models."""
-        snapshot, snapshot_hash = _validated_sealed_snapshot(snapshot)
-        compiled = _validated_compiled_intervention(compiled_intervention, snapshot)
-        registry = _validated_sealed_registry(mechanism_registry)
+        """Apply one bounded input through this twin's sealed mechanism registry."""
+        source = _validated_twin_state(state)
+        snapshot, snapshot_hash = _validated_sealed_snapshot(source.world_snapshot)
+        if parameter_draw_id != self._parameters.parameter_draw_id:
+            raise ValueError("twin transition parameter draw does not match the bound parameters")
+        if time_step != BUSINESS_TIME_STEP:
+            raise ValueError("AI-infrastructure twin requires its fixed 30-day business step")
+        if (
+            source.state_id != f"{TWIN_ID}:{snapshot.snapshot_id}:initial"
+            or source.as_of != snapshot.as_of
+        ):
+            raise ValueError(
+                "AI-infrastructure twin only supports one transition from its initial state"
+            )
+        if source.content_hash != self.initial_state(snapshot).content_hash:
+            raise ValueError("twin transition source does not match the canonical initial state")
+        capex_growth = _validated_transition_input(inputs)
+        registry = _validated_sealed_registry(self._mechanism_registry)
         mechanism = registry.resolve(
             mechanism_id=self._parameters.mechanism_id,
             mechanism_version=self._parameters.mechanism_version,
@@ -251,13 +255,12 @@ class CapexToSupplierRevenueTwin:
             raise ValueError("mechanism versioned domain pack does not match twin")
         if registry.version != self._parameters.registry_version:
             raise ValueError("mechanism registry version does not match twin parameters")
-        source = self.initial_state(snapshot)
         variables = _validated_domain_variables(source.variables)
-        intervention = compiled.interventions[0]
-        capex = _intervened_capex(variables[CAPEX_VARIABLE].value, intervention)
-        revenue = (
-            variables[REVENUE_VARIABLE].value
-            + (capex - variables[CAPEX_VARIABLE].value) * self._parameters.capex_to_revenue_ratio
+        self._validate_source_invariants(variables)
+        revenue = variables[REVENUE_VARIABLE].value * (
+            1
+            + (capex_growth - variables[CAPEX_GROWTH_VARIABLE].value)
+            * self._parameters.capex_growth_to_revenue_elasticity
         )
         if not isfinite(revenue) or revenue < 0:
             raise ValueError("supplier revenue must remain finite and nonnegative")
@@ -275,7 +278,7 @@ class CapexToSupplierRevenueTwin:
             world_snapshot=snapshot,
             as_of=snapshot.as_of + BUSINESS_TIME_STEP,
             variables=(
-                _scenario_variable(variables[CAPEX_VARIABLE], capex),
+                _scenario_variable(variables[CAPEX_GROWTH_VARIABLE], capex_growth),
                 _estimated_variable(variables[REVENUE_VARIABLE], revenue),
                 _estimated_variable(variables[CASH_FROM_REVENUE_VARIABLE], cash_from_revenue),
                 variables[REVENUE_CAPACITY_VARIABLE],
@@ -295,14 +298,36 @@ class CapexToSupplierRevenueTwin:
             invariant_violations=self.validate(target),
         ).sealed()
 
+    def transition_compiled(
+        self,
+        snapshot: WorldSnapshot,
+        compiled_intervention: CompiledScenario,
+    ) -> TwinTransition:
+        """Apply exactly one compiled capex intervention without I/O or fallback models."""
+        snapshot, _ = _validated_sealed_snapshot(snapshot)
+        compiled = _validated_compiled_intervention(compiled_intervention, snapshot)
+        source = self.initial_state(snapshot)
+        variables = _validated_domain_variables(source.variables)
+        intervention = compiled.interventions[0]
+        capex_growth = _intervened_capex_growth(
+            variables[CAPEX_GROWTH_VARIABLE].value, intervention
+        )
+        return self.transition(
+            source,
+            {CAPEX_GROWTH_VARIABLE: capex_growth},
+            self._parameters.parameter_draw_id,
+            BUSINESS_TIME_STEP,
+        )
+
     def observe(self, state: TwinState) -> dict[str, float]:
         """Return this slice's canonical candidate variables only."""
+        state = _validated_twin_state(state)
         variables = _validated_domain_variables(state.variables)
         return {variable_id: variables[variable_id].value for variable_id in _VARIABLE_UNITS}
 
     def validate(self, state: TwinState) -> tuple[InvariantViolation, ...]:
         """Report the period revenue-to-cash accounting reconciliation explicitly."""
-        state = TwinState.model_validate(state.model_dump(mode="json"))
+        state = _validated_twin_state(state)
         variables = _validated_domain_variables(state.variables)
         expected_cash = variables[REVENUE_VARIABLE].value * self._parameters.cash_conversion_ratio
         actual_cash = variables[CASH_FROM_REVENUE_VARIABLE].value
@@ -344,7 +369,7 @@ class CapexToSupplierRevenueTwin:
         definition = mechanism.mechanism
         if (
             definition.causal_edge_id != "capex-to-supplier-revenue-edge"
-            or definition.input_variable_ids != (CAPEX_VARIABLE,)
+            or definition.input_variable_ids != (CAPEX_GROWTH_VARIABLE,)
             or definition.output_variable_ids != (REVENUE_VARIABLE, CASH_FROM_REVENUE_VARIABLE)
             or definition.assumption_ids != ("capex-pass-through",)
         ):
@@ -375,6 +400,19 @@ def _validated_sealed_snapshot(snapshot: WorldSnapshot) -> tuple[WorldSnapshot, 
     return validated, validated.content_hash
 
 
+def _validated_twin_state(state: TwinState) -> TwinState:
+    if state.content_hash is None:
+        raise ValueError("twin state must be sealed")
+    validated = TwinState.model_validate(state.model_dump(mode="json"))
+    if (
+        validated.twin_id != TWIN_ID
+        or validated.domain_pack_id != DOMAIN_PACK_ID
+        or validated.domain_pack_version != DOMAIN_PACK_VERSION
+    ):
+        raise ValueError("twin state does not belong to this AI-infrastructure twin")
+    return validated
+
+
 def _validated_sealed_registry(registry: MechanismRegistry) -> MechanismRegistry:
     if registry.content_hash is None:
         raise ValueError("twin requires a sealed mechanism registry")
@@ -395,7 +433,7 @@ def _validated_compiled_intervention(
     if len(compiled.interventions) != 1:
         raise ValueError("twin requires exactly one compiled intervention")
     intervention = compiled.interventions[0]
-    if intervention.target_variable_id != CAPEX_VARIABLE:
+    if intervention.target_variable_id != CAPEX_GROWTH_VARIABLE:
         raise ValueError("compiled intervention targets an unsupported variable")
     if intervention.starts_at != snapshot.as_of:
         raise ValueError("compiled intervention must start at the world snapshot cutoff")
@@ -417,7 +455,9 @@ def _validated_domain_variables(variables: tuple[WorldVariable, ...]) -> dict[st
         variable = WorldVariable.model_validate(by_id[variable_id].model_dump(mode="json"))
         if variable.unit != unit:
             raise ValueError(f"AI-infrastructure variable {variable_id} has an unsupported unit")
-        if not isfinite(variable.value) or variable.value < 0:
+        if variable_id == CAPEX_GROWTH_VARIABLE:
+            _validated_capex_growth(variable.value)
+        elif not isfinite(variable.value) or variable.value < 0:
             raise ValueError(
                 f"AI-infrastructure variable {variable_id} must be finite and nonnegative"
             )
@@ -425,16 +465,29 @@ def _validated_domain_variables(variables: tuple[WorldVariable, ...]) -> dict[st
     return by_id
 
 
-def _intervened_capex(value: float, intervention: ScenarioIntervention) -> float:
+def _intervened_capex_growth(value: float, intervention: ScenarioIntervention) -> float:
     if intervention.relative_change is not None:
         result = value * (1 + intervention.relative_change)
     elif intervention.absolute_change is not None:
         result = value + intervention.absolute_change
     else:
         raise ValueError("compiled intervention must declare one change")
-    if not isfinite(result) or result < 0:
-        raise ValueError("intervention produces an invalid negative or non-finite capex value")
-    return result
+    return _validated_capex_growth(result)
+
+
+def _validated_transition_input(inputs: Mapping[str, float]) -> float:
+    if set(inputs) != {CAPEX_GROWTH_VARIABLE}:
+        raise ValueError("AI-infrastructure twin received unsupported or missing transition inputs")
+    value = inputs[CAPEX_GROWTH_VARIABLE]
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError("AI-infrastructure capex growth input must be a finite number")
+    return _validated_capex_growth(float(value))
+
+
+def _validated_capex_growth(value: float) -> float:
+    if not isfinite(value) or not CAPEX_GROWTH_MIN <= value <= CAPEX_GROWTH_MAX:
+        raise ValueError("capex growth must be finite and within the candidate range [-1.0, 1.0]")
+    return value
 
 
 def _scenario_variable(variable: WorldVariable, value: float) -> WorldVariable:

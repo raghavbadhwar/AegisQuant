@@ -4,7 +4,6 @@ from .ai_infrastructure import (
     AI_INFRASTRUCTURE_DOMAIN,
     CapexToSupplierRevenueParameters,
     CapexToSupplierRevenueTwin,
-    CompiledScenarioTwin,
     MechanismRegistry,
     VersionedMechanism,
 )
@@ -43,7 +42,6 @@ __all__ = [
     "CapexToSupplierRevenueTwin",
     "CausalMechanismApproval",
     "CompiledScenario",
-    "CompiledScenarioTwin",
     "CounterfactualOutcome",
     "CounterfactualRequest",
     "CounterfactualStatus",
