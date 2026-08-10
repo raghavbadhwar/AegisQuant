@@ -6,12 +6,13 @@
 - Locked inventory: `101` packages, including the project, all declared extras, and the dev group.
 - Source/version evidence comes directly from `uv.lock`; registry artifact URLs and hashes remain in that file.
 - Licence values are local installed-distribution metadata (`License-Expression`, then licence classifiers, then a short `License` field). They are evidence signals, not legal advice or an upstream licence-file audit.
+- The two metadata gaps and the qtype upstream-review gap were checked against the exact licence files retained at the locked version or revision: [`colorama 0.4.6`](https://github.com/tartley/colorama/blob/0.4.6/LICENSE.txt), [`watchdog 6.0.0`](https://github.com/gorakhargosh/watchdog/blob/v6.0.0/LICENSE), and [`qtype 5277e43`](https://github.com/VernonOY/qtype/blob/5277e433a524742c80889af8982377f2bbf8d8f3/LICENSE).
 
 ## Decision and obligations
 
 - v6 added no dependency and changed neither `pyproject.toml` nor `uv.lock`.
 - Every row is approved only for the inherited local engineering/test baseline. Distribution or production release approval is `pending`.
-- Release remains gated until an accountable reviewer checks upstream licence/NOTICE files, resolves every `UNKNOWN`, and records approval.
+- The locked inventory has no unresolved licence identifier after the pinned upstream-file review. Release remains gated until an accountable reviewer checks the complete upstream licence/NOTICE set and records distribution approval.
 - Attribution text below is the minimum review obligation inferred from the metadata signal; the upstream licence controls.
 
 | Package | Version | Locked source/revision | Licence metadata | Release decision | Attribution review |
@@ -27,7 +28,7 @@
 | `cfgv` | `3.5.0` | https://pypi.org/simple | MIT | pending | Retain upstream copyright and licence notices |
 | `charset-normalizer` | `3.4.9` | https://pypi.org/simple | MIT | pending | Retain upstream copyright and licence notices |
 | `click` | `8.4.2` | https://pypi.org/simple | BSD-3-Clause | pending | Retain upstream copyright and licence notices |
-| `colorama` | `0.4.6` | https://pypi.org/simple | UNKNOWN | pending | Resolve upstream licence and notices before release |
+| `colorama` | `0.4.6` | https://pypi.org/simple | BSD-3-Clause (upstream `0.4.6` licence) | pending | Retain the copyright notice, conditions, disclaimer, and non-endorsement restriction |
 | `coverage` | `7.15.4` | https://pypi.org/simple | Apache-2.0 | pending | Retain licence and any applicable NOTICE |
 | `distlib` | `0.4.3` | https://pypi.org/simple | Python Software Foundation License | pending | Retain upstream copyright and licence notices |
 | `distro` | `1.9.0` | https://pypi.org/simple | Apache Software License | pending | Retain licence and any applicable NOTICE |
@@ -86,7 +87,7 @@
 | `python-multipart` | `0.0.32` | https://pypi.org/simple | Apache-2.0 | pending | Retain licence and any applicable NOTICE |
 | `pytz` | `2026.3.post1` | https://pypi.org/simple | MIT License | pending | Retain upstream copyright and licence notices |
 | `pyyaml` | `6.0.3` | https://pypi.org/simple | MIT License | pending | Retain upstream copyright and licence notices |
-| `qtype` | `0.1.2` | https://github.com/VernonOY/qtype.git?rev=5277e433a524742c80889af8982377f2bbf8d8f3#5277e433a524742c80889af8982377f2bbf8d8f3 | MIT License | pending | Retain upstream copyright and licence notices |
+| `qtype` | `0.1.2` | https://github.com/VernonOY/qtype.git?rev=5277e433a524742c80889af8982377f2bbf8d8f3#5277e433a524742c80889af8982377f2bbf8d8f3 | MIT (upstream `5277e43` licence) | pending | Retain the 2026 VernonOY copyright and MIT permission notice |
 | `referencing` | `0.37.0` | https://pypi.org/simple | MIT | pending | Retain upstream copyright and licence notices |
 | `requests` | `2.34.2` | https://pypi.org/simple | Apache Software License | pending | Retain licence and any applicable NOTICE |
 | `requests-toolbelt` | `1.0.0` | https://pypi.org/simple | Apache Software License | pending | Retain licence and any applicable NOTICE |
@@ -113,13 +114,13 @@
 | `uuid-utils` | `0.17.0` | https://pypi.org/simple | BSD-3-Clause | pending | Retain upstream copyright and licence notices |
 | `uvicorn` | `0.52.1` | https://pypi.org/simple | BSD-3-Clause | pending | Retain upstream copyright and licence notices |
 | `virtualenv` | `21.7.3` | https://pypi.org/simple | MIT | pending | Retain upstream copyright and licence notices |
-| `watchdog` | `6.0.0` | https://pypi.org/simple | UNKNOWN | pending | Resolve upstream licence and notices before release |
+| `watchdog` | `6.0.0` | https://pypi.org/simple | Apache-2.0 (upstream `v6.0.0` licence) | pending | Include Apache-2.0; preserve applicable notices and review any upstream NOTICE file |
 | `websockets` | `15.0.1` | https://pypi.org/simple | BSD License | pending | Retain upstream copyright and licence notices |
 | `xxhash` | `3.8.1` | https://pypi.org/simple | BSD-2-Clause | pending | Retain upstream copyright and licence notices |
 | `zstandard` | `0.25.0` | https://pypi.org/simple | BSD-3-Clause | pending | Retain upstream copyright and licence notices |
 
-## Unresolved release items
+## Remaining release items
 
-- `colorama 0.4.6` and `watchdog 6.0.0` have `UNKNOWN` local metadata in this environment.
-- The Git dependency `qtype 0.1.2` is pinned to `5277e433a524742c80889af8982377f2bbf8d8f3`; its upstream licence file and attribution still require release review.
+- The `colorama 0.4.6`, `watchdog 6.0.0`, and `qtype 5277e43` identifiers and minimum notice obligations are now bound to their pinned upstream licence files; there are no remaining `UNKNOWN` licence rows.
+- An accountable distribution reviewer must still inspect the complete upstream licence and NOTICE set for all 101 locked packages and record approval. This engineering review is not legal advice or release authority.
 - No package in this inventory is approved by this document for empirical, investment, governance, or production use.

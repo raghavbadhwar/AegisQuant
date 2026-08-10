@@ -5,7 +5,7 @@
 - Worktree: `/Volumes/RAGHAV2/Development_Projects/aegisquant-v6`
 - Branch: `upgrade/aegisquant-v6-investment-scientist`
 - Base: `579ddc13c9dae455e87b13720c5b95fa96701096`
-- Implemented-through commit: `830edd54aff2b82aae02de2f2c8c561ce93d44e4`
+- Implemented-through commit: `dc695d5607b6f826572defa82815f6fc7c840f24`
 - Disposition: `completed`, `engineering-only`, and `release-gated`.
 
 This manifest records local deterministic engineering evidence. It is not an
@@ -25,6 +25,7 @@ claim.
 | `7109052a018b662fba04839713d86bdea414d939` | independent verification, negative archive, contributions, and postmortems |
 | `9b1a419e3663dbc2b9222accb6ab4c9892b1ec5f` | bounded deterministic research-portfolio ranking and stop reasons |
 | `830edd54aff2b82aae02de2f2c8c561ce93d44e4` | sealed science report plus read-only CLI and dashboard observers |
+| `dc695d5607b6f826572defa82815f6fc7c840f24` | shared fixture evaluator, read-only ledger verification, exact dependency reconciliation, and final acceptance closure |
 
 ## Requirement-by-requirement engineering evidence
 
@@ -93,8 +94,8 @@ The following are unchanged and cannot be cleared by local code or fixtures:
   incomplete;
 - N-PORT timing and raw-archive-to-receipt binding still require hardening;
 - externally retained append-only original-record receipts are unavailable;
-- dependency distribution approval and upstream attribution review remain
-  pending, including two `UNKNOWN` local licence metadata rows;
+- pinned upstream licence files resolve the prior local metadata gaps, while
+  accountable distribution approval and the complete NOTICE review remain pending;
 - local Yahoo and synthetic/registered fixtures are engineering-only and cannot
   establish empirical or release claims.
 
