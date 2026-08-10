@@ -200,6 +200,19 @@ class CapexToSupplierRevenueTwin:
         )
         self._mechanism_registry = _validated_sealed_registry(mechanism_registry)
 
+    @property
+    def mechanism_registry_hash(self) -> str:
+        """Return the exact sealed registry binding used by this candidate twin."""
+        registry = _validated_sealed_registry(self._mechanism_registry)
+        if registry.content_hash is None:
+            raise ValueError("candidate twin mechanism registry must be sealed")
+        return registry.content_hash
+
+    @property
+    def mechanism_registry(self) -> MechanismRegistry:
+        """Return the revalidated sealed registry used by this candidate twin."""
+        return _validated_sealed_registry(self._mechanism_registry)
+
     def initial_state(self, snapshot: WorldSnapshot) -> TwinState:
         """Create the deterministic PIT-safe source state from one sealed snapshot."""
         snapshot, snapshot_hash = _validated_sealed_snapshot(snapshot)
@@ -293,6 +306,7 @@ class CapexToSupplierRevenueTwin:
             from_state=source,
             to_state=target,
             parameter_draw_id=self._parameters.parameter_draw_id,
+            mechanism_registry_hash=self.mechanism_registry_hash,
             time_step=BUSINESS_TIME_STEP,
             support_ids=(f"{mechanism.mechanism.mechanism_id}@{mechanism.version}",),
             invariant_violations=self.validate(target),

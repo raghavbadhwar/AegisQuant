@@ -51,6 +51,21 @@ from aegis.world_model.experiments import (
     WorldModelExperimentLedger,
     WorldModelExperimentManifest,
 )
+from aegis.world_model.fcff_adapter import TwinOperatingDriver, TwinOperatingOutput
+from aegis.world_model.propagation import (
+    FeedbackConvergencePolicy,
+    FeedbackRule,
+    FeedbackSolveResult,
+    FeedbackVariable,
+    NetworkPropagationEdge,
+    NetworkPropagationPlan,
+)
+from aegis.world_model.runs import (
+    HistoricalReplayEvaluation,
+    HistoricalReplayFixture,
+    ScenarioRunManifest,
+    ScenarioRunResult,
+)
 from aegis.world_model.scenario import CompiledScenario, ScenarioResult
 from aegis.world_model.twin import InvariantViolation, TwinState, TwinTransition
 from aegis.world_model.uncertainty import DistributionSpec, UncertaintyDecomposition
@@ -116,6 +131,18 @@ def test_every_public_v4_candidate_contract_uses_the_revalidating_base() -> None
         TemporalEvaluationPlan,
         WorldModelExperimentManifest,
         WorldModelExperimentLedger,
+        NetworkPropagationEdge,
+        NetworkPropagationPlan,
+        FeedbackVariable,
+        FeedbackRule,
+        FeedbackConvergencePolicy,
+        FeedbackSolveResult,
+        ScenarioRunManifest,
+        ScenarioRunResult,
+        HistoricalReplayFixture,
+        HistoricalReplayEvaluation,
+        TwinOperatingDriver,
+        TwinOperatingOutput,
         DistributionSpec,
         UncertaintyDecomposition,
         CausalMechanismApproval,

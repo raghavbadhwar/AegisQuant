@@ -117,6 +117,7 @@ class TwinTransition(CandidateContractModel):
     from_state: TwinState
     to_state: TwinState
     parameter_draw_id: str = Field(pattern=_STABLE_ID)
+    mechanism_registry_hash: str | None = Field(default=None, pattern=_SHA256)
     time_step: timedelta = Field(gt=timedelta())
     support_ids: tuple[str, ...] = Field(min_length=1)
     invariant_violations: tuple[InvariantViolation, ...] = ()

@@ -22,3 +22,11 @@ def test_readme_links_to_the_candidate_only_v4_library_surface() -> None:
     assert "Candidate-only v4 world-model library" in readme
     assert "docs/V4_TRACEABILITY.md" in readme
     assert "hyperscaler.ai_capex_growth" in readme
+
+
+def test_world_model_exports_candidate_only_v4b_expansion_contracts() -> None:
+    assert world_model.NetworkPropagationPlan
+    assert world_model.FeedbackConvergencePolicy
+    assert world_model.ScenarioRunManifest
+    assert world_model.HistoricalReplayFixture
+    assert world_model.TwinOperatingOutput
