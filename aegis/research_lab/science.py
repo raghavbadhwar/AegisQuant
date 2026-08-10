@@ -1060,11 +1060,212 @@ class ResearchContributionReport(_SealedScienceModel):
         paths = [item.mechanism_path for item in contributions]
         if len(paths) != len(set(paths)):
             raise ValueError("contribution mechanism paths must be unique")
-        if not math.isclose(
-            self.total,
-            sum(item.amount for item in contributions),
-            rel_tol=0.0,
-            abs_tol=1e-12,
-        ):
+        if self.total != sum(item.amount for item in contributions):
             raise ValueError("research contributions must reconcile exactly")
         return self
+
+
+class ResearchPortfolioCandidate(_SealedScienceModel):
+    """Finite read-only research candidate; scoring grants no spending authority."""
+
+    candidate_id: str = Field(min_length=1)
+    programme: ResearchProgramme
+    expected_validity: float = Field(ge=0.0, le=1.0, allow_inf_nan=False)
+    decision_value: float = Field(ge=0.0, allow_inf_nan=False)
+    novelty: float = Field(ge=0.0, le=1.0, allow_inf_nan=False)
+    strategic_fit: float = Field(ge=0.0, le=1.0, allow_inf_nan=False)
+    compute_cost: float = Field(ge=0.0, allow_inf_nan=False)
+    data_cost: float = Field(ge=0.0, allow_inf_nan=False)
+    review_cost: float = Field(ge=0.0, allow_inf_nan=False)
+    redundancy_penalty: float = Field(ge=0.0, allow_inf_nan=False)
+    total_cost: float = Field(gt=0.0, allow_inf_nan=False)
+    expected_voi: float = Field(allow_inf_nan=False)
+    priority_score: float = Field(ge=0.0, allow_inf_nan=False)
+    deadline: AwareDatetime
+    redundant: bool = False
+    robust: bool = True
+    uncertainty_decision_changing: bool = True
+    authority: Literal["candidate_only"] = "candidate_only"
+
+    @model_validator(mode="after")
+    def recomputes_cost_voi_and_priority(self) -> ResearchPortfolioCandidate:
+        programme = ResearchProgramme.model_validate(self.programme.model_dump(mode="json"))
+        if programme.content_hash is None:
+            raise ValueError("research portfolio candidate requires a sealed programme")
+        if programme.status == "stopped":
+            raise ValueError("research portfolio candidate cannot use a stopped programme")
+        expected_cost = (
+            self.compute_cost + self.data_cost + self.review_cost + self.redundancy_penalty
+        )
+        benefit = self.expected_validity * self.decision_value * self.novelty * self.strategic_fit
+        expected_voi = benefit - expected_cost
+        priority_score = benefit / expected_cost
+        if self.total_cost != expected_cost:
+            raise ValueError("research portfolio candidate total cost must reconcile")
+        if self.expected_voi != expected_voi:
+            raise ValueError("research portfolio candidate expected VOI must be recomputed")
+        if self.priority_score != priority_score:
+            raise ValueError("research portfolio candidate priority score must be recomputed")
+        return self
+
+
+ResearchPortfolioStopReason = Literal[
+    "non_positive_voi",
+    "redundancy",
+    "budget",
+    "deadline",
+    "robustness",
+    "non_decision_changing_uncertainty",
+]
+
+
+def _portfolio_selection(
+    *,
+    as_of: AwareDatetime,
+    budget: ResearchBudget,
+    candidates: tuple[ResearchPortfolioCandidate, ...],
+) -> tuple[
+    tuple[str, ...],
+    ResearchPortfolioStopReason | None,
+    tuple[float, float, float, float, float],
+]:
+    positive = tuple(candidate for candidate in candidates if candidate.expected_voi > 0.0)
+    if not positive:
+        return (), "non_positive_voi", (0.0, 0.0, 0.0, 0.0, 0.0)
+    nonredundant = tuple(candidate for candidate in positive if not candidate.redundant)
+    if not nonredundant:
+        return (), "redundancy", (0.0, 0.0, 0.0, 0.0, 0.0)
+    timely = tuple(candidate for candidate in nonredundant if candidate.deadline > as_of)
+    if not timely:
+        return (), "deadline", (0.0, 0.0, 0.0, 0.0, 0.0)
+    robust = tuple(candidate for candidate in timely if candidate.robust)
+    if not robust:
+        return (), "robustness", (0.0, 0.0, 0.0, 0.0, 0.0)
+    decision_changing = tuple(
+        candidate for candidate in robust if candidate.uncertainty_decision_changing
+    )
+    if not decision_changing:
+        return (), "non_decision_changing_uncertainty", (0.0, 0.0, 0.0, 0.0, 0.0)
+
+    ordered = sorted(
+        decision_changing,
+        key=lambda candidate: (-candidate.priority_score, candidate.programme.programme_id),
+    )
+    selected: list[str] = []
+    compute = data = review = redundancy = total = 0.0
+    for candidate in ordered:
+        next_compute = compute + candidate.compute_cost
+        next_data = data + candidate.data_cost
+        next_review = review + candidate.review_cost
+        next_redundancy = redundancy + candidate.redundancy_penalty
+        next_total = total + candidate.total_cost
+        if (
+            next_compute <= budget.compute_limit
+            and next_data <= budget.data_limit
+            and next_review <= budget.review_limit
+            and next_total <= budget.total_limit
+        ):
+            selected.append(candidate.candidate_id)
+            compute, data, review, redundancy, total = (
+                next_compute,
+                next_data,
+                next_review,
+                next_redundancy,
+                next_total,
+            )
+    if not selected:
+        return (), "budget", (0.0, 0.0, 0.0, 0.0, 0.0)
+    return tuple(selected), None, (compute, data, review, redundancy, total)
+
+
+class ResearchPortfolio(_SealedScienceModel):
+    """Deterministic read-only research ranking; it cannot initiate or fund work."""
+
+    portfolio_id: str = Field(min_length=1)
+    as_of: AwareDatetime
+    budget: ResearchBudget
+    candidates: tuple[ResearchPortfolioCandidate, ...] = Field(min_length=1)
+    selected_candidate_ids: tuple[str, ...] = ()
+    stop_reason: ResearchPortfolioStopReason | None = None
+    selected_compute_cost: float = Field(ge=0.0, allow_inf_nan=False)
+    selected_data_cost: float = Field(ge=0.0, allow_inf_nan=False)
+    selected_review_cost: float = Field(ge=0.0, allow_inf_nan=False)
+    selected_redundancy_penalty: float = Field(ge=0.0, allow_inf_nan=False)
+    total_selected_cost: float = Field(ge=0.0, allow_inf_nan=False)
+    authority: Literal["candidate_only"] = "candidate_only"
+    release_disposition: Literal["engineering_only"] = "engineering_only"
+
+    @model_validator(mode="after")
+    def recomputes_selection_and_costs(self) -> ResearchPortfolio:
+        budget = ResearchBudget.model_validate(self.budget.model_dump(mode="json"))
+        candidates = tuple(
+            ResearchPortfolioCandidate.model_validate(candidate.model_dump(mode="json"))
+            for candidate in self.candidates
+        )
+        if budget.content_hash is None or any(
+            candidate.content_hash is None for candidate in candidates
+        ):
+            raise ValueError("research portfolio requires sealed budget and candidates")
+        candidate_ids = [candidate.candidate_id for candidate in candidates]
+        programme_ids = [candidate.programme.programme_id for candidate in candidates]
+        if len(candidate_ids) != len(set(candidate_ids)) or len(programme_ids) != len(
+            set(programme_ids)
+        ):
+            raise ValueError("research portfolio candidate and programme IDs must be unique")
+        if any(
+            candidate.programme.as_of > self.as_of
+            or candidate.programme.evidence_binding.as_of > self.as_of
+            for candidate in candidates
+        ):
+            raise ValueError("research portfolio candidate evidence is after the portfolio cutoff")
+        expected_ids, expected_reason, expected_costs = _portfolio_selection(
+            as_of=self.as_of,
+            budget=budget,
+            candidates=candidates,
+        )
+        actual_costs = (
+            self.selected_compute_cost,
+            self.selected_data_cost,
+            self.selected_review_cost,
+            self.selected_redundancy_penalty,
+            self.total_selected_cost,
+        )
+        if self.selected_candidate_ids != expected_ids or self.stop_reason != expected_reason:
+            raise ValueError("research portfolio selection or stop reason mismatch")
+        if actual_costs != expected_costs:
+            raise ValueError("research portfolio selected costs must reconcile")
+        return self
+
+
+def rank_research_portfolio(
+    *,
+    portfolio_id: str,
+    as_of: AwareDatetime,
+    budget: ResearchBudget,
+    candidates: tuple[ResearchPortfolioCandidate, ...],
+) -> ResearchPortfolio:
+    """Return a sealed deterministic selection or one explicit stop reason."""
+
+    validated_budget = ResearchBudget.model_validate(budget.model_dump(mode="json"))
+    validated_candidates = tuple(
+        ResearchPortfolioCandidate.model_validate(candidate.model_dump(mode="json"))
+        for candidate in candidates
+    )
+    selected, reason, costs = _portfolio_selection(
+        as_of=as_of,
+        budget=validated_budget,
+        candidates=validated_candidates,
+    )
+    return ResearchPortfolio(
+        portfolio_id=portfolio_id,
+        as_of=as_of,
+        budget=validated_budget,
+        candidates=validated_candidates,
+        selected_candidate_ids=selected,
+        stop_reason=reason,
+        selected_compute_cost=costs[0],
+        selected_data_cost=costs[1],
+        selected_review_cost=costs[2],
+        selected_redundancy_penalty=costs[3],
+        total_selected_cost=costs[4],
+    ).sealed()

@@ -27,6 +27,8 @@ from aegis.research_lab.science import (
     ResearchContributionReport,
     ResearchCritiqueReceipt,
     ResearchEvidenceBinding,
+    ResearchPortfolio,
+    ResearchPortfolioCandidate,
     ResearchPostmortem,
     ResearchProgramme,
     ResearchTeam,
@@ -35,6 +37,7 @@ from aegis.research_lab.science import (
     VerificationPackage,
     authorize_v6_research_tool,
     load_experiment_run,
+    rank_research_portfolio,
     record_experiment_run,
 )
 
@@ -97,10 +100,11 @@ def _hypothesis(
     mechanism_id: str,
     competitor_id: str,
     evidence_binding: ResearchEvidenceBinding,
+    programme_id: str = "programme-1",
 ) -> Hypothesis:
     return Hypothesis(
         hypothesis_id=hypothesis_id,
-        programme_id="programme-1",
+        programme_id=programme_id,
         mechanism_id=mechanism_id,
         statement=f"Candidate statement for {mechanism_id}.",
         falsifiable_predictions=(f"prediction-{hypothesis_id}",),
@@ -112,13 +116,13 @@ def _hypothesis(
     ).sealed()
 
 
-def _programme(*, max_tree_depth: int = 2) -> ResearchProgramme:
+def _programme(*, max_tree_depth: int = 2, programme_id: str = "programme-1") -> ResearchProgramme:
     binding = _evidence_binding()
-    first = _hypothesis("hypothesis-a", "mechanism-a", "hypothesis-b", binding)
-    second = _hypothesis("hypothesis-b", "mechanism-b", "hypothesis-a", binding)
+    first = _hypothesis("hypothesis-a", "mechanism-a", "hypothesis-b", binding, programme_id)
+    second = _hypothesis("hypothesis-b", "mechanism-b", "hypothesis-a", binding, programme_id)
     family = HypothesisFamily(
         family_id="family-1",
-        programme_id="programme-1",
+        programme_id=programme_id,
         hypotheses=(first, second),
     ).sealed()
     budget = ResearchBudget(
@@ -128,7 +132,7 @@ def _programme(*, max_tree_depth: int = 2) -> ResearchProgramme:
         total_limit=18.0,
     ).sealed()
     return ResearchProgramme(
-        programme_id="programme-1",
+        programme_id=programme_id,
         mandate="Test competing candidate mechanisms.",
         as_of=AS_OF,
         owner_id="research-director-1",
@@ -551,6 +555,167 @@ def test_archive_surfaces_prior_negative_results_and_reconciles_contributions() 
             ),
             total=1.0,
         )
+
+
+def test_research_portfolio_reconciles_compute_data_review_and_redundancy_costs() -> None:
+    programme = _programme()
+    candidate = ResearchPortfolioCandidate(
+        candidate_id="portfolio-candidate-1",
+        programme=programme,
+        expected_validity=0.8,
+        decision_value=20.0,
+        novelty=0.5,
+        strategic_fit=0.5,
+        compute_cost=1.0,
+        data_cost=0.5,
+        review_cost=0.25,
+        redundancy_penalty=0.25,
+        total_cost=2.0,
+        expected_voi=2.0,
+        priority_score=2.0,
+        deadline=AS_OF + timedelta(days=1),
+    ).sealed()
+    budget = ResearchBudget(
+        compute_limit=2.0,
+        data_limit=1.0,
+        review_limit=1.0,
+        total_limit=4.0,
+    ).sealed()
+
+    first = rank_research_portfolio(
+        portfolio_id="portfolio-1",
+        as_of=AS_OF,
+        budget=budget,
+        candidates=(candidate,),
+    )
+    second = rank_research_portfolio(
+        portfolio_id="portfolio-1",
+        as_of=AS_OF,
+        budget=budget,
+        candidates=(candidate,),
+    )
+    assert isinstance(first, ResearchPortfolio)
+    assert first.selected_candidate_ids == (candidate.candidate_id,)
+    assert first.total_selected_cost == 2.0
+    assert first.model_dump_json() == second.model_dump_json()
+
+    second_candidate = candidate.model_copy(
+        update={
+            "candidate_id": "portfolio-candidate-2",
+            "programme": _programme(programme_id="programme-2"),
+            "content_hash": None,
+        }
+    ).sealed()
+    wider_budget = ResearchBudget(
+        compute_limit=4.0,
+        data_limit=2.0,
+        review_limit=2.0,
+        total_limit=8.0,
+    ).sealed()
+    tie = rank_research_portfolio(
+        portfolio_id="portfolio-tie",
+        as_of=AS_OF,
+        budget=wider_budget,
+        candidates=(second_candidate, candidate),
+    )
+    assert tie.selected_candidate_ids == (candidate.candidate_id, second_candidate.candidate_id)
+
+    with pytest.raises(ValidationError, match="priority score"):
+        candidate.model_copy(update={"priority_score": 3.0, "content_hash": None})
+    with pytest.raises(ValidationError, match="expected VOI"):
+        candidate.model_copy(update={"expected_voi": 2.0 + 5e-13, "content_hash": None})
+    with pytest.raises(ValidationError, match="selected costs"):
+        first.model_copy(update={"selected_compute_cost": 1.0 + 5e-13, "content_hash": None})
+    with pytest.raises(ValidationError, match="portfolio cutoff"):
+        rank_research_portfolio(
+            portfolio_id="portfolio-future-programme",
+            as_of=AS_OF - timedelta(seconds=1),
+            budget=budget,
+            candidates=(candidate,),
+        )
+
+
+def test_research_portfolio_emits_explicit_stop_reasons() -> None:
+    programme = _programme()
+    candidate = ResearchPortfolioCandidate(
+        candidate_id="portfolio-candidate-1",
+        programme=programme,
+        expected_validity=1.0,
+        decision_value=4.0,
+        novelty=1.0,
+        strategic_fit=1.0,
+        compute_cost=1.0,
+        data_cost=1.0,
+        review_cost=1.0,
+        redundancy_penalty=1.0,
+        total_cost=4.0,
+        expected_voi=0.0,
+        priority_score=1.0,
+        deadline=AS_OF + timedelta(days=1),
+    ).sealed()
+    budget = ResearchBudget(
+        compute_limit=2.0,
+        data_limit=2.0,
+        review_limit=2.0,
+        total_limit=6.0,
+    ).sealed()
+    positive = candidate.model_copy(
+        update={
+            "decision_value": 8.0,
+            "expected_voi": 4.0,
+            "priority_score": 2.0,
+            "content_hash": None,
+        }
+    ).sealed()
+    stopped_programme = programme.model_copy(
+        update={"status": "stopped", "content_hash": None}
+    ).sealed()
+    with pytest.raises(ValidationError, match="stopped programme"):
+        positive.model_copy(update={"programme": stopped_programme, "content_hash": None})
+    cases = (
+        (candidate, budget, AS_OF, "non_positive_voi"),
+        (
+            positive.model_copy(update={"redundant": True, "content_hash": None}).sealed(),
+            budget,
+            AS_OF,
+            "redundancy",
+        ),
+        (positive, budget, positive.deadline, "deadline"),
+        (
+            positive.model_copy(update={"robust": False, "content_hash": None}).sealed(),
+            budget,
+            AS_OF,
+            "robustness",
+        ),
+        (
+            positive.model_copy(
+                update={"uncertainty_decision_changing": False, "content_hash": None}
+            ).sealed(),
+            budget,
+            AS_OF,
+            "non_decision_changing_uncertainty",
+        ),
+        (
+            positive,
+            ResearchBudget(
+                compute_limit=0.5,
+                data_limit=2.0,
+                review_limit=2.0,
+                total_limit=4.5,
+            ).sealed(),
+            AS_OF,
+            "budget",
+        ),
+    )
+    for item, item_budget, as_of, reason in cases:
+        portfolio = rank_research_portfolio(
+            portfolio_id=f"portfolio-{reason}",
+            as_of=as_of,
+            budget=item_budget,
+            candidates=(item,),
+        )
+        assert portfolio.selected_candidate_ids == ()
+        assert portfolio.stop_reason == reason
 
 
 def test_research_tree_rejects_duplicate_active_hypothesis_and_excess_depth() -> None:
@@ -1098,6 +1263,8 @@ def test_v6_science_contracts_are_public_and_model_copy_fail_closed() -> None:
         "ResearchEvidenceBinding",
         "ResearchProgramme",
         "ResearchPostmortem",
+        "ResearchPortfolio",
+        "ResearchPortfolioCandidate",
         "ResearchTeam",
         "ResearchTree",
         "ResearchTreeNode",
@@ -1106,6 +1273,7 @@ def test_v6_science_contracts_are_public_and_model_copy_fail_closed() -> None:
         "authorize_v6_research_tool",
         "load_experiment_run",
         "record_experiment_run",
+        "rank_research_portfolio",
     ):
         assert getattr(research_lab, name)
 

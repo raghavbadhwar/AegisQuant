@@ -32,6 +32,8 @@ from .science import (
     ResearchContributionReport,
     ResearchCritiqueReceipt,
     ResearchEvidenceBinding,
+    ResearchPortfolio,
+    ResearchPortfolioCandidate,
     ResearchPostmortem,
     ResearchProgramme,
     ResearchTeam,
@@ -40,6 +42,7 @@ from .science import (
     VerificationPackage,
     authorize_v6_research_tool,
     load_experiment_run,
+    rank_research_portfolio,
     record_experiment_run,
 )
 from .strategy_evaluation import (
@@ -89,6 +92,8 @@ __all__ = [
     "ResearchContributionReport",
     "ResearchCritiqueReceipt",
     "ResearchEvidenceBinding",
+    "ResearchPortfolio",
+    "ResearchPortfolioCandidate",
     "ResearchPostmortem",
     "ResearchProgramme",
     "ResearchTeam",
@@ -111,6 +116,7 @@ __all__ = [
     "interval_purged_walk_forward",
     "load_experiment_run",
     "purged_walk_forward",
+    "rank_research_portfolio",
     "receipt_series_hash",
     "record_experiment_run",
     "strategy_series_from_receipts",
