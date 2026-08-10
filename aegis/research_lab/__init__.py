@@ -17,6 +17,8 @@ from .receipt_series import (
 from .science import (
     V6_ROLE_TOOL_GRANTS,
     ExperimentPlan,
+    ExperimentRun,
+    ExperimentRunAbstention,
     Hypothesis,
     HypothesisFamily,
     NoveltyReport,
@@ -29,6 +31,8 @@ from .science import (
     ResearchTree,
     ResearchTreeNode,
     authorize_v6_research_tool,
+    load_experiment_run,
+    record_experiment_run,
 )
 from .strategy_evaluation import (
     ReceiptComparisonEvaluation,
@@ -54,6 +58,8 @@ __all__ = [
     "CandidateBoundaryError",
     "ExperimentLedger",
     "ExperimentPlan",
+    "ExperimentRun",
+    "ExperimentRunAbstention",
     "Hypothesis",
     "HypothesisFamily",
     "NoveltyReport",
@@ -87,8 +93,10 @@ __all__ = [
     "evaluate_receipt_comparison",
     "interval_combinatorial_purged_splits",
     "interval_purged_walk_forward",
+    "load_experiment_run",
     "purged_walk_forward",
     "receipt_series_hash",
+    "record_experiment_run",
     "strategy_series_from_receipts",
     "strategy_series_hash",
     "validate_candidate_target",

@@ -5,14 +5,15 @@ from __future__ import annotations
 import math
 from collections.abc import Mapping
 from types import MappingProxyType
-from typing import Literal, Self
+from typing import Any, Literal, Self
 
 from pydantic import AwareDatetime, Field, model_validator
 
-from aegis.contracts import canonical_sha256
+from aegis.contracts import ExperimentRecord, canonical_sha256
 from aegis.contracts._base import CandidateContractModel
 from aegis.harness.capability_broker import CapabilityDenied
 from aegis.reporting.traceability import SnapshotReference, SourceProvenanceReference
+from aegis.research_lab.experiments import ExperimentLedger
 
 _SHA256 = r"^[0-9a-f]{64}$"
 _PLAN_LOCKED_FIELDS = frozenset(
@@ -577,3 +578,139 @@ class ResearchTree(_SealedScienceModel):
             or node.critique.reviewer_id == validated_plan.author_id
         ):
             raise ValueError("research team members cannot review their own output")
+
+
+class ExperimentRun(_SealedScienceModel):
+    """One deterministic registered-fixture run with no general execution authority."""
+
+    experiment_id: str = Field(min_length=1)
+    programme_id: str = Field(min_length=1)
+    plan: ExperimentPlan
+    executor_id: str = Field(min_length=1)
+    executor_kind: Literal["registered_fixture"] = "registered_fixture"
+    code_revision: str = Field(min_length=1)
+    tree_hash: str = Field(pattern=_SHA256)
+    data_snapshot_hash: str = Field(pattern=_SHA256)
+    seed: int = Field(ge=0)
+    parameter_draw_hash: str = Field(pattern=_SHA256)
+    result_content_hash: str = Field(pattern=_SHA256)
+    trial_number: int = Field(gt=0)
+    status: Literal["passed", "failed", "rejected"]
+    started_at: AwareDatetime
+    completed_at: AwareDatetime
+    authority: Literal["candidate_only"] = "candidate_only"
+
+    @model_validator(mode="after")
+    def binds_plan_data_and_lifecycle(self) -> ExperimentRun:
+        plan = ExperimentPlan.model_validate(self.plan.model_dump(mode="json"))
+        if plan.content_hash is None:
+            raise ValueError("experiment run requires a sealed plan")
+        if self.experiment_id != plan.experiment_id:
+            raise ValueError("experiment run ID must match its plan")
+        if self.data_snapshot_hash != plan.dataset_snapshot_hash:
+            raise ValueError("experiment run data snapshot must match its plan")
+        if self.started_at <= plan.preregistered_at:
+            raise ValueError("experiment run must start after preregistration")
+        if self.completed_at < self.started_at:
+            raise ValueError("experiment run completion cannot precede its start")
+        return self
+
+
+class ExperimentRunAbstention(_SealedScienceModel):
+    """Typed no-write result for an unavailable registered-fixture executor."""
+
+    experiment_id: str = Field(min_length=1)
+    executor_id: str = Field(min_length=1)
+    requested_run_hash: str = Field(pattern=_SHA256)
+    plan_hash: str = Field(pattern=_SHA256)
+    tree_hash: str = Field(pattern=_SHA256)
+    reason: Literal["unsupported_or_unavailable_executor"] = "unsupported_or_unavailable_executor"
+    authority: Literal["candidate_only"] = "candidate_only"
+
+
+_REGISTERED_V6_FIXTURE_EXECUTORS = frozenset({"registered-fixture-1"})
+
+
+def _experiment_record(run: ExperimentRun) -> ExperimentRecord:
+    if run.content_hash is None:
+        raise ValueError("experiment record requires a sealed v6 run")
+    payload: dict[str, Any] = {
+        "experiment_id": run.experiment_id,
+        "candidate_id": f"v6:{run.programme_id}",
+        "hypothesis_id": run.plan.hypothesis.hypothesis_id,
+        "parent_experiment_id": None,
+        "code_revision": run.code_revision,
+        "tree_hash": run.tree_hash,
+        "data_snapshot_hash": run.data_snapshot_hash,
+        "parameters": {
+            "v6_run": run.model_dump(mode="json"),
+            "v6_run_content_hash": run.content_hash,
+        },
+        "dependency_versions": {"aegisquant": "v6"},
+        "trial_number": run.trial_number,
+        "status": run.status,
+        "created_at": run.started_at,
+    }
+    return ExperimentRecord.model_validate(payload | {"content_hash": canonical_sha256(payload)})
+
+
+def load_experiment_run(record: ExperimentRecord) -> ExperimentRun:
+    """Reconstruct and cross-check a sealed v6 run from its ledger envelope."""
+
+    validated_record = ExperimentRecord.model_validate_json(record.model_dump_json())
+    parameters = validated_record.parameters
+    if set(parameters) != {"v6_run", "v6_run_content_hash"}:
+        raise ValueError("experiment record does not contain an exact v6 run payload")
+    run_payload = parameters["v6_run"]
+    run_hash = parameters["v6_run_content_hash"]
+    if not isinstance(run_payload, dict) or not isinstance(run_hash, str):
+        raise ValueError("experiment record v6 run payload is malformed")
+    run = ExperimentRun.model_validate(run_payload)
+    if run.content_hash is None or run.content_hash != run_hash:
+        raise ValueError("experiment record v6 run content hash mismatch")
+    if (
+        validated_record.experiment_id != run.experiment_id
+        or validated_record.candidate_id != f"v6:{run.programme_id}"
+        or validated_record.hypothesis_id != run.plan.hypothesis.hypothesis_id
+        or validated_record.code_revision != run.code_revision
+        or validated_record.tree_hash != run.tree_hash
+        or validated_record.data_snapshot_hash != run.data_snapshot_hash
+        or validated_record.trial_number != run.trial_number
+        or validated_record.status != run.status
+        or validated_record.created_at != run.started_at
+        or validated_record.dependency_versions != {"aegisquant": "v6"}
+    ):
+        raise ValueError("experiment record envelope does not match its v6 run")
+    return run
+
+
+def record_experiment_run(
+    ledger: ExperimentLedger, run: ExperimentRun, tree: ResearchTree
+) -> ExperimentRun | ExperimentRunAbstention:
+    """Append and verify the exact v6 run before returning it to a caller."""
+
+    validated_run = ExperimentRun.model_validate(run.model_dump(mode="json"))
+    validated_tree = ResearchTree.model_validate(tree.model_dump(mode="json"))
+    if validated_run.content_hash is None or validated_tree.content_hash is None:
+        raise ValueError("experiment recording requires sealed run and tree")
+    if (
+        validated_run.programme_id != validated_tree.programme.programme_id
+        or validated_run.tree_hash != validated_tree.content_hash
+    ):
+        raise ValueError("experiment run does not match its research tree")
+    validated_tree.validate_plan(validated_run.plan)
+    if validated_run.executor_id not in _REGISTERED_V6_FIXTURE_EXECUTORS:
+        if validated_run.plan.content_hash is None:
+            raise ValueError("experiment abstention requires a sealed plan")
+        return ExperimentRunAbstention(
+            experiment_id=validated_run.experiment_id,
+            executor_id=validated_run.executor_id,
+            requested_run_hash=validated_run.content_hash,
+            plan_hash=validated_run.plan.content_hash,
+            tree_hash=validated_tree.content_hash,
+        ).sealed()
+    ledger.append(_experiment_record(validated_run))
+    loaded = load_experiment_run(ledger.get(validated_run.experiment_id))
+    if loaded.content_hash != validated_run.content_hash:
+        raise ValueError("persisted experiment run does not match submitted content")
+    return loaded

@@ -1,15 +1,19 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
 
-from aegis.contracts import canonical_sha256
+from aegis.contracts import ExperimentRecord, canonical_sha256
 from aegis.harness.capability_broker import CapabilityDenied
 from aegis.reporting.traceability import SnapshotReference, SourceProvenanceReference
+from aegis.research_lab.experiments import ExperimentIntegrityError, ExperimentLedger
 from aegis.research_lab.science import (
     ExperimentPlan,
+    ExperimentRun,
+    ExperimentRunAbstention,
     Hypothesis,
     HypothesisFamily,
     NoveltyReport,
@@ -22,6 +26,8 @@ from aegis.research_lab.science import (
     ResearchTree,
     ResearchTreeNode,
     authorize_v6_research_tool,
+    load_experiment_run,
+    record_experiment_run,
 )
 
 AS_OF = datetime(2026, 1, 15, tzinfo=UTC)
@@ -125,6 +131,169 @@ def _programme(*, max_tree_depth: int = 2) -> ResearchProgramme:
         hypothesis_families=(family,),
         evidence_binding=binding,
     ).sealed()
+
+
+def _reviewed_tree_and_plan() -> tuple[ResearchTree, ExperimentPlan]:
+    programme = _programme()
+    hypothesis = programme.hypothesis_families[0].hypotheses[0]
+    team = ResearchTeam(
+        team_id="team-ledger",
+        programme_id=programme.programme_id,
+        role="experiment_designer",
+        member_ids=("designer-ledger",),
+        compute_limit=10.0,
+    ).sealed()
+    critique = ResearchCritiqueReceipt(
+        critique_id="critique-ledger",
+        node_id="node-ledger",
+        reviewer_id="reviewer-ledger",
+        recorded_at=AS_OF + timedelta(seconds=90),
+        findings=("Fixture evaluation is bounded.",),
+        evidence_binding=programme.evidence_binding,
+    ).sealed()
+    node = ResearchTreeNode(
+        node_id="node-ledger",
+        programme_id=programme.programme_id,
+        team_id=team.team_id,
+        hypothesis_id=hypothesis.hypothesis_id,
+        depth=0,
+        compute_cost=1.0,
+        critique=critique,
+    ).sealed()
+    tree = ResearchTree(
+        tree_id="tree-ledger",
+        programme=programme,
+        teams=(team,),
+        nodes=(node,),
+    ).sealed()
+    plan = ExperimentPlan(
+        experiment_id="experiment-ledger",
+        tree_node_id=node.node_id,
+        hypothesis=hypothesis,
+        preregistered_at=AS_OF + timedelta(minutes=2),
+        evidence_binding=programme.evidence_binding,
+        dataset_snapshot_hash=programme.evidence_binding.snapshot.content_hash,
+        split_policy_id="split-policy-1",
+        metric_ids=("metric-1",),
+        baseline_ids=("baseline-1",),
+        ablation_ids=("ablation-1",),
+        cost_model_id="cost-model-1",
+        stop_rules=("stop-rule-1",),
+        locked_fields=LOCKED_FIELDS,
+        author_id="designer-ledger",
+    ).sealed()
+    return tree, plan
+
+
+def _experiment_run(tree: ResearchTree, plan: ExperimentPlan) -> ExperimentRun:
+    return ExperimentRun(
+        experiment_id=plan.experiment_id,
+        programme_id=tree.programme.programme_id,
+        plan=plan,
+        executor_id="registered-fixture-1",
+        code_revision="aa78abd",
+        tree_hash=tree.content_hash,
+        data_snapshot_hash=plan.dataset_snapshot_hash,
+        seed=7,
+        parameter_draw_hash="c" * 64,
+        result_content_hash="d" * 64,
+        trial_number=1,
+        status="passed",
+        started_at=AS_OF + timedelta(minutes=3),
+        completed_at=AS_OF + timedelta(minutes=4),
+    ).sealed()
+
+
+def test_completed_run_is_persisted_before_return(tmp_path: Path) -> None:
+    tree, plan = _reviewed_tree_and_plan()
+    run = _experiment_run(tree, plan)
+    ledger = ExperimentLedger(tmp_path / "v6-experiments.sqlite")
+
+    returned = record_experiment_run(ledger, run, tree)
+    record = ledger.get(run.experiment_id)
+    assert returned == run
+    assert record.parameters["v6_run_content_hash"] == run.content_hash
+    assert load_experiment_run(record) == run
+
+
+def test_experiment_run_rejects_unpersisted_return_and_nested_tampering(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    tree, plan = _reviewed_tree_and_plan()
+    run = _experiment_run(tree, plan)
+    rejected_ledger = ExperimentLedger(tmp_path / "rejected.sqlite")
+
+    def reject_append(_record: ExperimentRecord) -> None:
+        raise RuntimeError("persistence unavailable")
+
+    monkeypatch.setattr(rejected_ledger, "append", reject_append)
+    with pytest.raises(RuntimeError, match="persistence unavailable"):
+        record_experiment_run(rejected_ledger, run, tree)
+    with pytest.raises(KeyError):
+        rejected_ledger.get(run.experiment_id)
+
+    ledger = ExperimentLedger(tmp_path / "tampered.sqlite")
+    record_experiment_run(ledger, run, tree)
+    record = ledger.get(run.experiment_id)
+    payload = record.model_dump(exclude={"content_hash"})
+    payload["parameters"] = record.parameters | {"v6_run_content_hash": "f" * 64}
+    forged = ExperimentRecord(**payload, content_hash=canonical_sha256(payload))
+    with pytest.raises(ValueError, match="v6 run content hash mismatch"):
+        load_experiment_run(forged)
+
+    outer_payload = record.model_dump(exclude={"content_hash"}) | {"code_revision": "forged"}
+    forged_outer = ExperimentRecord(**outer_payload, content_hash=canonical_sha256(outer_payload))
+    with pytest.raises(ValueError, match="envelope does not match"):
+        load_experiment_run(forged_outer)
+
+    with pytest.raises(ValidationError, match="ID must match"):
+        run.model_copy(update={"experiment_id": "other", "content_hash": None})
+    with pytest.raises(ValidationError, match="data snapshot"):
+        run.model_copy(update={"data_snapshot_hash": "e" * 64, "content_hash": None})
+    with pytest.raises(ValidationError, match="start after preregistration"):
+        run.model_copy(update={"started_at": plan.preregistered_at, "content_hash": None})
+    with pytest.raises(ValidationError, match="completion"):
+        run.model_copy(
+            update={
+                "completed_at": run.started_at - timedelta(seconds=1),
+                "content_hash": None,
+            }
+        )
+    wrong_tree_run = run.model_copy(update={"tree_hash": "e" * 64, "content_hash": None}).sealed()
+    with pytest.raises(ValueError, match="does not match its research tree"):
+        record_experiment_run(
+            ExperimentLedger(tmp_path / "wrong-tree.sqlite"), wrong_tree_run, tree
+        )
+
+    assert record_experiment_run(ledger, run, tree) == run
+    changed_run = run.model_copy(
+        update={"result_content_hash": "e" * 64, "content_hash": None}
+    ).sealed()
+    with pytest.raises(ExperimentIntegrityError, match="different content"):
+        record_experiment_run(ledger, changed_run, tree)
+
+
+def test_unknown_fixture_executor_abstains_without_ledger_record(tmp_path: Path) -> None:
+    tree, plan = _reviewed_tree_and_plan()
+    run = (
+        _experiment_run(tree, plan)
+        .model_copy(update={"executor_id": "unknown-fixture", "content_hash": None})
+        .sealed()
+    )
+    ledger = ExperimentLedger(tmp_path / "unknown-executor.sqlite")
+
+    result = record_experiment_run(ledger, run, tree)
+    assert isinstance(result, ExperimentRunAbstention)
+    assert result.reason == "unsupported_or_unavailable_executor"
+    with pytest.raises(KeyError):
+        ledger.get(run.experiment_id)
+
+    malformed_plan = plan.model_copy(
+        update={"tree_node_id": "missing-node", "content_hash": None}
+    ).sealed()
+    malformed_run = run.model_copy(update={"plan": malformed_plan, "content_hash": None}).sealed()
+    with pytest.raises(ValueError, match="tree node hypothesis"):
+        record_experiment_run(ledger, malformed_run, tree)
 
 
 def test_research_tree_rejects_duplicate_active_hypothesis_and_excess_depth() -> None:
@@ -655,6 +824,8 @@ def test_v6_science_contracts_are_public_and_model_copy_fail_closed() -> None:
 
     for name in (
         "ExperimentPlan",
+        "ExperimentRun",
+        "ExperimentRunAbstention",
         "Hypothesis",
         "HypothesisFamily",
         "NoveltyReport",
@@ -668,6 +839,8 @@ def test_v6_science_contracts_are_public_and_model_copy_fail_closed() -> None:
         "ResearchTreeNode",
         "V6_ROLE_TOOL_GRANTS",
         "authorize_v6_research_tool",
+        "load_experiment_run",
+        "record_experiment_run",
     ):
         assert getattr(research_lab, name)
 
