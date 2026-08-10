@@ -16,7 +16,7 @@ from aegis.reporting.view_models import (
     portfolio_rows,
     run_summary,
 )
-from aegis.research_lab import ScienceReport, science_report_view
+from aegis.research_lab import ExperimentLedger, ScienceReport, science_report_view
 
 BANNER = (
     "Research, backtest, and paper simulation only — read-only dashboard — "
@@ -43,7 +43,12 @@ def _streamlit() -> Any:
         raise RuntimeError("install AegisQuant with the dashboard extra") from exc
 
 
-def render(st: Any, ledger_path: Path, science_report_path: Path | None = None) -> None:
+def render(
+    st: Any,
+    ledger_path: Path,
+    science_report_path: Path | None = None,
+    science_ledger_path: Path | None = None,
+) -> None:
     st.set_page_config(page_title="AegisQuant", layout="wide")
     st.title("AegisQuant Research & Paper Portfolio Console")
     st.warning(BANNER)
@@ -114,9 +119,19 @@ def render(st: Any, ledger_path: Path, science_report_path: Path | None = None) 
             st.info("Supply AEGIS_SCIENCE_REPORT_PATH to view one sealed local report.")
         else:
             try:
-                report = ScienceReport.model_validate_json(science_report_path.read_bytes())
+                science_ledger = (
+                    ExperimentLedger(science_ledger_path, read_only=True)
+                    if science_ledger_path is not None
+                    else None
+                )
+                context = (
+                    {"experiment_ledger": science_ledger} if science_ledger is not None else None
+                )
+                report = ScienceReport.model_validate_json(
+                    science_report_path.read_bytes(), context=context
+                )
                 st.subheader("Candidate-only v6 Science Report")
-                st.json(science_report_view(report))
+                st.json(science_report_view(report, ledger=science_ledger))
             except Exception as exc:
                 st.error(f"Science report unavailable or failed integrity validation: {exc}")
     with tabs[9]:
@@ -127,7 +142,13 @@ def render(st: Any, ledger_path: Path, science_report_path: Path | None = None) 
 def main() -> None:
     ledger_path = Path(os.environ.get("AEGIS_LEDGER_PATH", "run_data/aegisquant.sqlite"))
     science_path = os.environ.get("AEGIS_SCIENCE_REPORT_PATH")
-    render(_streamlit(), ledger_path, Path(science_path) if science_path else None)
+    science_ledger = os.environ.get("AEGIS_SCIENCE_LEDGER_PATH")
+    render(
+        _streamlit(),
+        ledger_path,
+        Path(science_path) if science_path else None,
+        Path(science_ledger) if science_ledger else None,
+    )
 
 
 if __name__ == "__main__":

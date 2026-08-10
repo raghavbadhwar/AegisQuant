@@ -3,9 +3,46 @@
 from __future__ import annotations
 
 import sqlite3
+from collections.abc import Mapping
 from pathlib import Path
+from types import MappingProxyType
+from typing import Any, Literal
 
 from aegis.contracts import ExperimentRecord, canonical_json, canonical_sha256
+
+V6FixtureStatus = Literal["passed", "failed"]
+_V6_FIXTURE_OUTCOMES: Mapping[str, V6FixtureStatus] = MappingProxyType(
+    {
+        "registered-fixture-1": "passed",
+        "registered-fixture-failure-1": "failed",
+    }
+)
+
+
+def deterministic_v6_fixture_outcome(
+    run_payload: Mapping[str, Any],
+) -> tuple[V6FixtureStatus, str]:
+    """Compute the closed v6 fixture outcome from its canonical run inputs."""
+
+    executor_id = run_payload.get("executor_id")
+    plan = run_payload.get("plan")
+    if not isinstance(executor_id, str) or executor_id not in _V6_FIXTURE_OUTCOMES:
+        raise ValueError("registered fixture executor is unavailable")
+    if not isinstance(plan, dict) or not isinstance(plan.get("content_hash"), str):
+        raise ValueError("registered fixture requires a sealed plan")
+    result_hash = canonical_sha256(
+        {
+            "executor_id": executor_id,
+            "plan_hash": plan["content_hash"],
+            "code_revision": run_payload.get("code_revision"),
+            "tree_hash": run_payload.get("tree_hash"),
+            "data_snapshot_hash": run_payload.get("data_snapshot_hash"),
+            "seed": run_payload.get("seed"),
+            "parameter_draw_hash": run_payload.get("parameter_draw_hash"),
+            "trial_number": run_payload.get("trial_number"),
+        }
+    )
+    return _V6_FIXTURE_OUTCOMES[executor_id], result_hash
 
 
 class ExperimentIntegrityError(RuntimeError):
@@ -22,12 +59,19 @@ class ExperimentLedger:
 
     _GENESIS = "0" * 64
 
-    def __init__(self, path: str | Path) -> None:
+    def __init__(self, path: str | Path, *, read_only: bool = False) -> None:
         self.path = Path(path).resolve()
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        self._initialize()
+        self.read_only = read_only
+        if read_only:
+            if not self.path.is_file():
+                raise FileNotFoundError(self.path)
+        else:
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            self._initialize()
 
     def _connect(self) -> sqlite3.Connection:
+        if self.read_only:
+            return sqlite3.connect(f"{self.path.as_uri()}?mode=ro", uri=True)
         return sqlite3.connect(self.path)
 
     @staticmethod
@@ -128,6 +172,20 @@ class ExperimentLedger:
             raise ExperimentIntegrityError("experiment records and commitments do not reconcile")
 
     def append(self, record: ExperimentRecord) -> None:
+        if self.read_only:
+            raise ExperimentIntegrityError("experiment ledger is read-only")
+        run_payload = record.parameters.get("v6_run")
+        if run_payload is not None:
+            if not isinstance(run_payload, dict):
+                raise ExperimentIntegrityError("v6 experiment run payload is malformed")
+            try:
+                expected = deterministic_v6_fixture_outcome(run_payload)
+            except ValueError as exc:
+                raise ExperimentIntegrityError(str(exc)) from exc
+            if (run_payload.get("status"), run_payload.get("result_content_hash")) != expected:
+                raise ExperimentIntegrityError(
+                    "v6 experiment run does not match deterministic registered-fixture outcome"
+                )
         payload = canonical_json(record)
         record_hash = canonical_sha256(record)
         with self._connect() as connection:

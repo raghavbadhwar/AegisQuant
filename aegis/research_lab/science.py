@@ -13,7 +13,11 @@ from aegis.contracts import ExperimentRecord, canonical_sha256
 from aegis.contracts._base import CandidateContractModel
 from aegis.harness.capability_broker import CapabilityDenied
 from aegis.reporting.traceability import SnapshotReference, SourceProvenanceReference
-from aegis.research_lab.experiments import ExperimentLedger
+from aegis.research_lab.experiments import (
+    ExperimentLedger,
+    V6FixtureStatus,
+    deterministic_v6_fixture_outcome,
+)
 
 _SHA256 = r"^[0-9a-f]{64}$"
 _PLAN_LOCKED_FIELDS = frozenset(
@@ -26,6 +30,14 @@ _PLAN_LOCKED_FIELDS = frozenset(
         "cost_model_id",
         "stop_rules",
     }
+)
+_REGISTERED_V6_PLAN_VALUES = (
+    "split-policy-1",
+    ("metric-1",),
+    ("baseline-1",),
+    ("ablation-1",),
+    "cost-model-1",
+    ("stop-rule-1",),
 )
 
 
@@ -257,6 +269,15 @@ class ExperimentPlan(_SealedScienceModel):
             _PLAN_LOCKED_FIELDS
         ):
             raise ValueError("experiment plan locked fields must match the governed surface")
+        if (
+            self.split_policy_id,
+            self.metric_ids,
+            self.baseline_ids,
+            self.ablation_ids,
+            self.cost_model_id,
+            self.stop_rules,
+        ) != _REGISTERED_V6_PLAN_VALUES:
+            raise ValueError("experiment plan must use the governed fixture evaluation policy")
         for name, values in (
             ("metric", self.metric_ids),
             ("baseline", self.baseline_ids),
@@ -628,7 +649,11 @@ class ExperimentRunAbstention(_SealedScienceModel):
     authority: Literal["candidate_only"] = "candidate_only"
 
 
-_REGISTERED_V6_FIXTURE_EXECUTORS = frozenset({"registered-fixture-1"})
+def evaluate_registered_fixture(run: ExperimentRun) -> tuple[V6FixtureStatus, str]:
+    """Recompute the closed fixture outcome from sealed deterministic inputs."""
+
+    validated = ExperimentRun.model_validate(run.model_dump(mode="json"))
+    return deterministic_v6_fixture_outcome(validated.model_dump(mode="json"))
 
 
 def _experiment_record(run: ExperimentRun) -> ExperimentRecord:
@@ -699,9 +724,11 @@ def record_experiment_run(
     ):
         raise ValueError("experiment run does not match its research tree")
     validated_tree.validate_plan(validated_run.plan)
-    if validated_run.executor_id not in _REGISTERED_V6_FIXTURE_EXECUTORS:
+    try:
+        expected_outcome = evaluate_registered_fixture(validated_run)
+    except ValueError:
         if validated_run.plan.content_hash is None:
-            raise ValueError("experiment abstention requires a sealed plan")
+            raise ValueError("experiment abstention requires a sealed plan") from None
         return ExperimentRunAbstention(
             experiment_id=validated_run.experiment_id,
             executor_id=validated_run.executor_id,
@@ -709,6 +736,8 @@ def record_experiment_run(
             plan_hash=validated_run.plan.content_hash,
             tree_hash=validated_tree.content_hash,
         ).sealed()
+    if (validated_run.status, validated_run.result_content_hash) != expected_outcome:
+        raise ValueError("experiment run does not match deterministic registered-fixture outcome")
     ledger.append(_experiment_record(validated_run))
     loaded = load_experiment_run(ledger.get(validated_run.experiment_id))
     if loaded.content_hash != validated_run.content_hash:
@@ -826,6 +855,29 @@ class VerificationPackage(_SealedScienceModel):
         return self
 
 
+def _require_verification_ledger(
+    package: VerificationPackage, info: ValidationInfo
+) -> ExperimentLedger:
+    ledger = (info.context or {}).get("experiment_ledger")
+    if not isinstance(ledger, ExperimentLedger):
+        raise ValueError("verified output requires ledger verification context")
+    if ledger.get(package.original_run.experiment_id) != package.original_record:
+        raise ValueError("verified output original run is not included in the ledger")
+    for replication in package.replications:
+        if ledger.get(replication.replication_run.experiment_id) != replication.replication_record:
+            raise ValueError("verified output replication is not included in the ledger")
+    supported_runs = (
+        package.original_run,
+        *(replication.replication_run for replication in package.replications),
+    )
+    if any(
+        (run.status, run.result_content_hash) != evaluate_registered_fixture(run)
+        for run in supported_runs
+    ):
+        raise ValueError("verified output requires deterministic registered-fixture outcomes")
+    return ledger
+
+
 class ResearchClaim(_SealedScienceModel):
     """Candidate claim whose conclusion cannot exceed sealed verification support."""
 
@@ -870,19 +922,9 @@ class ResearchClaim(_SealedScienceModel):
         ):
             raise ValueError("verified claim requires verified replication support")
         if self.status == "verified":
-            ledger = (info.context or {}).get("experiment_ledger")
-            if not isinstance(ledger, ExperimentLedger):
-                raise ValueError("verified claim requires ledger verification context")
             if package is None:
                 raise ValueError("verified claim requires a verification package")
-            if ledger.get(package.original_run.experiment_id) != package.original_record:
-                raise ValueError("verified claim original run is not included in the ledger")
-            for replication in package.replications:
-                if (
-                    ledger.get(replication.replication_run.experiment_id)
-                    != replication.replication_record
-                ):
-                    raise ValueError("verified claim replication is not included in the ledger")
+            _require_verification_ledger(package, info)
         if self.status == "abstained" and self.conclusion is not None:
             raise ValueError("abstained research claim cannot contain a conclusion")
         if self.conclusion is not None and package is None:
@@ -1078,8 +1120,33 @@ class ScienceReport(_SealedScienceModel):
     authority: Literal["candidate_only"] = "candidate_only"
     release_disposition: Literal["engineering_only"] = "engineering_only"
 
+    @classmethod
+    def verified(
+        cls,
+        *,
+        report_id: str,
+        programme: ResearchProgramme,
+        archive: ResearchArchive,
+        verification_package: VerificationPackage,
+        ledger: ExperimentLedger,
+        postmortems: tuple[ResearchPostmortem, ...] = (),
+    ) -> ScienceReport:
+        payload: dict[str, Any] = {
+            "report_id": report_id,
+            "programme": programme,
+            "archive": archive,
+            "verification_package": verification_package,
+            "postmortems": postmortems,
+            "declared_strength": verification_package.claim_strength_ceiling,
+            "declared_limitations": verification_package.limitations,
+        }
+        context = {"experiment_ledger": ledger}
+        draft = cls.model_validate(payload, context=context)
+        content_hash = canonical_sha256(draft.model_dump(mode="json", exclude={"content_hash"}))
+        return cls.model_validate(payload | {"content_hash": content_hash}, context=context)
+
     @model_validator(mode="after")
-    def binds_programme_archive_package_and_wording(self) -> ScienceReport:
+    def binds_programme_archive_package_and_wording(self, info: ValidationInfo) -> ScienceReport:
         programme = ResearchProgramme.model_validate_json(self.programme.model_dump_json())
         archive = ResearchArchive.model_validate_json(self.archive.model_dump_json())
         package = VerificationPackage.model_validate_json(
@@ -1093,6 +1160,8 @@ class ScienceReport(_SealedScienceModel):
             raise ValueError("science report requires sealed source artifacts")
         if self.declared_strength != package.claim_strength_ceiling:
             raise ValueError("science report cannot exceed verification strength")
+        if self.declared_strength == "verified":
+            _require_verification_ledger(package, info)
         if self.declared_limitations != package.limitations:
             raise ValueError("science report limitations must match the verification package")
         if (
@@ -1120,10 +1189,13 @@ class ScienceReport(_SealedScienceModel):
         return self
 
 
-def science_report_view(report: ScienceReport) -> dict[str, Any]:
+def science_report_view(
+    report: ScienceReport, *, ledger: ExperimentLedger | None = None
+) -> dict[str, Any]:
     """Return deterministic JSON-safe candidate-only report data."""
 
-    validated = ScienceReport.model_validate_json(report.model_dump_json())
+    context = {"experiment_ledger": ledger} if ledger is not None else None
+    validated = ScienceReport.model_validate_json(report.model_dump_json(), context=context)
     package = validated.verification_package
     return {
         "report_id": validated.report_id,

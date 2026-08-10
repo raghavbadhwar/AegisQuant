@@ -45,7 +45,7 @@ from aegis.quant_research.demo import (
     demo_universe,
 )
 from aegis.reporting import dossier_html, dossier_json, dossier_markdown
-from aegis.research_lab import ScienceReport, science_report_view
+from aegis.research_lab import ExperimentLedger, ScienceReport, science_report_view
 from aegis.sources import RawStore, SourceGateway, SourcePlanner, SourceRegistry
 from aegis.sources.adapters import DirectHTTPConnector
 
@@ -81,11 +81,23 @@ def _project_path(value: str | Path) -> Path:
 @science_app.command("view")
 def science_view(
     report_path: Annotated[Path, typer.Argument(help="Sealed local v6 science report JSON")],
+    experiment_ledger: Annotated[
+        Path | None,
+        typer.Option(help="Existing read-only experiment ledger required for verified reports"),
+    ] = None,
 ) -> None:
     """Validate and print one local report without creating or mutating records."""
 
-    report = ScienceReport.model_validate_json(_project_path(report_path).read_bytes())
-    typer.echo(canonical_json(science_report_view(report)))
+    ledger = (
+        ExperimentLedger(_project_path(experiment_ledger), read_only=True)
+        if experiment_ledger is not None
+        else None
+    )
+    context = {"experiment_ledger": ledger} if ledger is not None else None
+    report = ScienceReport.model_validate_json(
+        _project_path(report_path).read_bytes(), context=context
+    )
+    typer.echo(canonical_json(science_report_view(report, ledger=ledger)))
 
 
 @pit_app.command("bootstrap")

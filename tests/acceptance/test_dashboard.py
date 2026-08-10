@@ -68,12 +68,16 @@ def test_dashboard_science_report_is_read_only_and_fails_safe(tmp_path: Path, mo
     assert result.exit_code == 0, result.output
     report_path = _science_report_path(tmp_path)
     before = hashlib.sha256(report_path.read_bytes()).hexdigest()
+    science_ledger = tmp_path / "science.sqlite"
+    ledger_before = hashlib.sha256(science_ledger.read_bytes()).hexdigest()
     monkeypatch.setenv("AEGIS_LEDGER_PATH", str(ledger))
     monkeypatch.setenv("AEGIS_SCIENCE_REPORT_PATH", str(report_path))
+    monkeypatch.setenv("AEGIS_SCIENCE_LEDGER_PATH", str(science_ledger))
 
     dashboard = AppTest.from_file(str(ROOT / "apps/dashboard.py")).run(timeout=20)
     assert not dashboard.exception
     assert hashlib.sha256(report_path.read_bytes()).hexdigest() == before
+    assert hashlib.sha256(science_ledger.read_bytes()).hexdigest() == ledger_before
     assert any(item.value == "Candidate-only v6 Science Report" for item in dashboard.subheader)
     assert any(
         json.loads(item.value).get("verification", {}).get("claim_strength") == "limited"
@@ -82,6 +86,14 @@ def test_dashboard_science_report_is_read_only_and_fails_safe(tmp_path: Path, mo
     assert len(dashboard.button) == 0
     assert len(dashboard.text_input) == 0
 
+    missing_ledger = tmp_path / "missing-science.sqlite"
+    monkeypatch.setenv("AEGIS_SCIENCE_LEDGER_PATH", str(missing_ledger))
+    missing = AppTest.from_file(str(ROOT / "apps/dashboard.py")).run(timeout=20)
+    assert not missing.exception
+    assert any("Science report unavailable" in item.value for item in missing.error)
+    assert not missing_ledger.exists()
+
+    monkeypatch.setenv("AEGIS_SCIENCE_LEDGER_PATH", str(science_ledger))
     report_path.write_text("not valid JSON")
     invalid = AppTest.from_file(str(ROOT / "apps/dashboard.py")).run(timeout=20)
     assert not invalid.exception

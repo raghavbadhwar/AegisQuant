@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -36,7 +37,9 @@ from aegis.research_lab.science import (
     ResearchTreeNode,
     ScienceReport,
     VerificationPackage,
+    _experiment_record,
     authorize_v6_research_tool,
+    evaluate_registered_fixture,
     load_experiment_run,
     rank_research_portfolio,
     record_experiment_run,
@@ -200,7 +203,7 @@ def _reviewed_tree_and_plan() -> tuple[ResearchTree, ExperimentPlan]:
 
 
 def _experiment_run(tree: ResearchTree, plan: ExperimentPlan) -> ExperimentRun:
-    return ExperimentRun(
+    draft = ExperimentRun(
         experiment_id=plan.experiment_id,
         programme_id=tree.programme.programme_id,
         plan=plan,
@@ -216,6 +219,26 @@ def _experiment_run(tree: ResearchTree, plan: ExperimentPlan) -> ExperimentRun:
         started_at=AS_OF + timedelta(minutes=3),
         completed_at=AS_OF + timedelta(minutes=4),
     ).sealed()
+    return _with_fixture_outcome(draft)
+
+
+def _with_fixture_outcome(run: ExperimentRun) -> ExperimentRun:
+    status, result_hash = evaluate_registered_fixture(run)
+    return run.model_copy(
+        update={"status": status, "result_content_hash": result_hash, "content_hash": None}
+    ).sealed()
+
+
+def test_experiment_plan_denies_candidate_selected_locked_values() -> None:
+    _, plan = _reviewed_tree_and_plan()
+
+    for update in (
+        {"split_policy_id": "candidate-split"},
+        {"metric_ids": ("candidate-metric",)},
+        {"cost_model_id": "candidate-cost"},
+    ):
+        with pytest.raises(ValidationError, match="governed fixture evaluation policy"):
+            plan.model_copy(update=update | {"content_hash": None})
 
 
 def test_completed_run_is_persisted_before_return(tmp_path: Path) -> None:
@@ -228,6 +251,36 @@ def test_completed_run_is_persisted_before_return(tmp_path: Path) -> None:
     assert returned == run
     assert record.parameters["v6_run_content_hash"] == run.content_hash
     assert load_experiment_run(record) == run
+
+    before = hashlib.sha256(ledger.path.read_bytes()).hexdigest()
+    read_only = ExperimentLedger(ledger.path, read_only=True)
+    assert read_only.get(run.experiment_id) == record
+    with pytest.raises(ExperimentIntegrityError, match="read-only"):
+        read_only.append(record)
+    assert hashlib.sha256(ledger.path.read_bytes()).hexdigest() == before
+    with pytest.raises(FileNotFoundError):
+        ExperimentLedger(tmp_path / "missing-read-only.sqlite", read_only=True)
+
+
+def test_registered_fixture_recomputes_outcome_before_ledger_write(tmp_path: Path) -> None:
+    tree, plan = _reviewed_tree_and_plan()
+    run = _experiment_run(tree, plan)
+    assert evaluate_registered_fixture(run) == (run.status, run.result_content_hash)
+    forged = run.model_copy(
+        update={
+            "status": "failed",
+            "result_content_hash": "e" * 64,
+            "content_hash": None,
+        }
+    ).sealed()
+    ledger = ExperimentLedger(tmp_path / "forged-fixture-outcome.sqlite")
+
+    with pytest.raises(ValueError, match="deterministic registered-fixture outcome"):
+        record_experiment_run(ledger, forged, tree)
+    with pytest.raises(KeyError):
+        ledger.get(forged.experiment_id)
+    with pytest.raises(ExperimentIntegrityError, match="deterministic registered-fixture outcome"):
+        ledger.append(_experiment_record(forged))
 
 
 def test_experiment_run_rejects_unpersisted_return_and_nested_tampering(
@@ -283,7 +336,7 @@ def test_experiment_run_rejects_unpersisted_return_and_nested_tampering(
     changed_run = run.model_copy(
         update={"result_content_hash": "e" * 64, "content_hash": None}
     ).sealed()
-    with pytest.raises(ExperimentIntegrityError, match="different content"):
+    with pytest.raises(ValueError, match="deterministic registered-fixture outcome"):
         record_experiment_run(ledger, changed_run, tree)
 
 
@@ -320,10 +373,10 @@ def test_verified_claim_requires_independent_replication_and_identities(tmp_path
             "content_hash": None,
         }
     ).sealed()
-    replication_run = (
-        _experiment_run(tree, replication_plan)
-        .model_copy(update={"seed": 11, "content_hash": None})
-        .sealed()
+    replication_run = _with_fixture_outcome(
+        _experiment_run(tree, replication_plan).model_copy(
+            update={"seed": 11, "content_hash": None}
+        )
     )
     ledger = ExperimentLedger(tmp_path / "verification.sqlite")
     assert record_experiment_run(ledger, original, tree) == original
@@ -364,6 +417,37 @@ def test_verified_claim_requires_independent_replication_and_identities(tmp_path
         ledger=ledger,
     )
     assert claim.authority == "candidate_only"
+
+    report_archive = ResearchArchive(
+        archive_id="archive-verified-report",
+        programme_id=tree.programme.programme_id,
+    ).sealed()
+    report_payload = {
+        "report_id": "report-verified",
+        "programme": tree.programme,
+        "archive": report_archive,
+        "verification_package": package,
+        "declared_strength": package.claim_strength_ceiling,
+        "declared_limitations": package.limitations,
+    }
+    with pytest.raises(ValidationError, match="ledger verification context"):
+        ScienceReport(**report_payload)
+    read_only_ledger = ExperimentLedger(ledger.path, read_only=True)
+    verified_report = ScienceReport.verified(
+        report_id="report-verified",
+        programme=tree.programme,
+        archive=report_archive,
+        verification_package=package,
+        ledger=read_only_ledger,
+    )
+    with pytest.raises(ValidationError, match="ledger verification context"):
+        science_report_view(verified_report)
+    assert science_report_view(verified_report, ledger=read_only_ledger)["verification"] == {
+        "claim_strength": "verified",
+        "limitations": ["Registered fixture evidence only."],
+        "package_id": "verification-1",
+        "replication_ids": ["replication-1"],
+    }
     with pytest.raises(KeyError):
         ResearchClaim.verified(
             claim_id="claim-missing-ledger",
@@ -430,9 +514,11 @@ def test_verified_claim_requires_independent_replication_and_identities(tmp_path
             claim_strength_ceiling="verified",
             verified_at=AS_OF + timedelta(minutes=6),
         )
-    failed_run = replication_run.model_copy(
-        update={"status": "failed", "content_hash": None}
-    ).sealed()
+    failed_run = _with_fixture_outcome(
+        replication_run.model_copy(
+            update={"executor_id": "registered-fixture-failure-1", "content_hash": None}
+        )
+    )
     failed_ledger = ExperimentLedger(tmp_path / "failed-replication.sqlite")
     assert record_experiment_run(failed_ledger, failed_run, tree) == failed_run
     failed_replication = ReplicationRun(
@@ -1365,6 +1451,7 @@ def test_v6_science_contracts_are_public_and_model_copy_fail_closed() -> None:
         "VerificationPackage",
         "V6_ROLE_TOOL_GRANTS",
         "authorize_v6_research_tool",
+        "evaluate_registered_fixture",
         "load_experiment_run",
         "record_experiment_run",
         "rank_research_portfolio",

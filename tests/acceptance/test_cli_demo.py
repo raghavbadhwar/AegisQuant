@@ -184,13 +184,36 @@ def _science_report_path(tmp_path: Path) -> Path:
 def test_science_view_is_read_only_byte_stable_and_rejects_action_flags(tmp_path: Path) -> None:
     report_path = _science_report_path(tmp_path)
     before = report_path.read_bytes()
+    ledger_path = tmp_path / "science.sqlite"
+    ledger_before = ledger_path.read_bytes()
 
-    first = CliRunner().invoke(app, ["science", "view", str(report_path)])
-    second = CliRunner().invoke(app, ["science", "view", str(report_path)])
+    command = [
+        "science",
+        "view",
+        str(report_path),
+        "--experiment-ledger",
+        str(ledger_path),
+    ]
+    first = CliRunner().invoke(app, command)
+    second = CliRunner().invoke(app, command)
     assert first.exit_code == 0, first.output
     assert first.stdout.encode() == second.stdout.encode()
     assert json.loads(first.stdout)["verification"]["claim_strength"] == "limited"
     assert report_path.read_bytes() == before
+    assert ledger_path.read_bytes() == ledger_before
+    missing_ledger = tmp_path / "missing-science.sqlite"
+    denied_missing = CliRunner().invoke(
+        app,
+        [
+            "science",
+            "view",
+            str(report_path),
+            "--experiment-ledger",
+            str(missing_ledger),
+        ],
+    )
+    assert denied_missing.exit_code != 0
+    assert not missing_ledger.exists()
     for flag in ("--create", "--run", "--approve", "--promote", "--acquire"):
         denied = CliRunner().invoke(app, ["science", "view", str(report_path), flag])
         assert denied.exit_code != 0
