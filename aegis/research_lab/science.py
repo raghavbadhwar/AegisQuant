@@ -7,7 +7,7 @@ from collections.abc import Mapping
 from types import MappingProxyType
 from typing import Any, Literal, Self
 
-from pydantic import AwareDatetime, Field, model_validator
+from pydantic import AwareDatetime, Field, ValidationInfo, model_validator
 
 from aegis.contracts import ExperimentRecord, canonical_sha256
 from aegis.contracts._base import CandidateContractModel
@@ -41,7 +41,7 @@ class _SealedScienceModel(CandidateContractModel):
 
     def sealed(self) -> Self:
         payload = self.model_dump(mode="json", exclude={"content_hash"})
-        validated = type(self).model_validate(payload)
+        validated = type(self).model_validate_json(self.model_dump_json(exclude={"content_hash"}))
         return validated.model_copy(update={"content_hash": canonical_sha256(payload)})
 
 
@@ -714,3 +714,357 @@ def record_experiment_run(
     if loaded.content_hash != validated_run.content_hash:
         raise ValueError("persisted experiment run does not match submitted content")
     return loaded
+
+
+class ReplicationRun(_SealedScienceModel):
+    """Independent candidate replication bound to one original ledgered run."""
+
+    replication_id: str = Field(min_length=1)
+    original_run: ExperimentRun
+    original_record: ExperimentRecord
+    replication_run: ExperimentRun
+    replication_record: ExperimentRecord
+    replicator_id: str = Field(min_length=1)
+    recorded_at: AwareDatetime
+    authority: Literal["candidate_only"] = "candidate_only"
+
+    @model_validator(mode="after")
+    def binds_independent_same_hypothesis_run(self) -> ReplicationRun:
+        original = ExperimentRun.model_validate(self.original_run.model_dump(mode="json"))
+        replication = ExperimentRun.model_validate(self.replication_run.model_dump(mode="json"))
+        ledgered_original = load_experiment_run(self.original_record)
+        ledgered_replication = load_experiment_run(self.replication_record)
+        if original.content_hash is None or replication.content_hash is None:
+            raise ValueError("replication requires sealed runs")
+        if (
+            ledgered_original.content_hash != original.content_hash
+            or ledgered_replication.content_hash != replication.content_hash
+        ):
+            raise ValueError("replication requires exact ledger-bound runs")
+        if original.experiment_id == replication.experiment_id:
+            raise ValueError("replication run must differ from its original run")
+        if (
+            original.programme_id != replication.programme_id
+            or original.plan.hypothesis.content_hash != replication.plan.hypothesis.content_hash
+            or original.data_snapshot_hash != replication.data_snapshot_hash
+        ):
+            raise ValueError("replication must preserve programme, hypothesis, and data identity")
+        if self.replicator_id in {
+            original.plan.hypothesis.proposer_id,
+            original.plan.author_id,
+        }:
+            raise ValueError("replication requires an independent replicator")
+        if replication.plan.author_id != self.replicator_id:
+            raise ValueError("replication plan author must be the replicator")
+        if self.recorded_at < replication.completed_at:
+            raise ValueError("replication cannot be recorded before completion")
+        return self
+
+
+class VerificationPackage(_SealedScienceModel):
+    """Bounded independent verification evidence; it grants no promotion authority."""
+
+    package_id: str = Field(min_length=1)
+    original_run: ExperimentRun
+    original_record: ExperimentRecord
+    replications: tuple[ReplicationRun, ...] = ()
+    verifier_id: str = Field(min_length=1)
+    approver_id: str = Field(min_length=1)
+    limitations: tuple[str, ...] = Field(min_length=1)
+    claim_strength_ceiling: Literal["limited", "verified"]
+    verified_at: AwareDatetime
+    authority: Literal["candidate_only"] = "candidate_only"
+
+    @model_validator(mode="after")
+    def enforces_replication_and_identity_separation(self) -> VerificationPackage:
+        original = ExperimentRun.model_validate(self.original_run.model_dump(mode="json"))
+        ledgered_original = load_experiment_run(self.original_record)
+        replications = tuple(
+            ReplicationRun.model_validate_json(replication.model_dump_json())
+            for replication in self.replications
+        )
+        if original.content_hash is None or any(item.content_hash is None for item in replications):
+            raise ValueError("verification package requires sealed runs and replications")
+        if ledgered_original.content_hash != original.content_hash:
+            raise ValueError("verification package requires an exact ledger-bound original run")
+        if self.claim_strength_ceiling == "verified" and not replications:
+            raise ValueError("verified package requires an independent replication")
+        if self.claim_strength_ceiling == "verified" and (
+            original.status != "passed"
+            or any(item.replication_run.status != "passed" for item in replications)
+        ):
+            raise ValueError("verified package requires passed supporting runs")
+        if any(item.original_run.content_hash != original.content_hash for item in replications):
+            raise ValueError("verification replication must bind the package original run")
+        replication_ids = [item.replication_id for item in replications]
+        if len(replication_ids) != len(set(replication_ids)):
+            raise ValueError("verification replication IDs must be unique")
+        replication_run_hashes = [item.replication_run.content_hash for item in replications]
+        if len(replication_run_hashes) != len(set(replication_run_hashes)):
+            raise ValueError("verification replication runs must be unique")
+        identities = {
+            original.plan.hypothesis.proposer_id,
+            original.plan.author_id,
+            *(item.replicator_id for item in replications),
+        }
+        if (
+            self.verifier_id == self.approver_id
+            or self.verifier_id in identities
+            or self.approver_id in identities
+        ):
+            raise ValueError(
+                "verification requires proposer, replicator, verifier, approver identity separation"
+            )
+        if self.verified_at < max(
+            (item.recorded_at for item in replications), default=original.completed_at
+        ):
+            raise ValueError("verification cannot predate its supporting runs")
+        if len(self.limitations) != len(set(self.limitations)) or any(
+            not limitation for limitation in self.limitations
+        ):
+            raise ValueError("verification limitations must be unique and non-empty")
+        return self
+
+
+class ResearchClaim(_SealedScienceModel):
+    """Candidate claim whose conclusion cannot exceed sealed verification support."""
+
+    claim_id: str = Field(min_length=1)
+    package: VerificationPackage | None = None
+    status: Literal["candidate", "limited", "verified", "rejected", "abstained"]
+    conclusion: str | None = Field(default=None, min_length=1)
+    authority: Literal["candidate_only"] = "candidate_only"
+    release_disposition: Literal["engineering_only"] = "engineering_only"
+
+    @classmethod
+    def verified(
+        cls,
+        *,
+        claim_id: str,
+        package: VerificationPackage,
+        conclusion: str,
+        ledger: ExperimentLedger,
+    ) -> ResearchClaim:
+        payload = {
+            "claim_id": claim_id,
+            "package": package,
+            "status": "verified",
+            "conclusion": conclusion,
+        }
+        context = {"experiment_ledger": ledger}
+        draft = cls.model_validate(payload, context=context)
+        content_hash = canonical_sha256(draft.model_dump(mode="json", exclude={"content_hash"}))
+        return cls.model_validate(payload | {"content_hash": content_hash}, context=context)
+
+    @model_validator(mode="after")
+    def cannot_exceed_verification_support(self, info: ValidationInfo) -> ResearchClaim:
+        package = (
+            VerificationPackage.model_validate_json(self.package.model_dump_json())
+            if self.package is not None
+            else None
+        )
+        if package is not None and package.content_hash is None:
+            raise ValueError("research claim requires a sealed verification package")
+        if self.status == "verified" and (
+            package is None or package.claim_strength_ceiling != "verified"
+        ):
+            raise ValueError("verified claim requires verified replication support")
+        if self.status == "verified":
+            ledger = (info.context or {}).get("experiment_ledger")
+            if not isinstance(ledger, ExperimentLedger):
+                raise ValueError("verified claim requires ledger verification context")
+            if package is None:
+                raise ValueError("verified claim requires a verification package")
+            if ledger.get(package.original_run.experiment_id) != package.original_record:
+                raise ValueError("verified claim original run is not included in the ledger")
+            for replication in package.replications:
+                if (
+                    ledger.get(replication.replication_run.experiment_id)
+                    != replication.replication_record
+                ):
+                    raise ValueError("verified claim replication is not included in the ledger")
+        if self.status == "abstained" and self.conclusion is not None:
+            raise ValueError("abstained research claim cannot contain a conclusion")
+        if self.conclusion is not None and package is None:
+            raise ValueError("research conclusion requires a sealed verification package")
+        if self.status in {"limited", "verified"} and self.conclusion is None:
+            raise ValueError("supported research claim requires an explicit conclusion")
+        return self
+
+
+class NegativeResult(_SealedScienceModel):
+    """Preserved rejected or inconclusive result for deterministic prior-failure surfacing."""
+
+    negative_result_id: str = Field(min_length=1)
+    run: ExperimentRun
+    disposition: Literal["rejected", "inconclusive"]
+    category: Literal["causal", "economic", "operational"]
+    reason: str = Field(min_length=1)
+    reopen_condition: str = Field(min_length=1)
+    mechanism_id: str = Field(min_length=1)
+    assumption_ids: tuple[str, ...] = Field(min_length=1)
+    recorded_at: AwareDatetime
+    evidence_binding: ResearchEvidenceBinding
+    authority: Literal["candidate_only"] = "candidate_only"
+
+    @model_validator(mode="after")
+    def binds_run_hypothesis_and_evidence(self) -> NegativeResult:
+        run = ExperimentRun.model_validate(self.run.model_dump(mode="json"))
+        evidence = ResearchEvidenceBinding.model_validate(
+            self.evidence_binding.model_dump(mode="json")
+        )
+        if run.content_hash is None or evidence.content_hash is None:
+            raise ValueError("negative result requires sealed run and evidence")
+        hypothesis = run.plan.hypothesis
+        if (
+            self.mechanism_id != hypothesis.mechanism_id
+            or not set(self.assumption_ids).issubset(hypothesis.assumption_ids)
+            or len(self.assumption_ids) != len(set(self.assumption_ids))
+        ):
+            raise ValueError("negative result must bind its hypothesis mechanism and assumptions")
+        if evidence.content_hash != run.plan.evidence_binding.content_hash:
+            raise ValueError("negative result evidence must match its run")
+        if self.recorded_at < run.completed_at:
+            raise ValueError("negative result cannot predate its run completion")
+        return self
+
+
+class ResearchArchive(_SealedScienceModel):
+    """Immutable negative-result archive with deterministic exact-match surfacing."""
+
+    archive_id: str = Field(min_length=1)
+    programme_id: str = Field(min_length=1)
+    negative_results: tuple[NegativeResult, ...] = ()
+    authority: Literal["candidate_only"] = "candidate_only"
+
+    @model_validator(mode="after")
+    def revalidates_unique_same_programme_results(self) -> ResearchArchive:
+        results = tuple(
+            NegativeResult.model_validate(result.model_dump(mode="json"))
+            for result in self.negative_results
+        )
+        if any(result.content_hash is None for result in results):
+            raise ValueError("research archive requires sealed negative results")
+        ids = [result.negative_result_id for result in results]
+        if len(ids) != len(set(ids)):
+            raise ValueError("research archive negative result IDs must be unique")
+        if any(result.run.programme_id != self.programme_id for result in results):
+            raise ValueError("research archive result programme IDs must match")
+        return self
+
+    def surfaced_negative_results(self, hypothesis: Hypothesis) -> tuple[NegativeResult, ...]:
+        archive = type(self).model_validate(self.model_dump(mode="json"))
+        validated = Hypothesis.model_validate(hypothesis.model_dump(mode="json"))
+        if archive.content_hash is None or validated.content_hash is None:
+            raise ValueError("negative-result surfacing requires sealed archive and hypothesis")
+        matching = [
+            result
+            for result in archive.negative_results
+            if result.mechanism_id == validated.mechanism_id
+            or set(result.assumption_ids).intersection(validated.assumption_ids)
+        ]
+        return tuple(
+            sorted(
+                matching,
+                key=lambda result: (
+                    -(result.mechanism_id == validated.mechanism_id),
+                    -len(set(result.assumption_ids).intersection(validated.assumption_ids)),
+                    result.negative_result_id,
+                ),
+            )
+        )
+
+    def validate_novelty_report(self, report: NoveltyReport) -> None:
+        archive = type(self).model_validate(self.model_dump(mode="json"))
+        validated = NoveltyReport.model_validate(report.model_dump(mode="json"))
+        surfaced = archive.surfaced_negative_results(validated.hypothesis)
+        if any(result.recorded_at > validated.assessed_at for result in surfaced):
+            raise ValueError("novelty report can include only prior negative results")
+        expected = tuple(result.negative_result_id for result in surfaced)
+        if validated.surfaced_negative_result_ids != expected:
+            raise ValueError("novelty report must include exactly the surfaced negative results")
+
+
+class ResearchPostmortem(_SealedScienceModel):
+    """Evidence-bound review that preserves negative and inconclusive outcomes."""
+
+    postmortem_id: str = Field(min_length=1)
+    run: ExperimentRun
+    outcome: Literal["positive", "negative", "inconclusive"]
+    negative_result: NegativeResult | None = None
+    reviewer_id: str = Field(min_length=1)
+    limitations: tuple[str, ...] = Field(min_length=1)
+    recorded_at: AwareDatetime
+    evidence_binding: ResearchEvidenceBinding
+    authority: Literal["candidate_only"] = "candidate_only"
+    release_disposition: Literal["engineering_only"] = "engineering_only"
+
+    @model_validator(mode="after")
+    def binds_outcome_run_evidence_and_lifecycle(self) -> ResearchPostmortem:
+        run = ExperimentRun.model_validate(self.run.model_dump(mode="json"))
+        evidence = ResearchEvidenceBinding.model_validate(
+            self.evidence_binding.model_dump(mode="json")
+        )
+        negative = (
+            NegativeResult.model_validate(self.negative_result.model_dump(mode="json"))
+            if self.negative_result is not None
+            else None
+        )
+        if run.content_hash is None or evidence.content_hash is None:
+            raise ValueError("research postmortem requires sealed run and evidence")
+        if evidence.content_hash != run.plan.evidence_binding.content_hash:
+            raise ValueError("research postmortem evidence must match its run")
+        if self.outcome in {"negative", "inconclusive"} and (
+            negative is None or negative.run.content_hash != run.content_hash
+        ):
+            raise ValueError("negative or inconclusive postmortem requires its negative result")
+        if negative is not None and (
+            (self.outcome == "negative" and negative.disposition != "rejected")
+            or (self.outcome == "inconclusive" and negative.disposition != "inconclusive")
+        ):
+            raise ValueError("postmortem outcome must match its negative-result disposition")
+        if self.outcome == "positive" and negative is not None:
+            raise ValueError("positive postmortem cannot bind a negative result")
+        if self.outcome == "positive" and run.status != "passed":
+            raise ValueError("positive postmortem requires a passed run")
+        if self.recorded_at < run.completed_at or (
+            negative is not None and self.recorded_at < negative.recorded_at
+        ):
+            raise ValueError("research postmortem cannot predate its supporting records")
+        if len(self.limitations) != len(set(self.limitations)) or any(
+            not limitation for limitation in self.limitations
+        ):
+            raise ValueError("research postmortem limitations must be unique and non-empty")
+        return self
+
+
+class ResearchContribution(_SealedScienceModel):
+    mechanism_path: str = Field(min_length=1)
+    amount: float = Field(allow_inf_nan=False)
+
+
+class ResearchContributionReport(_SealedScienceModel):
+    report_id: str = Field(min_length=1)
+    contributions: tuple[ResearchContribution, ...] = Field(min_length=1)
+    total: float = Field(allow_inf_nan=False)
+    authority: Literal["candidate_only"] = "candidate_only"
+
+    @model_validator(mode="after")
+    def reconciles_unique_mechanism_paths(self) -> ResearchContributionReport:
+        contributions = tuple(
+            ResearchContribution.model_validate(item.model_dump(mode="json"))
+            for item in self.contributions
+        )
+        if any(item.content_hash is None for item in contributions):
+            raise ValueError("contribution report requires sealed contributions")
+        paths = [item.mechanism_path for item in contributions]
+        if len(paths) != len(set(paths)):
+            raise ValueError("contribution mechanism paths must be unique")
+        if not math.isclose(
+            self.total,
+            sum(item.amount for item in contributions),
+            rel_tol=0.0,
+            abs_tol=1e-12,
+        ):
+            raise ValueError("research contributions must reconcile exactly")
+        return self

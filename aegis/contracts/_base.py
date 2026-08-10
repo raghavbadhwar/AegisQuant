@@ -31,7 +31,7 @@ class CandidateContractModel(BaseModel):
                 names = ", ".join(sorted(unknown_fields))
                 raise ValueError(f"candidate model_copy update contains unknown fields: {names}")
         copied = super().model_copy(update=update, deep=deep)
-        return type(self).model_validate(copied.model_dump(mode="json"))
+        return type(self).model_validate_json(copied.model_dump_json())
 
 
 def normalize_ticker(value: Any) -> str:

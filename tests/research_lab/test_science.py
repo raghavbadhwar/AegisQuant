@@ -16,15 +16,23 @@ from aegis.research_lab.science import (
     ExperimentRunAbstention,
     Hypothesis,
     HypothesisFamily,
+    NegativeResult,
     NoveltyReport,
+    ReplicationRun,
+    ResearchArchive,
     ResearchArtifactReceiptReference,
     ResearchBudget,
+    ResearchClaim,
+    ResearchContribution,
+    ResearchContributionReport,
     ResearchCritiqueReceipt,
     ResearchEvidenceBinding,
+    ResearchPostmortem,
     ResearchProgramme,
     ResearchTeam,
     ResearchTree,
     ResearchTreeNode,
+    VerificationPackage,
     authorize_v6_research_tool,
     load_experiment_run,
     record_experiment_run,
@@ -294,6 +302,255 @@ def test_unknown_fixture_executor_abstains_without_ledger_record(tmp_path: Path)
     malformed_run = run.model_copy(update={"plan": malformed_plan, "content_hash": None}).sealed()
     with pytest.raises(ValueError, match="tree node hypothesis"):
         record_experiment_run(ledger, malformed_run, tree)
+
+
+def test_verified_claim_requires_independent_replication_and_identities(tmp_path: Path) -> None:
+    tree, plan = _reviewed_tree_and_plan()
+    original = _experiment_run(tree, plan)
+    replication_plan = plan.model_copy(
+        update={
+            "experiment_id": "experiment-replication",
+            "author_id": "replicator-1",
+            "content_hash": None,
+        }
+    ).sealed()
+    replication_run = (
+        _experiment_run(tree, replication_plan)
+        .model_copy(update={"seed": 11, "content_hash": None})
+        .sealed()
+    )
+    ledger = ExperimentLedger(tmp_path / "verification.sqlite")
+    assert record_experiment_run(ledger, original, tree) == original
+    assert record_experiment_run(ledger, replication_run, tree) == replication_run
+    original_record = ledger.get(original.experiment_id)
+    replication_record = ledger.get(replication_run.experiment_id)
+    replication = ReplicationRun(
+        replication_id="replication-1",
+        original_run=original,
+        original_record=original_record,
+        replication_run=replication_run,
+        replication_record=replication_record,
+        replicator_id="replicator-1",
+        recorded_at=AS_OF + timedelta(minutes=5),
+    ).sealed()
+    package = VerificationPackage(
+        package_id="verification-1",
+        original_run=original,
+        original_record=original_record,
+        replications=(replication,),
+        verifier_id="verifier-1",
+        approver_id="approver-1",
+        limitations=("Registered fixture evidence only.",),
+        claim_strength_ceiling="verified",
+        verified_at=AS_OF + timedelta(minutes=6),
+    ).sealed()
+    with pytest.raises(ValidationError, match="ledger verification context"):
+        ResearchClaim(
+            claim_id="claim-unledgered",
+            package=package,
+            status="verified",
+            conclusion="Unverified direct construction.",
+        )
+    claim = ResearchClaim.verified(
+        claim_id="claim-1",
+        package=package,
+        conclusion="The registered fixture reproduced the bounded result.",
+        ledger=ledger,
+    )
+    assert claim.authority == "candidate_only"
+    with pytest.raises(KeyError):
+        ResearchClaim.verified(
+            claim_id="claim-missing-ledger",
+            package=package,
+            conclusion="Must not verify without ledger inclusion.",
+            ledger=ExperimentLedger(tmp_path / "empty-verification.sqlite"),
+        )
+
+    limited_package = package.model_copy(
+        update={
+            "replications": (),
+            "claim_strength_ceiling": "limited",
+            "content_hash": None,
+        }
+    ).sealed()
+    limited = ResearchClaim(
+        claim_id="claim-limited",
+        package=limited_package,
+        status="limited",
+        conclusion="Limited registered-fixture observation only.",
+    ).sealed()
+    assert limited.status == "limited"
+    with pytest.raises(ValidationError, match="verified replication support"):
+        ResearchClaim(
+            claim_id="claim-inflated",
+            package=limited_package,
+            status="verified",
+            conclusion="Unsupported verified claim.",
+        )
+    with pytest.raises(ValidationError, match="verification package"):
+        ResearchClaim(
+            claim_id="claim-unbound",
+            status="limited",
+            conclusion="Unbound conclusion.",
+        )
+    with pytest.raises(ValidationError, match="cannot contain a conclusion"):
+        ResearchClaim(
+            claim_id="claim-abstained",
+            status="abstained",
+            conclusion="Should not exist.",
+        )
+
+    with pytest.raises(ValidationError, match="independent replicator"):
+        ReplicationRun(
+            replication_id="replication-self",
+            original_run=original,
+            original_record=original_record,
+            replication_run=replication_run,
+            replication_record=replication_record,
+            replicator_id=original.plan.hypothesis.proposer_id,
+            recorded_at=AS_OF + timedelta(minutes=5),
+        )
+    with pytest.raises(ValidationError, match="identity separation"):
+        package.model_copy(update={"approver_id": package.verifier_id, "content_hash": None})
+    with pytest.raises(ValidationError, match="replication"):
+        VerificationPackage(
+            package_id="verification-missing-replication",
+            original_run=original,
+            original_record=original_record,
+            replications=(),
+            verifier_id="verifier-1",
+            approver_id="approver-1",
+            limitations=("No replication.",),
+            claim_strength_ceiling="verified",
+            verified_at=AS_OF + timedelta(minutes=6),
+        )
+    failed_run = replication_run.model_copy(
+        update={"status": "failed", "content_hash": None}
+    ).sealed()
+    failed_ledger = ExperimentLedger(tmp_path / "failed-replication.sqlite")
+    assert record_experiment_run(failed_ledger, failed_run, tree) == failed_run
+    failed_replication = ReplicationRun(
+        replication_id="replication-failed",
+        original_run=original,
+        original_record=original_record,
+        replication_run=failed_run,
+        replication_record=failed_ledger.get(failed_run.experiment_id),
+        replicator_id="replicator-1",
+        recorded_at=AS_OF + timedelta(minutes=5),
+    ).sealed()
+    with pytest.raises(ValidationError, match="passed supporting runs"):
+        package.model_copy(update={"replications": (failed_replication,), "content_hash": None})
+    duplicate_wrapper = replication.model_copy(
+        update={"replication_id": "replication-duplicate", "content_hash": None}
+    ).sealed()
+    with pytest.raises(ValidationError, match="replication runs must be unique"):
+        package.model_copy(
+            update={"replications": (replication, duplicate_wrapper), "content_hash": None}
+        )
+
+
+def test_archive_surfaces_prior_negative_results_and_reconciles_contributions() -> None:
+    tree, plan = _reviewed_tree_and_plan()
+    run = _experiment_run(tree, plan)
+    hypothesis = plan.hypothesis
+    negative = NegativeResult(
+        negative_result_id="negative-1",
+        run=run,
+        disposition="inconclusive",
+        category="causal",
+        reason="The fixture cannot distinguish the competing mechanism.",
+        reopen_condition="A governed independent snapshot becomes available.",
+        mechanism_id=hypothesis.mechanism_id,
+        assumption_ids=hypothesis.assumption_ids,
+        recorded_at=AS_OF + timedelta(minutes=5),
+        evidence_binding=tree.programme.evidence_binding,
+    ).sealed()
+    archive = ResearchArchive(
+        archive_id="archive-1",
+        programme_id=tree.programme.programme_id,
+        negative_results=(negative,),
+    ).sealed()
+    assert archive.surfaced_negative_results(hypothesis) == (negative,)
+    postmortem = ResearchPostmortem(
+        postmortem_id="postmortem-1",
+        run=run,
+        outcome="inconclusive",
+        negative_result=negative,
+        reviewer_id="reviewer-1",
+        limitations=("No external calibration evidence.",),
+        recorded_at=AS_OF + timedelta(minutes=6),
+        evidence_binding=tree.programme.evidence_binding,
+    ).sealed()
+    assert postmortem.release_disposition == "engineering_only"
+    with pytest.raises(ValidationError, match="outcome must match"):
+        ResearchPostmortem(
+            postmortem_id="postmortem-mismatch",
+            run=run,
+            outcome="negative",
+            negative_result=negative,
+            reviewer_id="reviewer-1",
+            limitations=("Mismatched disposition.",),
+            recorded_at=AS_OF + timedelta(minutes=6),
+            evidence_binding=tree.programme.evidence_binding,
+        )
+    failed_run = run.model_copy(update={"status": "failed", "content_hash": None}).sealed()
+    with pytest.raises(ValidationError, match="positive postmortem requires a passed run"):
+        ResearchPostmortem(
+            postmortem_id="postmortem-failed-positive",
+            run=failed_run,
+            outcome="positive",
+            reviewer_id="reviewer-1",
+            limitations=("Failed run.",),
+            recorded_at=AS_OF + timedelta(minutes=6),
+            evidence_binding=tree.programme.evidence_binding,
+        )
+
+    report = NoveltyReport(
+        novelty_report_id="novelty-archive",
+        hypothesis=hypothesis,
+        assessed_at=AS_OF + timedelta(minutes=6),
+        evidence_binding=tree.programme.evidence_binding,
+        surfaced_negative_result_ids=(),
+        limitations=("Internal archive only.",),
+        auditor_id="novelty-auditor-1",
+    ).sealed()
+    with pytest.raises(ValueError, match="surfaced negative results"):
+        archive.validate_novelty_report(report)
+    future_negative = negative.model_copy(
+        update={"recorded_at": AS_OF + timedelta(minutes=7), "content_hash": None}
+    ).sealed()
+    future_archive = ResearchArchive(
+        archive_id="archive-future",
+        programme_id=tree.programme.programme_id,
+        negative_results=(future_negative,),
+    ).sealed()
+    future_report = report.model_copy(
+        update={
+            "surfaced_negative_result_ids": (negative.negative_result_id,),
+            "content_hash": None,
+        }
+    ).sealed()
+    with pytest.raises(ValueError, match="prior negative results"):
+        future_archive.validate_novelty_report(future_report)
+
+    contributions = ResearchContributionReport(
+        report_id="contributions-1",
+        contributions=(
+            ResearchContribution(mechanism_path="mechanism-a", amount=0.4).sealed(),
+            ResearchContribution(mechanism_path="mechanism-b", amount=0.6).sealed(),
+        ),
+        total=1.0,
+    ).sealed()
+    assert contributions.total == 1.0
+    with pytest.raises(ValidationError, match="mechanism paths"):
+        ResearchContributionReport(
+            report_id="contributions-duplicate",
+            contributions=(
+                ResearchContribution(mechanism_path="mechanism-a", amount=0.4).sealed(),
+                ResearchContribution(mechanism_path="mechanism-a", amount=0.6).sealed(),
+            ),
+            total=1.0,
+        )
 
 
 def test_research_tree_rejects_duplicate_active_hypothesis_and_excess_depth() -> None:
@@ -828,15 +1085,23 @@ def test_v6_science_contracts_are_public_and_model_copy_fail_closed() -> None:
         "ExperimentRunAbstention",
         "Hypothesis",
         "HypothesisFamily",
+        "NegativeResult",
         "NoveltyReport",
+        "ReplicationRun",
+        "ResearchArchive",
         "ResearchArtifactReceiptReference",
         "ResearchBudget",
+        "ResearchClaim",
+        "ResearchContribution",
+        "ResearchContributionReport",
         "ResearchCritiqueReceipt",
         "ResearchEvidenceBinding",
         "ResearchProgramme",
+        "ResearchPostmortem",
         "ResearchTeam",
         "ResearchTree",
         "ResearchTreeNode",
+        "VerificationPackage",
         "V6_ROLE_TOOL_GRANTS",
         "authorize_v6_research_tool",
         "load_experiment_run",
