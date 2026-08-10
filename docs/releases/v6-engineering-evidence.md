@@ -5,7 +5,7 @@
 - Worktree: `/Volumes/RAGHAV2/Development_Projects/aegisquant-v6`
 - Branch: `upgrade/aegisquant-v6-investment-scientist`
 - Base: `579ddc13c9dae455e87b13720c5b95fa96701096`
-- Implemented-through commit: `dc695d5607b6f826572defa82815f6fc7c840f24`
+- Implemented-through commit: `6b7b58c0694fc1f47c36dac9a6c3923c1e3f9a99`
 - Disposition: `completed`, `engineering-only`, and `release-gated`.
 
 This manifest records local deterministic engineering evidence. It is not an
@@ -26,6 +26,10 @@ claim.
 | `9b1a419e3663dbc2b9222accb6ab4c9892b1ec5f` | bounded deterministic research-portfolio ranking and stop reasons |
 | `830edd54aff2b82aae02de2f2c8c561ce93d44e4` | sealed science report plus read-only CLI and dashboard observers |
 | `dc695d5607b6f826572defa82815f6fc7c840f24` | shared fixture evaluator, read-only ledger verification, exact dependency reconciliation, and final acceptance closure |
+| `a9ab782cc36052c3b85e9d4850fbf07a6e6da0b0` | resolved locked dependency licence evidence without changing the dependency set |
+| `3dd872b4f7b033c3549d89bf8fc3afa7664e8da9` | receipt-bound archived accession XBRL parsing with malformed and ambiguous input quarantine |
+| `f540691ec8cde6ab20fa2378cf46a1dfdbe1d0aa` | receipt-bound dated security history and independently retained snapshot source copies |
+| `6b7b58c0694fc1f47c36dac9a6c3923c1e3f9a99` | N-PORT receipt, holding identity, observed availability, and snapshot-source binding |
 
 ## Requirement-by-requirement engineering evidence
 
@@ -50,7 +54,7 @@ Commands ran from the isolated worktree with injected `PYTHONPATH` removed:
 
 ```text
 env -u PYTHONPATH uv run pytest -q
-453 passed in 38.07s
+499 passed in 40.11s
 
 env -u PYTHONPATH uv run ruff check aegis apps tests scripts/generate_demo_data.py
 All checks passed!
@@ -80,6 +84,10 @@ Independent audit evidence retained during implementation includes:
 - report/CLI/dashboard re-audit: no material findings after lineage fix; explicit `4 passed`.
 - final requirement audit after shared evaluator fixes: no material findings;
   focused `6 passed`, full repository `453 passed`.
+- archived XBRL re-audit: no material findings; focused PIT matrix `33 passed`;
+- dated security-master re-audit: no material findings; focused `22 passed`;
+- N-PORT re-audit: no material findings; focused `27 passed`, full repository
+  `499 passed`.
 
 Every material audit finding was fixed test-first and re-audited before its
 milestone commit.
