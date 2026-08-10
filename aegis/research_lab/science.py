@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Literal, Self
 
 from pydantic import AwareDatetime, Field, model_validator
 
 from aegis.contracts import canonical_sha256
 from aegis.contracts._base import CandidateContractModel
+from aegis.harness.capability_broker import CapabilityDenied
 from aegis.reporting.traceability import SnapshotReference, SourceProvenanceReference
 
 _SHA256 = r"^[0-9a-f]{64}$"
@@ -317,3 +320,260 @@ class ResearchProgramme(_SealedScienceModel):
         if len(hypothesis_ids) != len(set(hypothesis_ids)):
             raise ValueError("research programme hypothesis IDs must be globally unique")
         return self
+
+
+ResearchRole = Literal[
+    "director",
+    "hypothesis_architect",
+    "novelty_auditor",
+    "experiment_designer",
+    "quant_research_engineer",
+    "statistician",
+    "replication_team",
+    "adversarial_reviewer",
+    "claim_verifier",
+    "archivist",
+]
+
+V6_ROLE_TOOL_GRANTS: Mapping[ResearchRole, frozenset[str]] = MappingProxyType(
+    {
+        "director": frozenset({"science.programme.plan", "science.portfolio.rank"}),
+        "hypothesis_architect": frozenset({"science.hypothesis.propose", "science.tree.propose"}),
+        "novelty_auditor": frozenset({"science.archive.search", "science.novelty.record"}),
+        "experiment_designer": frozenset({"science.experiment.preregister"}),
+        "quant_research_engineer": frozenset({"science.fixture.evaluate"}),
+        "statistician": frozenset({"science.experiment.review"}),
+        "replication_team": frozenset({"science.replication.record"}),
+        "adversarial_reviewer": frozenset({"science.review.adversarial"}),
+        "claim_verifier": frozenset({"science.claim.verify"}),
+        "archivist": frozenset({"science.archive.record", "science.postmortem.record"}),
+    }
+)
+_V6_FORBIDDEN_CAPABILITY_PREFIXES = (
+    "broker.",
+    "execution.",
+    "fund.",
+    "promotion.",
+    "risk.",
+    "source.",
+)
+
+
+def authorize_v6_research_tool(role: ResearchRole, capability: str) -> str:
+    """Authorize one deterministic in-process research capability, never an external tool."""
+
+    if capability.startswith(_V6_FORBIDDEN_CAPABILITY_PREFIXES):
+        raise CapabilityDenied("v6 roles cannot access capital-critical or source capabilities")
+    if capability not in V6_ROLE_TOOL_GRANTS.get(role, frozenset()):
+        raise CapabilityDenied("v6 research capability is not granted to this role")
+    return capability
+
+
+class ResearchTeam(_SealedScienceModel):
+    """A bounded candidate-only team identity; it cannot start work."""
+
+    team_id: str = Field(min_length=1)
+    programme_id: str = Field(min_length=1)
+    role: ResearchRole
+    member_ids: tuple[str, ...] = Field(min_length=1)
+    compute_limit: float = Field(ge=0.0, allow_inf_nan=False)
+    authority: Literal["candidate_only"] = "candidate_only"
+
+    @model_validator(mode="after")
+    def has_unique_members(self) -> ResearchTeam:
+        if len(self.member_ids) != len(set(self.member_ids)) or any(
+            not member_id for member_id in self.member_ids
+        ):
+            raise ValueError("research team member IDs must be unique and non-empty")
+        return self
+
+
+class ResearchCritiqueReceipt(_SealedScienceModel):
+    """Evidence-bound critique recorded before a research plan may use a node."""
+
+    critique_id: str = Field(min_length=1)
+    node_id: str = Field(min_length=1)
+    reviewer_id: str = Field(min_length=1)
+    recorded_at: AwareDatetime
+    findings: tuple[str, ...] = Field(min_length=1)
+    evidence_binding: ResearchEvidenceBinding
+    authority: Literal["candidate_only"] = "candidate_only"
+
+    @model_validator(mode="after")
+    def binds_sealed_evidence_and_lifecycle(self) -> ResearchCritiqueReceipt:
+        evidence = ResearchEvidenceBinding.model_validate(
+            self.evidence_binding.model_dump(mode="json")
+        )
+        if evidence.content_hash is None:
+            raise ValueError("research critique requires sealed evidence")
+        if self.recorded_at < evidence.original_receipt.recorded_at:
+            raise ValueError("research critique cannot predate its retained receipt")
+        if len(self.findings) != len(set(self.findings)) or any(
+            not finding for finding in self.findings
+        ):
+            raise ValueError("research critique findings must be unique and non-empty")
+        return self
+
+
+class ResearchTreeNode(_SealedScienceModel):
+    """One bounded hypothesis or replication node in a progressive research tree."""
+
+    node_id: str = Field(min_length=1)
+    programme_id: str = Field(min_length=1)
+    team_id: str = Field(min_length=1)
+    hypothesis_id: str = Field(min_length=1)
+    parent_node_id: str | None = Field(default=None, min_length=1)
+    depth: int = Field(ge=0)
+    compute_cost: float = Field(ge=0.0, allow_inf_nan=False)
+    node_kind: Literal["hypothesis", "replication"] = "hypothesis"
+    replicates_node_id: str | None = Field(default=None, min_length=1)
+    critique: ResearchCritiqueReceipt | None = None
+    status: Literal["active", "stopped"] = "active"
+    authority: Literal["candidate_only"] = "candidate_only"
+
+    @model_validator(mode="after")
+    def has_consistent_replication_identity(self) -> ResearchTreeNode:
+        if (self.node_kind == "replication") != (self.replicates_node_id is not None):
+            raise ValueError("replication nodes require exactly one original node reference")
+        if self.replicates_node_id == self.node_id:
+            raise ValueError("research tree node cannot replicate itself")
+        if self.critique is not None:
+            critique = ResearchCritiqueReceipt.model_validate(self.critique.model_dump(mode="json"))
+            if critique.content_hash is None or critique.node_id != self.node_id:
+                raise ValueError("research tree node requires a sealed matching critique")
+        return self
+
+
+class ResearchTree(_SealedScienceModel):
+    """Sealed bounded research tree; validation grants no execution authority."""
+
+    tree_id: str = Field(min_length=1)
+    programme: ResearchProgramme
+    teams: tuple[ResearchTeam, ...] = Field(min_length=1)
+    nodes: tuple[ResearchTreeNode, ...] = Field(min_length=1)
+    authority: Literal["candidate_only"] = "candidate_only"
+
+    @model_validator(mode="after")
+    def enforces_team_depth_cost_and_replication_bounds(self) -> ResearchTree:
+        programme = ResearchProgramme.model_validate(self.programme.model_dump(mode="json"))
+        teams = tuple(
+            ResearchTeam.model_validate(team.model_dump(mode="json")) for team in self.teams
+        )
+        nodes = tuple(
+            ResearchTreeNode.model_validate(node.model_dump(mode="json")) for node in self.nodes
+        )
+        if programme.content_hash is None or any(team.content_hash is None for team in teams):
+            raise ValueError("research tree requires a sealed programme and teams")
+        if any(node.content_hash is None for node in nodes):
+            raise ValueError("research tree requires sealed nodes")
+        team_by_id = {team.team_id: team for team in teams}
+        node_by_id = {node.node_id: node for node in nodes}
+        if len(team_by_id) != len(teams) or len(node_by_id) != len(nodes):
+            raise ValueError("research tree team and node IDs must be unique")
+        critique_ids = [node.critique.critique_id for node in nodes if node.critique is not None]
+        if len(critique_ids) != len(set(critique_ids)):
+            raise ValueError("research tree critique IDs must be unique")
+        if len(teams) > programme.max_team_count:
+            raise ValueError("research tree exceeds programme team count")
+        if any(team.programme_id != programme.programme_id for team in teams):
+            raise ValueError("research tree team programme IDs must match")
+        if any(
+            node.programme_id != programme.programme_id or node.team_id not in team_by_id
+            for node in nodes
+        ):
+            raise ValueError("research tree nodes require a known same-programme team")
+        if any(
+            node.critique is not None
+            and node.critique.evidence_binding.content_hash
+            != programme.evidence_binding.content_hash
+            for node in nodes
+        ):
+            raise ValueError("research tree critique must match programme evidence")
+        if any(node.depth > programme.max_tree_depth for node in nodes):
+            raise ValueError("research tree depth exceeds the programme limit")
+
+        hypothesis_ids = {
+            hypothesis.hypothesis_id
+            for family in programme.hypothesis_families
+            for hypothesis in family.hypotheses
+        }
+        if any(node.hypothesis_id not in hypothesis_ids for node in nodes):
+            raise ValueError("research tree node requires a programme hypothesis")
+        for node in nodes:
+            if node.parent_node_id is None:
+                if node.depth != 0:
+                    raise ValueError("research tree root depth must be zero")
+            else:
+                parent = node_by_id.get(node.parent_node_id)
+                if parent is None or node.depth != parent.depth + 1:
+                    raise ValueError("research tree child depth must follow its parent")
+
+        active_nodes = tuple(node for node in nodes if node.status == "active")
+        if sum(node.compute_cost for node in active_nodes) > programme.budget.compute_limit:
+            raise ValueError("research tree exceeds programme compute limit")
+        for team in teams:
+            if (
+                sum(node.compute_cost for node in active_nodes if node.team_id == team.team_id)
+                > team.compute_limit
+            ):
+                raise ValueError("research tree exceeds team compute limit")
+
+        active_by_hypothesis: dict[str, list[ResearchTreeNode]] = {}
+        for node in active_nodes:
+            active_by_hypothesis.setdefault(node.hypothesis_id, []).append(node)
+        for same_hypothesis in active_by_hypothesis.values():
+            originals = [node for node in same_hypothesis if node.node_kind == "hypothesis"]
+            if len(originals) > 1:
+                raise ValueError("research tree contains a duplicate active hypothesis")
+            for node in same_hypothesis:
+                if node.node_kind != "replication":
+                    continue
+                original = node_by_id.get(node.replicates_node_id or "")
+                if (
+                    original is None
+                    or original.hypothesis_id != node.hypothesis_id
+                    or original.node_kind != "hypothesis"
+                ):
+                    raise ValueError("replication must reference its original hypothesis node")
+                if team_by_id[node.team_id].role != "replication_team":
+                    raise ValueError("duplicate active hypothesis requires a replication team")
+        return self
+
+    def validate_plan(self, plan: ExperimentPlan) -> None:
+        tree = type(self).model_validate(self.model_dump(mode="json"))
+        validated_plan = ExperimentPlan.model_validate(plan.model_dump(mode="json"))
+        if tree.content_hash is None or validated_plan.content_hash is None:
+            raise ValueError("research plan validation requires sealed records")
+        node = next(
+            (
+                candidate
+                for candidate in tree.nodes
+                if candidate.node_id == validated_plan.tree_node_id
+            ),
+            None,
+        )
+        if node is None or node.hypothesis_id != validated_plan.hypothesis.hypothesis_id:
+            raise ValueError("research plan must match a tree node hypothesis")
+        if tree.programme.status == "stopped" or node.status == "stopped":
+            raise ValueError("research plan cannot use a stopped programme or tree node")
+        programme_hypothesis = next(
+            hypothesis
+            for family in tree.programme.hypothesis_families
+            for hypothesis in family.hypotheses
+            if hypothesis.hypothesis_id == node.hypothesis_id
+        )
+        if programme_hypothesis.content_hash != validated_plan.hypothesis.content_hash:
+            raise ValueError("research plan must match the sealed programme hypothesis")
+        if (
+            validated_plan.evidence_binding.content_hash
+            != tree.programme.evidence_binding.content_hash
+        ):
+            raise ValueError("research plan must match programme evidence")
+        if node.critique is None or node.critique.recorded_at >= validated_plan.preregistered_at:
+            raise ValueError("research plan requires a recorded critique before preregistration")
+        team = next(team for team in tree.teams if team.team_id == node.team_id)
+        if (
+            node.critique.reviewer_id in team.member_ids
+            or node.critique.reviewer_id == validated_plan.author_id
+        ):
+            raise ValueError("research team members cannot review their own output")

@@ -15,14 +15,20 @@ from .receipt_series import (
     receipt_series_hash,
 )
 from .science import (
+    V6_ROLE_TOOL_GRANTS,
     ExperimentPlan,
     Hypothesis,
     HypothesisFamily,
     NoveltyReport,
     ResearchArtifactReceiptReference,
     ResearchBudget,
+    ResearchCritiqueReceipt,
     ResearchEvidenceBinding,
     ResearchProgramme,
+    ResearchTeam,
+    ResearchTree,
+    ResearchTreeNode,
+    authorize_v6_research_tool,
 )
 from .strategy_evaluation import (
     ReceiptComparisonEvaluation,
@@ -44,6 +50,7 @@ from .validation import (
 )
 
 __all__ = [
+    "V6_ROLE_TOOL_GRANTS",
     "CandidateBoundaryError",
     "ExperimentLedger",
     "ExperimentPlan",
@@ -60,11 +67,16 @@ __all__ = [
     "ReceiptSeriesError",
     "ResearchArtifactReceiptReference",
     "ResearchBudget",
+    "ResearchCritiqueReceipt",
     "ResearchEvidenceBinding",
     "ResearchProgramme",
+    "ResearchTeam",
+    "ResearchTree",
+    "ResearchTreeNode",
     "StrategyEvaluationError",
     "StrategyReturnSeries",
     "authorize_promotion",
+    "authorize_v6_research_tool",
     "build_postmortem",
     "combinatorial_purged_splits",
     "common_sample_hash",
