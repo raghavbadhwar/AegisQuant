@@ -53,7 +53,7 @@ receipt. The projection itself does not read, write, or authorize that register.
 ## Current release blockers
 
 1. There is no approved survivorship-safe, PIT market/universe/corporate-action/delisting source.
-2. SEC Company Facts current-API provenance is insufficient for production historical revisions; archived accession XBRL parsing remains required.
+2. Archived accession XBRL parsing is implemented, but a governed real-filing corpus and externally retained original-record receipts remain unavailable.
 3. Security-master ticker history needs a dated identifier-history source.
 4. N-PORT disclosure timing and raw archive-to-receipt binding need production hardening.
 

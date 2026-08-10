@@ -8,11 +8,16 @@ bytes through the existing content-addressed RawStore.
 from __future__ import annotations
 
 import json
+import math
 import re
 import time
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
+from io import BytesIO
+from typing import cast
 from urllib.parse import quote
+from xml.etree import ElementTree
+from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -23,6 +28,24 @@ _SEC_DATA_HOST = "https://data.sec.gov"
 _SEC_ARCHIVES_HOST = "https://www.sec.gov"
 _ACCESSION = re.compile(r"^\d{10}-\d{2}-\d{6}$")
 _SUBMISSION_FILE = re.compile(r"^[A-Za-z0-9_.-]+\.json$")
+_HEADER_FLAGS = re.IGNORECASE | re.MULTILINE
+_ACCEPTANCE_DATETIME = re.compile(rb"^<ACCEPTANCE-DATETIME>[ \t]*(\d{14})[ \t]*\r?$", _HEADER_FLAGS)
+_ACCESSION_HEADER = re.compile(
+    rb"^<ACCESSION-NUMBER>[ \t]*(\d{10}-\d{2}-\d{6})[ \t]*\r?$", _HEADER_FLAGS
+)
+_CIK_HEADER = re.compile(rb"^<CENTRAL-INDEX-KEY>[ \t]*(\d{1,10})[ \t]*\r?$", _HEADER_FLAGS)
+_XBRL_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+_DOCUMENT = re.compile(rb"<DOCUMENT>(.*?)</DOCUMENT>", re.IGNORECASE | re.DOTALL)
+_DOCUMENT_TYPE = re.compile(rb"<TYPE>\s*([^\r\n<]+)", re.IGNORECASE)
+_DOCUMENT_TEXT = re.compile(rb"<TEXT>\s*(.*?)\s*</TEXT>", re.IGNORECASE | re.DOTALL)
+_XBRLI = "http://www.xbrl.org/2003/instance"
+_XSI = "http://www.w3.org/2001/XMLSchema-instance"
+_SEC_CIK_SCHEME = "http://www.sec.gov/CIK"
+_ISO4217 = "http://www.xbrl.org/2003/iso4217"
+_US_GAAP_NAMESPACES = frozenset(
+    [f"http://fasb.org/us-gaap/{year}-01-31" for year in range(2009, 2022)]
+    + [f"http://fasb.org/us-gaap/{year}" for year in range(2022, 2027)]
+)
 
 
 def _date_only_available_at(value: str) -> datetime:
@@ -68,6 +91,8 @@ class SecFiling(BaseModel):
 
     @model_validator(mode="after")
     def availability_is_causal(self) -> SecFiling:
+        if self.accession_number[:10] != self.cik:
+            raise ValueError("SEC accession CIK must match filing CIK")
         if self.filed_at.tzinfo is None or self.available_at.tzinfo is None:
             raise ValueError("SEC filing timestamps must be timezone-aware")
         if self.available_at < self.filed_at:
@@ -101,9 +126,211 @@ class SecFactObservation(BaseModel):
 
     @model_validator(mode="after")
     def fact_is_causal(self) -> SecFactObservation:
+        if self.accession_number[:10] != self.cik:
+            raise ValueError("SEC fact accession CIK must match fact CIK")
         if self.available_at < self.filed_at:
             raise ValueError("fact availability cannot precede filing")
         return self
+
+
+def archived_acceptance_time(submission: bytes, filing: SecFiling) -> datetime:
+    first_document = _DOCUMENT.search(submission)
+    header = submission[: first_document.start()] if first_document else submission
+    accessions = _ACCESSION_HEADER.findall(header)
+    ciks = _CIK_HEADER.findall(header)
+    if (
+        len(accessions) != 1
+        or len(ciks) != 1
+        or accessions[0].decode("ascii") != filing.accession_number
+        or ciks[0].decode("ascii").zfill(10) != filing.cik
+    ):
+        raise SecPITError("archived SEC header identity does not match filing")
+    matches = _ACCEPTANCE_DATETIME.findall(header)
+    if len(matches) != 1:
+        raise SecPITError("archived SEC submission requires exactly one acceptance timestamp")
+    try:
+        local = datetime.strptime(matches[0].decode("ascii"), "%Y%m%d%H%M%S").replace(
+            tzinfo=ZoneInfo("America/New_York")
+        )
+    except (UnicodeDecodeError, ValueError) as exc:
+        raise SecPITError("invalid archived SEC acceptance timestamp") from exc
+    if local.date() != filing.filed_at.date():
+        raise SecPITError("archived SEC acceptance date does not match filing")
+    return local.astimezone(UTC)
+
+
+def _archived_xbrl_instance(submission: bytes) -> bytes:
+    if len(submission) > 25_000_000:
+        raise SecPITError("archived SEC submission exceeds parsing limit")
+    instances: list[bytes] = []
+    for document in _DOCUMENT.findall(submission):
+        document_type = _DOCUMENT_TYPE.search(document)
+        if document_type is None or document_type.group(1).strip().upper() != b"EX-101.INS":
+            continue
+        text = _DOCUMENT_TEXT.search(document)
+        if text is None:
+            raise SecPITError("archived XBRL instance lacks document text")
+        instances.append(text.group(1).strip())
+    if len(instances) != 1:
+        raise SecPITError("archived SEC submission requires exactly one XBRL instance")
+    return instances[0]
+
+
+def _xbrl_date(value: str) -> datetime:
+    if not _XBRL_DATE.fullmatch(value):
+        raise SecPITError("invalid archived XBRL period date")
+    try:
+        return datetime.strptime(value, "%Y-%m-%d").replace(tzinfo=UTC)
+    except ValueError as exc:
+        raise SecPITError("invalid archived XBRL period date") from exc
+
+
+def parse_archived_xbrl_facts(
+    filing: SecFiling,
+    submission: bytes,
+    *,
+    tags: tuple[str, ...] = (),
+) -> tuple[SecFactObservation, ...]:
+    """Parse consolidated numeric facts from one raw accession submission.
+
+    This parser accepts only the original ``EX-101.INS`` document, an exact
+    acceptance timestamp, simple units, and non-dimensional contexts. It fails
+    closed instead of guessing across ambiguous instance documents or contexts.
+    """
+
+    available_at = archived_acceptance_time(submission, filing)
+    instance = _archived_xbrl_instance(submission)
+    namespaces: dict[str, str] = {}
+    namespace_by_prefix: dict[str, str] = {}
+    try:
+        for _, item in ElementTree.iterparse(BytesIO(instance), events=("start-ns",)):
+            namespace_prefix, namespace_uri = cast(tuple[str, str], item)
+            if (
+                namespace_prefix in namespace_by_prefix
+                and namespace_by_prefix[namespace_prefix] != namespace_uri
+            ):
+                raise SecPITError("archived XBRL namespace prefix is ambiguous")
+            if (namespace_prefix == "iso4217" and namespace_uri != _ISO4217) or (
+                namespace_prefix == "us-gaap" and namespace_uri not in _US_GAAP_NAMESPACES
+            ):
+                raise SecPITError("archived XBRL namespace provenance is invalid")
+            namespace_by_prefix[namespace_prefix] = namespace_uri
+            namespaces[namespace_uri] = namespace_prefix
+        root = ElementTree.fromstring(instance)
+    except (ElementTree.ParseError, ValueError) as exc:
+        raise SecPITError("invalid archived XBRL instance") from exc
+    if root.tag != f"{{{_XBRLI}}}xbrl":
+        raise SecPITError("archived XBRL instance has invalid root")
+
+    contexts: dict[str, tuple[datetime | None, datetime]] = {}
+    context_ids: set[str] = set()
+    for context in root.findall(f"{{{_XBRLI}}}context"):
+        context_id = context.get("id", "")
+        if not context_id:
+            raise SecPITError("archived XBRL context lacks ID")
+        if context_id in context_ids:
+            raise SecPITError("archived XBRL context IDs must be unique")
+        context_ids.add(context_id)
+        if (
+            context.find(f".//{{{_XBRLI}}}segment") is not None
+            or context.find(f".//{{{_XBRLI}}}scenario") is not None
+        ):
+            continue
+        identifier = context.find(f".//{{{_XBRLI}}}identifier")
+        if identifier is None or not identifier.text:
+            raise SecPITError("archived XBRL context lacks entity identifier")
+        if identifier.get("scheme") != _SEC_CIK_SCHEME:
+            raise SecPITError("archived XBRL entity identifier scheme is invalid")
+        if identifier.text.strip().zfill(10) != filing.cik:
+            raise SecPITError("archived XBRL context entity does not match filing")
+        period = context.find(f"{{{_XBRLI}}}period")
+        if period is None:
+            raise SecPITError("archived XBRL context lacks period")
+        instant = period.find(f"{{{_XBRLI}}}instant")
+        start = period.find(f"{{{_XBRLI}}}startDate")
+        end = period.find(f"{{{_XBRLI}}}endDate")
+        if instant is not None and instant.text:
+            contexts[context_id] = (None, _xbrl_date(instant.text.strip()))
+        elif start is not None and start.text and end is not None and end.text:
+            contexts[context_id] = (
+                _xbrl_date(start.text.strip()),
+                _xbrl_date(end.text.strip()),
+            )
+        else:
+            raise SecPITError("archived XBRL context has unsupported period")
+
+    units: dict[str, str] = {}
+    unit_ids: set[str] = set()
+    for unit in root.findall(f"{{{_XBRLI}}}unit"):
+        unit_id = unit.get("id", "")
+        if unit_id in unit_ids:
+            raise SecPITError("archived XBRL unit IDs must be unique")
+        unit_ids.add(unit_id)
+        measures = unit.findall(f"{{{_XBRLI}}}measure")
+        if not unit_id or len(measures) != 1 or not measures[0].text:
+            continue
+        measure = measures[0].text.strip()
+        unit_prefix, separator, local_name = measure.partition(":")
+        namespace = namespace_by_prefix.get(unit_prefix)
+        if (
+            not separator
+            or not local_name
+            or (namespace == _ISO4217 and not re.fullmatch(r"[A-Z]{3}", local_name))
+            or (namespace == _XBRLI and local_name not in {"pure", "shares"})
+        ):
+            raise SecPITError("archived XBRL unit QName is invalid")
+        if namespace not in {_ISO4217, _XBRLI}:
+            raise SecPITError("archived XBRL unit namespace is unsupported")
+        units[unit_id] = local_name
+
+    requested = set(tags)
+    observations: list[SecFactObservation] = []
+    fact_keys: set[tuple[str, str, str, datetime | None, datetime]] = set()
+    for fact in root:
+        if fact.get(f"{{{_XSI}}}nil", "false").lower() == "true":
+            continue
+        context_ref = fact.get("contextRef")
+        unit_ref = fact.get("unitRef")
+        if context_ref not in contexts or unit_ref not in units or fact.text is None:
+            continue
+        namespace, separator, tag = (
+            fact.tag[1:].partition("}") if fact.tag.startswith("{") else ("", "", fact.tag)
+        )
+        if not separator or not tag or (requested and tag not in requested):
+            continue
+        taxonomy_prefix = namespaces.get(namespace, "")
+        if not taxonomy_prefix:
+            raise SecPITError("archived XBRL fact taxonomy prefix is unavailable")
+        taxonomy = "us-gaap" if namespace in _US_GAAP_NAMESPACES else namespace
+        try:
+            value = float(fact.text.strip())
+        except ValueError as exc:
+            raise SecPITError("archived XBRL numeric fact is invalid") from exc
+        if not math.isfinite(value):
+            raise SecPITError("archived XBRL numeric fact must be finite")
+        period_start, period_end = contexts[context_ref]
+        fact_key = (taxonomy, tag, units[unit_ref], period_start, period_end)
+        if fact_key in fact_keys:
+            raise SecPITError("archived XBRL facts must be unique by concept, unit, and period")
+        fact_keys.add(fact_key)
+        observations.append(
+            SecFactObservation(
+                cik=filing.cik,
+                taxonomy=taxonomy,
+                tag=tag,
+                unit=units[unit_ref],
+                value=value,
+                form=filing.form,
+                accession_number=filing.accession_number,
+                period_start=period_start,
+                period_end=period_end,
+                filed_at=filing.filed_at,
+                available_at=available_at,
+            )
+        )
+    return tuple(
+        sorted(observations, key=lambda item: (item.period_end, item.taxonomy, item.tag, item.unit))
+    )
 
 
 def select_available_filings(
@@ -369,3 +596,18 @@ class SecPITClient:
             body=body,
             media_type="text/html",
         )
+
+    def filing_submission(self, filing: SecFiling) -> tuple[RawDocumentReceipt, bytes]:
+        """Raw-capture the complete accession submission used for XBRL parsing."""
+        accession = filing.accession_number.replace("-", "")
+        archive_root = f"{_SEC_ARCHIVES_HOST}/Archives/edgar/data/{int(filing.cik)}"
+        url = f"{archive_root}/{accession}/{accession}.txt"
+        body = self._fetch(url, "text/plain")
+        receipt = self._commit(
+            source_id="sec-edgar",
+            request_id=f"filing-{filing.accession_number}",
+            url=url,
+            body=body,
+            media_type="text/plain",
+        )
+        return receipt, body

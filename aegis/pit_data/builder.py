@@ -2,16 +2,17 @@
 
 from __future__ import annotations
 
+import hashlib
 from datetime import UTC, date, datetime
 from pathlib import Path
 
-from aegis.contracts import canonical_json
+from aegis.contracts import RawDocumentReceipt, canonical_json
 from aegis.sources.raw_store import RawStore
 
 from .fundamentals import PITFundamentalFact, normalize_sec_facts
 from .models import PITArtifact, SecurityMasterRecord
 from .nport import NPortHolding, normalize_nport_holdings
-from .sec import SecPITClient
+from .sec import SecPITClient, archived_acceptance_time, parse_archived_xbrl_facts
 
 # The initial automatic corpus is statements-first. Event/ownership forms
 # require an archive-index resolver because some SEC rows do not expose a
@@ -21,6 +22,11 @@ DEFAULT_FORMS = frozenset({"10-K", "10-Q", "10-K/A", "10-Q/A"})
 
 class PITBuildError(RuntimeError):
     pass
+
+
+def _require_receipt_body(receipt: RawDocumentReceipt, body: bytes) -> None:
+    if receipt.byte_length != len(body) or receipt.content_hash != hashlib.sha256(body).hexdigest():
+        raise PITBuildError("SEC raw receipt does not match submission bytes")
 
 
 def bootstrap(root: str | Path) -> Path:
@@ -40,8 +46,25 @@ def bootstrap(root: str | Path) -> Path:
 
 def _append_immutable(path: Path, rows: tuple[PITArtifact, ...]) -> None:
     existing = path.read_text().splitlines() if path.exists() else []
-    known = {PITArtifact.model_validate_json(row).artifact_id for row in existing if row}
-    additions = [canonical_json(row) for row in rows if row.artifact_id not in known]
+    known: dict[str, PITArtifact] = {}
+    for raw_row in existing:
+        if not raw_row:
+            continue
+        artifact = PITArtifact.model_validate_json(raw_row)
+        if artifact.artifact_id in known:
+            raise PITBuildError(f"conflicting immutable artifact: {artifact.artifact_id}")
+        known[artifact.artifact_id] = artifact
+    additions: list[str] = []
+    for row in rows:
+        previous = known.get(row.artifact_id)
+        if previous is not None:
+            if previous.model_dump(exclude={"ingested_at"}) != row.model_dump(
+                exclude={"ingested_at"}
+            ):
+                raise PITBuildError(f"conflicting immutable artifact: {row.artifact_id}")
+            continue
+        known[row.artifact_id] = row
+        additions.append(canonical_json(row))
     if additions:
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("a") as handle:
@@ -84,7 +107,6 @@ def ingest_sec(
                 source_version="company-tickers",
             )
         )
-        captured_accessions: set[str] = set()
         for filing in filings:
             if (
                 filing.form not in allowed_forms
@@ -92,8 +114,11 @@ def ingest_sec(
                 or (filing_end is not None and filing.filed_at.date() > filing_end)
             ):
                 continue
-            receipt = client.filing_document(filing)
-            captured_accessions.add(filing.accession_number)
+            receipt, submission = client.filing_submission(filing)
+            _require_receipt_body(receipt, submission)
+            accepted_at = archived_acceptance_time(submission, filing)
+            facts = parse_archived_xbrl_facts(filing, submission)
+            normalized_facts.extend(normalize_sec_facts(ticker, facts))
             built.append(
                 PITArtifact(
                     artifact_id=f"sec:{cik}:{filing.accession_number}",
@@ -106,24 +131,15 @@ def ingest_sec(
                     accession=filing.accession_number,
                     period_end=filing.period_end,
                     filed_at=filing.filed_at,
-                    available_at=filing.available_at,
+                    accepted_at=accepted_at,
+                    available_at=accepted_at,
                     ingested_at=receipt.fetched_at,
                     raw_path=receipt.raw_uri,
                     sha256=receipt.content_hash,
-                    parser_version="sec-pit-v1",
+                    parser_version="sec-archived-xbrl-v1",
                     metadata={"primary_document": filing.primary_document, "cik": cik},
                 )
             )
-        # Company Facts is a current cumulative API response.  Do not emit a
-        # normalized value unless its accession was captured as an allowed
-        # filing artifact in this run; otherwise the fact's claimed raw lineage
-        # would point to an absent or disallowed document.
-        sourced_facts = tuple(
-            item
-            for item in client.company_facts(cik)
-            if item.form in allowed_forms and item.accession_number in captured_accessions
-        )
-        normalized_facts.extend(normalize_sec_facts(ticker, sourced_facts))
     _append_immutable(lake / "normalized" / "artifact_ledger.jsonl", tuple(built))
     facts_path = lake / "normalized" / "fundamental_fact_versions.jsonl"
     known_fact_versions = set(facts_path.read_text().splitlines()) if facts_path.exists() else set()

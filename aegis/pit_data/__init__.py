@@ -9,7 +9,15 @@ from .nport import (
     normalize_nport_holdings,
     nport_archive_url,
 )
-from .sec import SecFactObservation, SecFiling, SecPITClient, SecPITError, select_available_filings
+from .sec import (
+    SecFactObservation,
+    SecFiling,
+    SecPITClient,
+    SecPITError,
+    archived_acceptance_time,
+    parse_archived_xbrl_facts,
+    select_available_filings,
+)
 
 __all__ = [
     "NPortHolding",
@@ -24,10 +32,12 @@ __all__ = [
     "SecPITError",
     "SecurityMasterRecord",
     "acquire_nport_archive",
+    "archived_acceptance_time",
     "fundamentals_as_of",
     "load_snapshot",
     "normalize_nport_holdings",
     "normalize_sec_facts",
     "nport_archive_url",
+    "parse_archived_xbrl_facts",
     "select_available_filings",
 ]

@@ -86,7 +86,7 @@ You are taking over the AegisQuant institutional research and candidate world-mo
 ## Known release blockers — do not work around them
 
 - No approved survivorship-safe PIT market/universe/corporate-action/delisting source exists. Thus real six-strategy performance qualification and release acceptance are blocked.
-- SEC Company Facts current API provenance has limitations for production historical revisions; archived accession XBRL parsing is the eventual standard.
+- Archived accession XBRL parsing replaces Company Facts in normalized ingestion; governed real-filing corpus and external original-record receipt evidence remain release-gated.
 - Security-master ticker history needs a dated identifier-history source for release-grade treatment.
 - N-PORT disclosure timing and raw archive-to-receipt binding need further production hardening.
 

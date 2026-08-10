@@ -8,7 +8,7 @@ This is real-source ingestion infrastructure, not a performance claim. Synthetic
 
 ## Architecture
 
-1. `aegis pit ingest-sec` acquires official SEC submission metadata and original filing bytes under a contact-bearing SEC User-Agent.
+1. `aegis pit ingest-sec` acquires official SEC submission metadata and complete accession submissions under a contact-bearing SEC User-Agent.
 2. `RawStore` content-addresses every response and makes capture receipts immutable.
 3. `PITArtifact` records source identity, accession, filing/availability times, raw path, hash, parser version, and metadata.
 4. `PITAvailabilityLedger` is the central time gate; callers cannot retrieve future artifacts through its query methods.
@@ -19,14 +19,14 @@ This is real-source ingestion infrastructure, not a performance claim. Synthetic
 
 * EDGAR submissions: `data.sec.gov/submissions/CIK##########.json`, including referenced historical submission files.
 * Official ticker/CIK mapping: `www.sec.gov/files/company_tickers.json`.
-* Filing documents: `www.sec.gov/Archives/edgar/data/...`.
-* Company Facts: `data.sec.gov/api/xbrl/companyfacts/CIK##########.json`.
+* Complete accession submissions: `www.sec.gov/Archives/edgar/data/.../##########.txt`.
+* Company Facts remains available as an engineering client method, but normalized ingestion does not use its current cumulative response.
 
 The client requires a contact-bearing User-Agent, follows no redirects, limits itself to 5 requests/second by default (never above 10), retries only transient failures with bounded exponential backoff, and refuses unsafe historic-submission filenames.
 
 ## Fact versions and restatements
 
-`normalize_sec_facts` retains every fact version and binds it to its accession. `fundamentals_as_of` selects the latest version public at its cutoff for each `(entity, taxonomy, concept, unit, period_end)` key. A later amended filing cannot overwrite the value visible before its own availability timestamp.
+`parse_archived_xbrl_facts` extracts numeric, non-dimensional facts only from the accession's single `EX-101.INS` document. It requires the archived acceptance timestamp, matching CIK, unique contexts, simple units, and finite values. `normalize_sec_facts` retains every accession version. `fundamentals_as_of` selects the latest version public at its cutoff for each `(entity, taxonomy, concept, unit, period_start, period_end)` key, so an amendment cannot overwrite an earlier PIT value.
 
 ## Snapshot format
 
@@ -60,4 +60,4 @@ SEC does not supply an institutional-quality survivorship-free US price/universe
 
 ## Release checks
 
-The PIT test suite covers future-filing exclusion, causal availability, restatement visibility, immutable snapshot destinations, manifest/hash lineage, and raw capture. Real SEC artifacts and multi-date snapshots must still be acquired before any v3 release qualification can be considered.
+The PIT test suite covers archived acceptance-time binding, malformed submission rejection, dimensional-fact quarantine, future-filing exclusion, restatement visibility, immutable snapshot destinations, manifest/hash lineage, and raw capture. A governed real SEC corpus and multi-date receipt-bound snapshots must still be acquired before release qualification can be considered.
