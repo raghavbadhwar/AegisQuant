@@ -1,5 +1,22 @@
 """Governed research lab; candidates never self-promote."""
 
+from .adaptation import (
+    AdaptationPolicy,
+    AdaptationProposal,
+    AdaptiveEvaluationManifest,
+    AdaptiveEvaluationResult,
+    AdaptiveTargetEnvelope,
+    CandidateRecommendation,
+    build_belief_adaptation_proposal,
+    build_candidate_recommendation,
+    evaluate_registered_adaptive_fixture,
+)
+from .adaptive_evidence import (
+    AdaptiveEvidenceCheckpoint,
+    AdaptiveEvidenceIndex,
+    AdaptiveEvidenceIndexError,
+    AdaptiveEvidenceRecord,
+)
 from .boundaries import CandidateBoundaryError, validate_candidate_target
 from .experiments import ExperimentLedger
 from .outcomes import OutcomeIntegrityError, OutcomeLedger, build_postmortem
@@ -69,7 +86,17 @@ from .validation import (
 
 __all__ = [
     "V6_ROLE_TOOL_GRANTS",
+    "AdaptationPolicy",
+    "AdaptationProposal",
+    "AdaptiveEvaluationManifest",
+    "AdaptiveEvaluationResult",
+    "AdaptiveEvidenceCheckpoint",
+    "AdaptiveEvidenceIndex",
+    "AdaptiveEvidenceIndexError",
+    "AdaptiveEvidenceRecord",
+    "AdaptiveTargetEnvelope",
     "CandidateBoundaryError",
+    "CandidateRecommendation",
     "ExperimentLedger",
     "ExperimentPlan",
     "ExperimentRun",
@@ -108,6 +135,8 @@ __all__ = [
     "VerificationPackage",
     "authorize_promotion",
     "authorize_v6_research_tool",
+    "build_belief_adaptation_proposal",
+    "build_candidate_recommendation",
     "build_postmortem",
     "combinatorial_purged_splits",
     "common_sample_hash",
@@ -116,6 +145,7 @@ __all__ = [
     "derive_receipt_observations_from_ledger",
     "evaluate_predeclared_strategies",
     "evaluate_receipt_comparison",
+    "evaluate_registered_adaptive_fixture",
     "evaluate_registered_fixture",
     "interval_combinatorial_purged_splits",
     "interval_purged_walk_forward",
