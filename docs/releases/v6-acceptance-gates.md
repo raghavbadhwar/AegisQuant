@@ -1,6 +1,6 @@
 # v6 Acceptance Gates
 
-## Entry assessment — documentation only
+## Entry assessment — engineering implementation permitted
 
 | Requirement | Evidence |
 | --- | --- |
@@ -10,13 +10,12 @@
 | v4 causal-world-model surface | sealed domain pack, scenario, twin, experiment, uncertainty, counterfactual, scenario intelligence and microstructure contracts at the base |
 | deterministic v4 validation | engineering evidence at base: `430 passed`; lint, format, mypy, lock and diff clean |
 | v6 reuse assessment | existing experiment ledger, capability broker, candidate boundary, LangGraph harness, and VOI planner mapped in v6 architecture |
-| v4 release manifest required by the post-v5 prompt | absent; `docs/V4_TRACEABILITY.md` is an engineering-only/release-gated disposition, not a release manifest |
+| v4 completion manifest required by the post-v5 prompt | `docs/releases/v4-causal-world-model-completion.md`, bound to base `579ddc1`; completed/engineering-only/release-gated |
 
-The documents are a valid v6 planning start. Runtime implementation remains on
-hold until an independently retained v4 completion/release-manifest reference
-is supplied or the post-v5 gate is formally amended under governance. This is
-not a claim that v4 or v6 is released for empirical, investment, governance, or
-production use.
+The Git-retained manifest permits candidate-only v6 engineering implementation
+after an independent read-only review confirms its commit map and disposition.
+It is not an external original-record receipt and does not claim that v4 or v6
+is released for empirical, investment, governance, or production use.
 
 ## v6 engineering acceptance
 

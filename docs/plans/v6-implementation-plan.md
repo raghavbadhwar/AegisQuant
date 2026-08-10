@@ -27,6 +27,7 @@
 | `docs/testing/v6-verification-plan.md` | v6 verification matrix |
 | `docs/releases/v6-acceptance-gates.md` | v6 entry/release gates and evidence register |
 | `docs/releases/v6-dependency-license-review.md` | required locked dependency inventory, licence/source review, and approval record before v6 release |
+| `docs/releases/v4-causal-world-model-completion.md` | Git-retained, independently reviewed engineering-completion reference for the v6 entry gate; never empirical release evidence |
 
 There are no migrations and no dependencies to add. v6 reuses SQLite through
 `ExperimentLedger`; it does not add tables or write a second ledger. The project
