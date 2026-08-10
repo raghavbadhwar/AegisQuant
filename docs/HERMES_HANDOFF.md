@@ -34,7 +34,14 @@ You are taking over the AegisQuant institutional research and candidate world-mo
   - Local data: `data/pit/yahoo-engineering-v3` (ignored)
   - Conservative next-UTC-day availability convention.
   - `apps/cli.py backtest --data-root ...` runs frozen local fixtures.
-  - 13-cycle engineering smoke backtest completed without displaying performance metrics.
+  - The local ignored replay ledger contains 366 `aegis-cycle-v1` records from
+    `2019-01-05` through `2025-12-31`; it is plumbing evidence only and must not
+    be used for release, performance, eligibility, investment, or governance claims.
+  - Those records contain neither an institutional mandate nor a quant research
+    bundle, so they cannot feed the receipt-only six-strategy comparison gates.
+  - No local exact-cutoff historical-artifact manifest is present for
+    `HistoricalMultiStrategyFixtureProvider`; do not synthesize one from the
+    Yahoo fixture to bypass the institutional v2 requirement.
 
 ### v4 candidate-only OS
 
