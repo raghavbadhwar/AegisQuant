@@ -4,12 +4,13 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, model_validator
+from pydantic import AwareDatetime, ConfigDict, Field, model_validator
 
 from aegis.contracts import canonical_sha256
+from aegis.contracts._base import CandidateContractModel
 
 
-class PITArtifact(BaseModel):
+class PITArtifact(CandidateContractModel):
     """A raw historical source artifact whose availability is explicitly causal."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -46,7 +47,7 @@ class PITArtifact(BaseModel):
         return self
 
 
-class SecurityMasterRecord(BaseModel):
+class SecurityMasterRecord(CandidateContractModel):
     """Historical identifier mapping; do not assume today's ticker mapping."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -61,9 +62,19 @@ class SecurityMasterRecord(BaseModel):
     valid_to: AwareDatetime | None = None
     source: str = Field(min_length=1)
     source_version: str = Field(min_length=1)
+    source_record_id: str = Field(min_length=1)
+    source_available_at: AwareDatetime
+    source_content_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
+    source_raw_uri: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def valid_history_interval(self) -> SecurityMasterRecord:
+        if self.valid_to is not None and self.valid_to < self.valid_from:
+            raise ValueError("security mapping validity interval is inverted")
+        return self
 
 
-class PITSnapshotManifest(BaseModel):
+class PITSnapshotManifest(CandidateContractModel):
     """Hash-bound offline information world for a single simulation timestamp."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -75,6 +86,8 @@ class PITSnapshotManifest(BaseModel):
     universe: tuple[str, ...]
     artifact_ids: tuple[str, ...]
     artifact_hashes: tuple[str, ...]
+    security_record_ids: tuple[str, ...] = ()
+    security_record_hashes: tuple[str, ...] = ()
     dataset_version: str = Field(min_length=1)
     parser_versions: tuple[str, ...]
     warnings: tuple[str, ...] = ()
@@ -90,6 +103,12 @@ class PITSnapshotManifest(BaseModel):
             raise ValueError("snapshot artifact hash count mismatch")
         if any(item != item.lower() or len(item) != 64 for item in self.artifact_hashes):
             raise ValueError("snapshot artifact hashes must be sha256 values")
+        if len(self.security_record_ids) != len(set(self.security_record_ids)):
+            raise ValueError("snapshot security record IDs must be unique")
+        if len(self.security_record_ids) != len(self.security_record_hashes):
+            raise ValueError("snapshot security record hash count mismatch")
+        if any(item != item.lower() or len(item) != 64 for item in self.security_record_hashes):
+            raise ValueError("snapshot security record hashes must be sha256 values")
         expected = canonical_sha256(
             self.model_dump(mode="json", exclude={"built_at", "manifest_hash"})
         )

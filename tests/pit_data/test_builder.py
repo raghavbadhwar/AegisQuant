@@ -4,9 +4,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
+from typer.testing import CliRunner
 
 from aegis.contracts import RawDocumentReceipt, canonical_json
-from aegis.pit_data import PITArtifact, SecFiling
+from aegis.pit_data import PITArtifact, SecFiling, SecurityMasterRecord
 from aegis.pit_data.builder import bootstrap
 
 
@@ -103,6 +104,7 @@ def test_sec_ingestion_uses_archived_accession_xbrl(
     )
     assert fact["concept"] == "Assets"
     assert fact["accession"] == filing.accession_number
+    assert not (tmp_path / "normalized" / "security_master.jsonl").exists()
 
 
 def test_artifact_ledger_rejects_conflicting_receipt_for_same_accession(tmp_path: Path) -> None:
@@ -200,3 +202,104 @@ def test_sec_ingestion_rejects_receipt_that_does_not_match_submission_bytes() ->
 
     with pytest.raises(PITBuildError, match="receipt does not match"):
         _require_receipt_body(receipt, body)
+
+
+def test_import_security_master_binds_records_to_exact_local_source(tmp_path: Path) -> None:
+    from aegis.pit_data.builder import import_security_master
+
+    source = tmp_path / "dated-security-history.json"
+    source.write_text(
+        json.dumps(
+            {
+                "source": "governed-security-history",
+                "source_version": "2026-01-01",
+                "source_available_at": "2026-01-02T00:00:00Z",
+                "records": [
+                    {
+                        "source_record_id": "record:AAPL:1980",
+                        "canonical_security_id": "us:AAPL",
+                        "ticker": "AAPL",
+                        "cik": "0000320193",
+                        "issuer": "Apple Inc.",
+                        "valid_from": "1980-12-12T00:00:00Z",
+                        "valid_to": None,
+                    }
+                ],
+            },
+            sort_keys=True,
+        )
+    )
+
+    records = import_security_master(tmp_path / "pit", source)
+
+    assert records[0].source_content_hash == hashlib.sha256(source.read_bytes()).hexdigest()
+    assert Path(records[0].source_raw_uri).read_bytes() == source.read_bytes()
+    persisted = SecurityMasterRecord.model_validate_json(
+        (tmp_path / "pit" / "normalized" / "security_master.jsonl").read_text().strip()
+    )
+    assert persisted == records[0]
+
+
+def test_security_master_import_is_exposed_as_local_only_cli(tmp_path: Path) -> None:
+    from apps.cli import app
+
+    source = tmp_path / "history.json"
+    source.write_text(
+        json.dumps(
+            {
+                "source": "governed-history",
+                "source_version": "v1",
+                "source_available_at": "2026-01-02T00:00:00Z",
+                "records": [
+                    {
+                        "source_record_id": "AAPL-1980",
+                        "canonical_security_id": "us:AAPL",
+                        "ticker": "AAPL",
+                        "issuer": "Apple Inc.",
+                        "valid_from": "1980-12-12T00:00:00Z",
+                    }
+                ],
+            }
+        )
+    )
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "pit",
+            "import-security-master",
+            "--source",
+            str(source),
+            "--root",
+            str(tmp_path / "pit"),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert '"record_count":1' in result.stdout
+
+
+def test_security_master_import_rejects_duplicate_source_record_ids(tmp_path: Path) -> None:
+    from aegis.pit_data.builder import PITBuildError, import_security_master
+
+    record = {
+        "source_record_id": "AAPL-1980",
+        "canonical_security_id": "us:AAPL",
+        "ticker": "AAPL",
+        "issuer": "Apple Inc.",
+        "valid_from": "1980-12-12T00:00:00Z",
+    }
+    source = tmp_path / "duplicates.json"
+    source.write_text(
+        json.dumps(
+            {
+                "source": "governed-history",
+                "source_version": "v1",
+                "source_available_at": "2026-01-02T00:00:00Z",
+                "records": [record, record],
+            }
+        )
+    )
+
+    with pytest.raises(PITBuildError, match="duplicate security-master source record"):
+        import_security_master(tmp_path / "pit", source)

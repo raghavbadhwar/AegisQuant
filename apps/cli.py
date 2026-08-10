@@ -33,7 +33,7 @@ from aegis.harness.graph import LangGraphForecastProvider
 from aegis.harness.model_router import ReplayModelProvider
 from aegis.harness.skill_loader import load_skill_tree
 from aegis.pit_data.builder import bootstrap as bootstrap_pit
-from aegis.pit_data.builder import ingest_sec, normalize_nport
+from aegis.pit_data.builder import import_security_master, ingest_sec, normalize_nport
 from aegis.pit_data.ledger import PITAvailabilityLedger
 from aegis.pit_data.models import PITArtifact, SecurityMasterRecord
 from aegis.pit_data.nport import NPortHolding, acquire_nport_archive
@@ -139,6 +139,25 @@ def pit_ingest_sec(
             {
                 "artifact_count": len(artifacts),
                 "artifact_ids": [item.artifact_id for item in artifacts],
+            }
+        )
+    )
+
+
+@pit_app.command("import-security-master")
+def pit_import_security_master(
+    source: Annotated[Path, typer.Option("--source", help="Dated local JSON source envelope")],
+    root: Annotated[Path, typer.Option("--root", help="Local PIT lake directory")] = Path(
+        "data/pit"
+    ),
+) -> None:
+    """Import receipt-bound dated identifier history without network access."""
+    records = import_security_master(_project_path(root), _project_path(source))
+    typer.echo(
+        canonical_json(
+            {
+                "record_count": len(records),
+                "source_record_ids": [item.source_record_id for item in records],
             }
         )
     )

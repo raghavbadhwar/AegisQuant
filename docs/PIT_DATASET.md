@@ -11,9 +11,10 @@ This is real-source ingestion infrastructure, not a performance claim. Synthetic
 1. `aegis pit ingest-sec` acquires official SEC submission metadata and complete accession submissions under a contact-bearing SEC User-Agent.
 2. `RawStore` content-addresses every response and makes capture receipts immutable.
 3. `PITArtifact` records source identity, accession, filing/availability times, raw path, hash, parser version, and metadata.
-4. `PITAvailabilityLedger` is the central time gate; callers cannot retrieve future artifacts through its query methods.
-5. `aegis pit build-snapshot` writes a new immutable local directory containing the manifest, gated artifacts, and applicable historical security records.
-6. Offline replay must receive only snapshot contents. A missing snapshot input is a failure, not a reason to consult current web data.
+4. `aegis pit import-security-master` raw-captures an explicit dated JSON envelope; current ticker mappings never fabricate historical validity.
+5. `PITAvailabilityLedger` is the central time gate; callers cannot retrieve future artifacts or identifier mappings through its query methods.
+6. `aegis pit build-snapshot` hash-binds gated artifacts and applicable receipt-bound historical security records into a new immutable local directory.
+7. Offline replay must receive only snapshot contents. A missing snapshot input is a failure, not a reason to consult current web data.
 
 ## SEC sources
 
@@ -35,6 +36,7 @@ data/pit/snapshots/2021-09-15T00-00-00Z/
   manifest.json          # hash-bound cutoff, artifact IDs/hashes, warnings
   artifacts.jsonl        # only `available_at <= simulation_at`
   security_master.jsonl  # only historical mappings valid at cutoff
+  security_sources/      # retained source bytes, keyed and verified by SHA-256
 ```
 
 The current storage is deliberately canonical JSONL to avoid introducing a second database dependency. Parquet/DuckDB export may be added as a derived representation; it must preserve the same artifact IDs, hashes, availability times, and raw provenance.
@@ -45,12 +47,16 @@ The current storage is deliberately canonical JSONL to avoid introducing a secon
 uv run python -m apps.cli pit bootstrap --root data/pit
 uv run python -m apps.cli pit ingest-sec AAPL MSFT NVDA \
   --sec-user-agent 'AegisQuant research ops@yourdomain.example' --root data/pit
+uv run python -m apps.cli pit import-security-master \
+  --source /path/to/dated-security-history.json --root data/pit
 uv run python -m apps.cli pit build-snapshot --at 2021-09-15T16:00:00+00:00 \
   --universe AAPL --universe MSFT --root data/pit
 uv run python -m apps.cli pit verify-snapshot data/pit/snapshots/2021-09-15T16-00-00Z
 ```
 
 `ingest-sec` performs public-source network acquisition only when explicitly invoked. It neither uses synthetic data nor generates investment, release, or performance claims.
+
+The security-master import is local-only. Its envelope must declare source identity/version/availability and explicit `valid_from`/`valid_to` intervals for every mapping. The exact envelope is copied into the content-addressed raw store. Imports may retain a mapping before its declared source-availability time, but snapshot creation rejects it until that time. Overlapping ticker or canonical-security intervals, duplicate/conflicting source-record IDs, missing applicable mappings, retained-source drift, and snapshot hash drift fail closed. Each snapshot retains its own verified copy of the applicable source bytes. The repository does not infer history from the current SEC ticker map.
 
 ## N-PORT and market-data boundaries
 

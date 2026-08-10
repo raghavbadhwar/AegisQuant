@@ -90,8 +90,9 @@ The following are unchanged and cannot be cleared by local code or fixtures:
 
 - no approved survivorship-safe PIT market, universe, corporate-action, and
   delisting source;
-- archived accession-level XBRL parsing is implemented, while governed corpus
-  evidence and dated identifier history remain incomplete;
+- archived accession-level XBRL parsing and dated security-master import are
+  implemented, while governed corpus evidence and an approved identifier-history
+  source remain unavailable;
 - N-PORT timing and raw-archive-to-receipt binding still require hardening;
 - externally retained append-only original-record receipts are unavailable;
 - pinned upstream licence files resolve the prior local metadata gaps, while

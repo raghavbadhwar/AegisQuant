@@ -49,7 +49,7 @@ read-only audit:
 v6 remains `engineering-only` and `release-gated` unless independently governed
 evidence exists. It cannot clear the existing blockers: approved
 survivorship-safe PIT market/universe/corporate-action/delisting source,
-governed archived-XBRL corpus evidence, dated identifier history, hardened
+governed archived-XBRL corpus evidence, an approved dated identifier-history source, hardened
 N-PORT disclosure/raw-to-receipt binding, and externally retained append-only
 original receipts. Local Yahoo/fixture output cannot establish accuracy,
 calibration, outperformance, investment, eligibility, governance, or release.

@@ -6,10 +6,13 @@ import hashlib
 from datetime import UTC, date, datetime
 from pathlib import Path
 
-from aegis.contracts import RawDocumentReceipt, canonical_json
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
+
+from aegis.contracts import FetchedDocument, RawDocumentReceipt, canonical_json
 from aegis.sources.raw_store import RawStore
 
 from .fundamentals import PITFundamentalFact, normalize_sec_facts
+from .ledger import PITAvailabilityLedger
 from .models import PITArtifact, SecurityMasterRecord
 from .nport import NPortHolding, normalize_nport_holdings
 from .sec import SecPITClient, archived_acceptance_time, parse_archived_xbrl_facts
@@ -22,6 +25,29 @@ DEFAULT_FORMS = frozenset({"10-K", "10-Q", "10-K/A", "10-Q/A"})
 
 class PITBuildError(RuntimeError):
     pass
+
+
+class _SecurityMasterImportRow(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    source_record_id: str = Field(min_length=1)
+    canonical_security_id: str = Field(min_length=1)
+    ticker: str = Field(min_length=1)
+    cik: str | None = Field(default=None, pattern=r"^\d{10}$")
+    cusip: str | None = None
+    issuer: str = Field(min_length=1)
+    exchange: str | None = None
+    valid_from: AwareDatetime
+    valid_to: AwareDatetime | None = None
+
+
+class _SecurityMasterImport(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    source: str = Field(min_length=1)
+    source_version: str = Field(min_length=1)
+    source_available_at: AwareDatetime
+    records: tuple[_SecurityMasterImportRow, ...] = Field(min_length=1)
 
 
 def _require_receipt_body(receipt: RawDocumentReceipt, body: bytes) -> None:
@@ -42,6 +68,77 @@ def bootstrap(root: str | Path) -> Path:
             "as release or performance evidence.\n"
         )
     return path
+
+
+def import_security_master(
+    root: str | Path, source_path: str | Path
+) -> tuple[SecurityMasterRecord, ...]:
+    """Import explicit dated mappings from one retained, content-addressed local source."""
+    source = Path(source_path).resolve()
+    try:
+        body = source.read_bytes()
+        envelope = _SecurityMasterImport.model_validate_json(body)
+    except (OSError, ValueError) as exc:
+        raise PITBuildError("invalid dated security-master source") from exc
+    if len(body) > 25_000_000:
+        raise PITBuildError("dated security-master source exceeds import limit")
+    source_record_ids = [item.source_record_id for item in envelope.records]
+    if len(source_record_ids) != len(set(source_record_ids)):
+        raise PITBuildError("duplicate security-master source record")
+    lake = bootstrap(root)
+    receipt = RawStore(lake / "raw").commit(
+        FetchedDocument(
+            source_id=envelope.source,
+            request_id=f"security-master-{envelope.source_version}",
+            url=source.as_uri(),
+            connector="security-master-import-v1",
+            connector_version="security-master-import-v1",
+            status_code=200,
+            headers={"content-type": "application/json"},
+            body=body,
+            fetched_at=datetime.now(UTC),
+            media_type="application/json",
+        )
+    )
+    records = tuple(
+        SecurityMasterRecord(
+            **row.model_dump(),
+            source=envelope.source,
+            source_version=envelope.source_version,
+            source_available_at=envelope.source_available_at,
+            source_content_hash=receipt.content_hash,
+            source_raw_uri=receipt.raw_uri,
+        )
+        for row in envelope.records
+    )
+    path = lake / "normalized" / "security_master.jsonl"
+    existing = (
+        tuple(
+            SecurityMasterRecord.model_validate_json(line)
+            for line in path.read_text().splitlines()
+            if line
+        )
+        if path.exists()
+        else ()
+    )
+    known = {item.source_record_id: item for item in existing}
+    if len(known) != len(existing):
+        raise PITBuildError("duplicate security-master source record")
+    additions: list[SecurityMasterRecord] = []
+    for record in records:
+        previous = known.get(record.source_record_id)
+        if previous is not None:
+            if previous != record:
+                raise PITBuildError("conflicting immutable security-master record")
+            continue
+        known[record.source_record_id] = record
+        additions.append(record)
+    PITAvailabilityLedger((), tuple(known.values()))
+    if additions:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("a") as handle:
+            handle.write("".join(canonical_json(item) + "\n" for item in additions))
+    return records
 
 
 def _append_immutable(path: Path, rows: tuple[PITArtifact, ...]) -> None:
@@ -92,21 +189,9 @@ def ingest_sec(
         raise PITBuildError(f"SEC ticker/CIK mapping missing: {', '.join(missing)}")
     built: list[PITArtifact] = []
     normalized_facts: list[PITFundamentalFact] = []
-    securities: list[SecurityMasterRecord] = []
     for ticker in requested:
         cik = mappings[ticker]
         filings = client.submissions(cik)
-        securities.append(
-            SecurityMasterRecord(
-                canonical_security_id=f"sec:{cik}",
-                ticker=ticker,
-                cik=cik,
-                issuer=ticker,
-                valid_from=datetime(1900, 1, 1, tzinfo=UTC),
-                source="SEC_EDGAR",
-                source_version="company-tickers",
-            )
-        )
         for filing in filings:
             if (
                 filing.form not in allowed_forms
@@ -150,24 +235,6 @@ def ingest_sec(
             handle.write(
                 "".join(item + "\n" for item in new_fact_rows if item not in known_fact_versions)
             )
-    security_path = lake / "normalized" / "security_master.jsonl"
-    known_security_ids = (
-        {
-            SecurityMasterRecord.model_validate_json(row).canonical_security_id
-            for row in security_path.read_text().splitlines()
-            if row
-        }
-        if security_path.exists()
-        else set()
-    )
-    security_additions = [
-        canonical_json(item)
-        for item in securities
-        if item.canonical_security_id not in known_security_ids
-    ]
-    if security_additions:
-        with security_path.open("a") as handle:
-            handle.write("".join(item + "\n" for item in security_additions))
     return tuple(built)
 
 
