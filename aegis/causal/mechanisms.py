@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import ConfigDict, Field, model_validator
+
+from aegis.contracts._base import CandidateContractModel
 
 
-class MechanismDefinition(BaseModel):
+class MechanismDefinition(CandidateContractModel):
     """A testable mechanism, not a factual, pricing, or execution authority."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)

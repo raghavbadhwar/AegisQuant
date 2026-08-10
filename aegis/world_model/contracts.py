@@ -8,9 +8,10 @@ from __future__ import annotations
 
 from enum import StrEnum
 
-from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, model_validator
+from pydantic import AwareDatetime, ConfigDict, Field, model_validator
 
 from aegis.contracts import canonical_sha256
+from aegis.contracts._base import CandidateContractModel
 
 
 class VariableProvenance(StrEnum):
@@ -20,7 +21,7 @@ class VariableProvenance(StrEnum):
     STRESS_ASSUMPTION = "stress_assumption"
 
 
-class WorldVariable(BaseModel):
+class WorldVariable(CandidateContractModel):
     """One unit-bearing state variable pinned to evidence and PIT availability."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -40,8 +41,8 @@ class WorldVariable(BaseModel):
         return self
 
 
-class WorldSnapshot(BaseModel):
-    """Sealed information state for a candidate simulation at a PIT cutoff."""
+class WorldSnapshot(CandidateContractModel):
+    """Content-addressed, not authenticated, information state at a PIT cutoff."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -76,7 +77,7 @@ class WorldSnapshot(BaseModel):
         )
 
 
-class ScenarioIntervention(BaseModel):
+class ScenarioIntervention(CandidateContractModel):
     """Explicit non-factual shock; it must never be rendered as observed evidence."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)

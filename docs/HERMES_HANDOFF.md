@@ -7,7 +7,8 @@ You are taking over the AegisQuant institutional research and candidate world-mo
 - Repository: `/Volumes/RAGHAV2/Development_Projects/AegisQuant`
 - Compatibility path: `/Users/raghav/aegisquant-v3-institutional` (symlink)
 - Branch: `upgrade/aegisquant-v3-institutional-os`
-- Current HEAD: `578f7a48c5d2fb3c4b965cdb2b2ae820e3a8a053`
+- Commit identity: obtain it from `git rev-parse HEAD`; this handoff deliberately
+  does not hard-code a stale commit SHA.
 - v4 design spec: `/Users/raghav/Downloads/AegisQuant_v4_Causal_World_Model_Design_Spec.md`
 
 ## Mandatory operating rules
@@ -42,15 +43,38 @@ You are taking over the AegisQuant institutional research and candidate world-mo
 - Evidence-bound mechanism registry: `aegis/causal/mechanisms.py`
 - PIT-bound world snapshots/interventions: `aegis/world_model/contracts.py`
 - Deterministic candidate scenario propagation: `aegis/world_model/scenario.py`
-- These modules have no execution, promotion, factual, pricing, or portfolio authority. Keep that boundary strict.
+- Domain-pack manifests and PIT-bound twins/transitions: `aegis/world_model/domain_pack.py`,
+  `aegis/world_model/twin.py`
+- Contribution reconciliation and single-linear experiment histories:
+  `aegis/world_model/contributions.py`, `aegis/world_model/experiments.py`
+- Candidate-only uncertainty/calibration declarations and counterfactual abstention:
+  `aegis/world_model/uncertainty.py`, `aegis/world_model/counterfactual.py`
+- Candidate-only research VOI contracts: `aegis/research_planner/`
+- Engineering traceability projection and external original-seal receipt references:
+  `aegis/reporting/traceability.py`, `docs/V4_TRACEABILITY.md`
+- All 34 public v4 candidate Pydantic contracts use `CandidateContractModel`:
+  frozen/`extra="forbid"` with revalidated, unknown-field-rejecting `model_copy()`.
+- Content hashes are content addressing, not authentication. Traceability rendering
+  requires a separately retained `TraceabilityReceiptReference` that binds the
+  original report ID/hash.
+- These modules have no execution, promotion, factual, pricing, portfolio, or
+  release authority. Keep that boundary strict.
 
 ## Priority work
 
-1. **v3 engineering closure:** use the local Yahoo engineering fixture to execute longer governed replays; produce receipts/ledgers and compare the six predeclared strategies through existing receipt/CPCV gates. Label every output `engineering-only/non-release`; do not state metrics as investment evidence.
-2. Add traceability/report artifacts for source provenance, snapshot hashes, run ledgers, receipt comparison, and explicit release disposition.
-3. **v4B–v4D:** implement deterministic, domain-bounded twin/domain-pack contracts; scenario compiler; contribution ledger; uncertainty/sensitivity; calibration/validation and experiment ledger; counterfactual/VOI contracts. All outputs stay candidate-only until v3 acceptance.
-4. Add focused tests first, then run Ruff, format, mypy, relevant tests, and full suite before substantive commits.
-5. Seek an independent read-only audit after meaningful closure.
+1. **v3 engineering closure:** use the local Yahoo engineering fixture to execute
+   longer governed replays; produce receipts/ledgers and compare the six
+   predeclared strategies through existing receipt/CPCV gates. Label every output
+   `engineering-only/non-release`; do not state metrics as investment evidence.
+2. Establish governed, externally retained receipt storage before treating any
+   traceability projection as an original-record verification surface. The current
+   projection records references only and cannot create or authorize that register.
+3. Obtain approved release-grade source evidence to address the known blockers;
+   do not convert engineering-only replay or traceability evidence into a release,
+   performance, eligibility, investment, or governance claim.
+4. Keep all v4 extensions candidate-only. Add focused tests first, then run Ruff,
+   format, mypy, relevant tests, the full suite, and an independent read-only audit
+   before substantive commits.
 
 ## Known release blockers — do not work around them
 

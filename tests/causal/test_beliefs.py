@@ -24,3 +24,16 @@ def test_belief_cannot_claim_factual_authority() -> None:
             calibration_status="uncalibrated",
             factuality="fact",
         )
+
+
+def test_belief_model_copy_revalidates_factuality() -> None:
+    belief = BeliefState(
+        belief_id="b",
+        proposition="x",
+        prior_probability=0.2,
+        posterior_probability=0.2,
+        calibration_status="uncalibrated",
+    )
+
+    with pytest.raises(ValueError, match="factual"):
+        belief.model_copy(update={"factuality": "fact"})

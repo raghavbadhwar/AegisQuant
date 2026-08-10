@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import ConfigDict, Field, model_validator
+
+from aegis.contracts._base import CandidateContractModel
 
 
-class BeliefState(BaseModel):
+class BeliefState(CandidateContractModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     belief_id: str = Field(min_length=1)

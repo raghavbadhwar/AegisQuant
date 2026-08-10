@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import math
 import re
-from typing import Any
+from collections.abc import Mapping
+from typing import Any, Self
 
 from pydantic import BaseModel, ConfigDict
 
@@ -16,6 +17,21 @@ class ContractModel(BaseModel):
     """Strict base for data crossing an AegisQuant boundary."""
 
     model_config = ConfigDict(extra="forbid", strict=True)
+
+
+class CandidateContractModel(BaseModel):
+    """Frozen public candidate contract that validates every model-copy update."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    def model_copy(self, *, update: Mapping[str, Any] | None = None, deep: bool = False) -> Self:
+        if update is not None:
+            unknown_fields = set(update).difference(type(self).model_fields)
+            if unknown_fields:
+                names = ", ".join(sorted(unknown_fields))
+                raise ValueError(f"candidate model_copy update contains unknown fields: {names}")
+        copied = super().model_copy(update=update, deep=deep)
+        return type(self).model_validate(copied.model_dump(mode="json"))
 
 
 def normalize_ticker(value: Any) -> str:

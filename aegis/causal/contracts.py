@@ -7,9 +7,10 @@ from __future__ import annotations
 
 from enum import StrEnum
 
-from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, model_validator
+from pydantic import AwareDatetime, ConfigDict, Field, model_validator
 
 from aegis.contracts import canonical_sha256
+from aegis.contracts._base import CandidateContractModel
 
 
 class CausalEdgeKind(StrEnum):
@@ -40,7 +41,7 @@ class CausalSupportLevel(StrEnum):
     C3_STRUCTURAL = "c3_structural"
 
 
-class IdentificationRecord(BaseModel):
+class IdentificationRecord(CandidateContractModel):
     """Evidence-bound method and failed/refutation record for C2+ support."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -55,7 +56,7 @@ class IdentificationRecord(BaseModel):
     validator_id: str = Field(min_length=1)
 
 
-class CausalEdge(BaseModel):
+class CausalEdge(CandidateContractModel):
     """One versioned causal candidate whose semantic authority is fail-closed."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -112,7 +113,7 @@ class CausalEdge(BaseModel):
         return self
 
 
-class CausalGraphSnapshot(BaseModel):
+class CausalGraphSnapshot(CandidateContractModel):
     """Immutable, versioned causal graph separate from the evidence claim DAG."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
