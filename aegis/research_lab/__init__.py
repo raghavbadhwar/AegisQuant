@@ -14,6 +14,16 @@ from .receipt_series import (
     derive_receipt_observations_from_ledger,
     receipt_series_hash,
 )
+from .science import (
+    ExperimentPlan,
+    Hypothesis,
+    HypothesisFamily,
+    NoveltyReport,
+    ResearchArtifactReceiptReference,
+    ResearchBudget,
+    ResearchEvidenceBinding,
+    ResearchProgramme,
+)
 from .strategy_evaluation import (
     ReceiptComparisonEvaluation,
     ReceiptComparisonValidationEvidence,
@@ -36,6 +46,10 @@ from .validation import (
 __all__ = [
     "CandidateBoundaryError",
     "ExperimentLedger",
+    "ExperimentPlan",
+    "Hypothesis",
+    "HypothesisFamily",
+    "NoveltyReport",
     "OutcomeIntegrityError",
     "OutcomeLedger",
     "ReceiptComparisonEvaluation",
@@ -44,6 +58,10 @@ __all__ = [
     "ReceiptComparisonValidationEvidence",
     "ReceiptReturnObservation",
     "ReceiptSeriesError",
+    "ResearchArtifactReceiptReference",
+    "ResearchBudget",
+    "ResearchEvidenceBinding",
+    "ResearchProgramme",
     "StrategyEvaluationError",
     "StrategyReturnSeries",
     "authorize_promotion",
