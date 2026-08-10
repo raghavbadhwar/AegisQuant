@@ -3,7 +3,15 @@ from datetime import UTC, datetime
 import pytest
 
 from aegis.causal.beliefs import BeliefState
-from aegis.causal.contracts import CausalEdge, CausalGraphSnapshot, IdentificationRecord
+from aegis.causal.contracts import (
+    CausalEdge,
+    CausalGraphSnapshot,
+    IdentificationOutcome,
+    IdentificationRecord,
+    IdentificationRequest,
+    RefutationRecord,
+)
+from aegis.causal.discovery import CausalDiscoveryCandidate
 from aegis.causal.mechanisms import MechanismDefinition
 from aegis.contracts._base import CandidateContractModel
 from aegis.reporting.traceability import (
@@ -76,8 +84,12 @@ def test_candidate_model_copy_rejects_unknown_fields() -> None:
 def test_every_public_v4_candidate_contract_uses_the_revalidating_base() -> None:
     candidate_contracts = (
         BeliefState,
+        RefutationRecord,
         IdentificationRecord,
+        IdentificationRequest,
+        IdentificationOutcome,
         CausalEdge,
+        CausalDiscoveryCandidate,
         CausalGraphSnapshot,
         MechanismDefinition,
         WorldVariable,

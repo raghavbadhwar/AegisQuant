@@ -9,6 +9,8 @@ from aegis.causal.contracts import (
     CausalSupportLevel,
     EdgeStatus,
     IdentificationRecord,
+    RefutationRecord,
+    RefutationStatus,
 )
 from aegis.causal.mechanisms import MechanismDefinition
 from aegis.contracts import canonical_sha256
@@ -81,7 +83,18 @@ def test_resolver_requires_sealed_mechanism_approval_artifacts() -> None:
         method="candidate method",
         assumption_ids=("assumption-1",),
         evidence_ids=("evidence-1",),
-        refutation_ids=("refutation-1",),
+        refutations=(
+            RefutationRecord(
+                refutation_id="refutation-1",
+                method="placebo-treatment",
+                status=RefutationStatus.PASSED,
+                assumption_ids=("assumption-1",),
+                evidence_ids=("evidence-1",),
+                evaluated_at=NOW,
+                evaluator_id="validator-1",
+                reason="Candidate placebo test passed.",
+            ),
+        ),
         validated_at=NOW,
         validator_id="validator-1",
     )
@@ -101,6 +114,7 @@ def test_resolver_requires_sealed_mechanism_approval_artifacts() -> None:
                 mechanism_description="candidate demand to revenue mechanism",
                 sign=1,
                 evidence_ids=("evidence-1",),
+                assumption_ids=("assumption-1",),
                 identification=identification,
                 domain_pack="test-domain",
                 known_from=NOW,
