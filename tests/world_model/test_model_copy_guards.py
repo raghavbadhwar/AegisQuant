@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 
 import pytest
 
-from aegis.causal.beliefs import BeliefState
+from aegis.causal.beliefs import BeliefRevision, BeliefRevisionLedger, BeliefState
 from aegis.causal.contracts import (
     CausalEdge,
     CausalGraphSnapshot,
@@ -23,6 +23,12 @@ from aegis.reporting.traceability import (
     TraceabilityReceiptReference,
 )
 from aegis.research_planner.contracts import ResearchAction, ValueOfInformationResult
+from aegis.research_planner.monte_carlo import (
+    MonteCarloVOIResult,
+    MonteCarloVOISample,
+    ResearchLoopConstraints,
+    ResearchLoopDecision,
+)
 from aegis.world_model.ai_infrastructure import (
     CapexToSupplierRevenueParameters,
     MechanismRegistry,
@@ -52,6 +58,22 @@ from aegis.world_model.experiments import (
     WorldModelExperimentManifest,
 )
 from aegis.world_model.fcff_adapter import TwinOperatingDriver, TwinOperatingOutput
+from aegis.world_model.optional_adapters import OptionalAdapterAbstention
+from aegis.world_model.probabilistic import (
+    BoundedOutcomeModel,
+    ComputedUncertaintyDecomposition,
+    FinancialValuationOutcome,
+    FrozenParameterArtifact,
+    MonteCarloRunManifest,
+    MonteCarloRunResult,
+    OneAtATimeSensitivity,
+    OutcomeParameterTerm,
+    ParameterDraw,
+    ScenarioGridOutcome,
+    ScenarioGridPoint,
+    ScenarioGridResult,
+    UncertaintyComponentSamples,
+)
 from aegis.world_model.propagation import (
     FeedbackConvergencePolicy,
     FeedbackRule,
@@ -104,6 +126,8 @@ def test_candidate_model_copy_rejects_unknown_fields() -> None:
 def test_every_public_v4_candidate_contract_uses_the_revalidating_base() -> None:
     candidate_contracts = (
         BeliefState,
+        BeliefRevision,
+        BeliefRevisionLedger,
         RefutationRecord,
         IdentificationRecord,
         IdentificationRequest,
@@ -143,6 +167,20 @@ def test_every_public_v4_candidate_contract_uses_the_revalidating_base() -> None
         HistoricalReplayEvaluation,
         TwinOperatingDriver,
         TwinOperatingOutput,
+        FrozenParameterArtifact,
+        OutcomeParameterTerm,
+        BoundedOutcomeModel,
+        MonteCarloRunManifest,
+        ParameterDraw,
+        FinancialValuationOutcome,
+        MonteCarloRunResult,
+        UncertaintyComponentSamples,
+        ComputedUncertaintyDecomposition,
+        OneAtATimeSensitivity,
+        ScenarioGridPoint,
+        ScenarioGridOutcome,
+        ScenarioGridResult,
+        OptionalAdapterAbstention,
         DistributionSpec,
         UncertaintyDecomposition,
         CausalMechanismApproval,
@@ -150,6 +188,10 @@ def test_every_public_v4_candidate_contract_uses_the_revalidating_base() -> None
         CounterfactualOutcome,
         ResearchAction,
         ValueOfInformationResult,
+        MonteCarloVOISample,
+        MonteCarloVOIResult,
+        ResearchLoopConstraints,
+        ResearchLoopDecision,
         SourceProvenanceReference,
         SnapshotReference,
         RunLedgerReceiptReference,

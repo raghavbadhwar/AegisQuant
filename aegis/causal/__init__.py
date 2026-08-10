@@ -6,7 +6,7 @@ from .adapters import (
     CausalToolUnavailable,
     DoWhyAdapter,
 )
-from .beliefs import BeliefState
+from .beliefs import BeliefRevision, BeliefRevisionLedger, BeliefState
 from .contracts import (
     CausalEdge,
     CausalEdgeKind,
@@ -27,6 +27,8 @@ from .storage import CausalGraphIntegrityError, CausalGraphStore
 from .view import causal_graph_view
 
 __all__ = [
+    "BeliefRevision",
+    "BeliefRevisionLedger",
     "BeliefState",
     "CausalDiscoveryCandidate",
     "CausalEdge",

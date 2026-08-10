@@ -7,6 +7,7 @@ from typing import Literal
 
 from pydantic import ConfigDict, Field, model_validator
 
+from aegis.contracts import canonical_sha256
 from aegis.contracts._base import CandidateContractModel
 
 
@@ -23,6 +24,7 @@ class ResearchAction(CandidateContractModel):
     model_cost: float = Field(ge=0.0)
     assumption_ids: tuple[str, ...] = Field(min_length=1)
     authority: Literal["candidate_only"] = "candidate_only"
+    content_hash: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
 
     @model_validator(mode="after")
     def requires_distinct_nonempty_assumptions(self) -> ResearchAction:
@@ -30,7 +32,15 @@ class ResearchAction(CandidateContractModel):
             raise ValueError("research action assumption IDs must be nonempty")
         if len(self.assumption_ids) != len(set(self.assumption_ids)):
             raise ValueError("research action assumption IDs must be unique")
+        expected = canonical_sha256(self.model_dump(mode="json", exclude={"content_hash"}))
+        if self.content_hash is not None and self.content_hash != expected:
+            raise ValueError("research action content hash mismatch")
         return self
+
+    def sealed(self) -> ResearchAction:
+        payload = self.model_dump(mode="json", exclude={"content_hash"})
+        validated = ResearchAction.model_validate(payload)
+        return validated.model_copy(update={"content_hash": canonical_sha256(payload)})
 
 
 class ValueOfInformationResult(CandidateContractModel):

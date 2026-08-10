@@ -30,3 +30,11 @@ def test_world_model_exports_candidate_only_v4b_expansion_contracts() -> None:
     assert world_model.ScenarioRunManifest
     assert world_model.HistoricalReplayFixture
     assert world_model.TwinOperatingOutput
+
+
+def test_world_model_exports_candidate_only_v4c_contracts() -> None:
+    assert world_model.FrozenParameterArtifact
+    assert world_model.MonteCarloRunManifest
+    assert world_model.ComputedUncertaintyDecomposition
+    assert world_model.ScenarioGridPoint
+    assert world_model.OptionalAdapterAbstention
