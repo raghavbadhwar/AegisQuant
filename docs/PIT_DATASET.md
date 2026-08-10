@@ -13,8 +13,9 @@ This is real-source ingestion infrastructure, not a performance claim. Synthetic
 3. `PITArtifact` records source identity, accession, filing/availability times, raw path, hash, parser version, and metadata.
 4. `aegis pit import-security-master` raw-captures an explicit dated JSON envelope; current ticker mappings never fabricate historical validity.
 5. `PITAvailabilityLedger` is the central time gate; callers cannot retrieve future artifacts or identifier mappings through its query methods.
-6. `aegis pit build-snapshot` hash-binds gated artifacts and applicable receipt-bound historical security records into a new immutable local directory.
-7. Offline replay must receive only snapshot contents. A missing snapshot input is a failure, not a reason to consult current web data.
+6. `aegis pit normalize-nport` accepts only a matching retained raw receipt and assigns a conservative observed-publication boundary.
+7. `aegis pit build-snapshot` hash-binds gated artifacts, applicable historical security records, selected N-PORT holdings, and retained source copies into a new immutable local directory.
+8. Offline replay must receive only snapshot contents. A missing snapshot input is a failure, not a reason to consult current web data.
 
 ## SEC sources
 
@@ -37,6 +38,8 @@ data/pit/snapshots/2021-09-15T00-00-00Z/
   artifacts.jsonl        # only `available_at <= simulation_at`
   security_master.jsonl  # only historical mappings valid at cutoff
   security_sources/      # retained source bytes, keyed and verified by SHA-256
+  fund_holdings.jsonl    # only holdings observable by the cutoff
+  nport_sources/         # retained N-PORT archives, keyed and verified by SHA-256
 ```
 
 The current storage is deliberately canonical JSONL to avoid introducing a second database dependency. Parquet/DuckDB export may be added as a derived representation; it must preserve the same artifact IDs, hashes, availability times, and raw provenance.
@@ -49,6 +52,9 @@ uv run python -m apps.cli pit ingest-sec AAPL MSFT NVDA \
   --sec-user-agent 'AegisQuant research ops@yourdomain.example' --root data/pit
 uv run python -m apps.cli pit import-security-master \
   --source /path/to/dated-security-history.json --root data/pit
+uv run python -m apps.cli pit normalize-nport \
+  --archive /path/to/captured-nport.zip --receipt /path/to/raw-receipt.json \
+  --series S000000001 --root data/pit
 uv run python -m apps.cli pit build-snapshot --at 2021-09-15T16:00:00+00:00 \
   --universe AAPL --universe MSFT --root data/pit
 uv run python -m apps.cli pit verify-snapshot data/pit/snapshots/2021-09-15T16-00-00Z
@@ -60,10 +66,12 @@ The security-master import is local-only. Its envelope must declare source ident
 
 ## N-PORT and market-data boundaries
 
-N-PORT holdings must store both the portfolio reporting date and separately verified public availability date. Reporting date is never sufficient for PIT visibility. N-PORT archive parsing is intentionally not yet enabled: a source-versioned parser plus archive-specific public-dissemination policy is required before holdings can enter a release-grade snapshot.
+The narrow quarterly N-PORT parser binds each holding to the SEC primary key `(ACCESSION_NUMBER, HOLDING_ID)`, an exact retained archive receipt, and an independently copied snapshot source. Reporting date is never treated as visibility. Because the bulk holding table lacks a precise dissemination timestamp, availability is conservatively the later of the next UTC day after its filing date and the archive's observed retrieval time. Duplicate identities, receipt/file mismatches, conflicting immutable records, future visibility, holding/hash drift, or retained-source drift fail closed.
+
+This observed-retrieval policy is engineering-only. It does not reconstruct historical dissemination before acquisition, and it cannot establish release-grade N-PORT timing without governed historical publication evidence and externally retained original receipts.
 
 SEC does not supply an institutional-quality survivorship-free US price/universe layer. Historical performance validation therefore remains blocked on an approved market-data provider (e.g. CRSP/WRDS or a separately licensed, documented feed). Any temporary engineering feed must be marked non-release and must never qualify a strategy or fund.
 
 ## Release checks
 
-The PIT test suite covers archived acceptance-time binding, malformed submission rejection, dimensional-fact quarantine, future-filing exclusion, restatement visibility, immutable snapshot destinations, manifest/hash lineage, and raw capture. A governed real SEC corpus and multi-date receipt-bound snapshots must still be acquired before release qualification can be considered.
+The PIT test suite covers archived acceptance-time binding, malformed submission rejection, dimensional-fact quarantine, future-filing exclusion, restatement visibility, N-PORT receipt/timing/identity binding, immutable snapshot destinations, manifest/hash lineage, and raw capture. A governed real SEC corpus and multi-date externally receipt-bound snapshots must still be acquired before release qualification can be considered.

@@ -93,7 +93,8 @@ The following are unchanged and cannot be cleared by local code or fixtures:
 - archived accession-level XBRL parsing and dated security-master import are
   implemented, while governed corpus evidence and an approved identifier-history
   source remain unavailable;
-- N-PORT timing and raw-archive-to-receipt binding still require hardening;
+- N-PORT receipt, identity, conservative observed-availability, and snapshot-source
+  binding are implemented, while governed historical dissemination evidence remains unavailable;
 - externally retained append-only original-record receipts are unavailable;
 - pinned upstream licence files resolve the prior local metadata gaps, while
   accountable distribution approval and the complete NOTICE review remain pending;

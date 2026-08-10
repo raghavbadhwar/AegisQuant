@@ -9,7 +9,7 @@ from typing import Annotated
 import typer
 
 from aegis.brokers import SimBroker
-from aegis.contracts import SourceRequest, canonical_json
+from aegis.contracts import RawDocumentReceipt, SourceRequest, canonical_json
 from aegis.data import FixtureDataClient
 from aegis.fund.backtest import backtest_fund
 from aegis.fund.ledger import SQLiteRunLedger
@@ -182,8 +182,8 @@ def pit_ingest_nport(
 @pit_app.command("normalize-nport")
 def pit_normalize_nport(
     archive: Annotated[Path, typer.Option("--archive", help="Locally captured SEC N-PORT ZIP")],
-    raw_artifact_id: Annotated[
-        str, typer.Option("--raw-artifact-id", help="Raw archive provenance ID")
+    receipt: Annotated[
+        Path, typer.Option("--receipt", help="RawDocumentReceipt JSON from acquisition")
     ],
     series: Annotated[list[str], typer.Option("--series", help="Explicit bounded SEC series ID")],
     root: Annotated[Path, typer.Option("--root", help="Local PIT lake directory")] = Path(
@@ -194,7 +194,7 @@ def pit_normalize_nport(
     rows = normalize_nport(
         _project_path(root),
         _project_path(archive),
-        raw_artifact_id=raw_artifact_id,
+        raw_receipt=RawDocumentReceipt.model_validate_json(_project_path(receipt).read_bytes()),
         series_ids=frozenset(series),
     )
     typer.echo(canonical_json({"holding_count": len(rows)}))

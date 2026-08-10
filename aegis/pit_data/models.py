@@ -88,6 +88,8 @@ class PITSnapshotManifest(CandidateContractModel):
     artifact_hashes: tuple[str, ...]
     security_record_ids: tuple[str, ...] = ()
     security_record_hashes: tuple[str, ...] = ()
+    fund_holding_ids: tuple[str, ...] = ()
+    fund_holding_hashes: tuple[str, ...] = ()
     dataset_version: str = Field(min_length=1)
     parser_versions: tuple[str, ...]
     warnings: tuple[str, ...] = ()
@@ -109,6 +111,14 @@ class PITSnapshotManifest(CandidateContractModel):
             raise ValueError("snapshot security record hash count mismatch")
         if any(item != item.lower() or len(item) != 64 for item in self.security_record_hashes):
             raise ValueError("snapshot security record hashes must be sha256 values")
+        if len(self.fund_holding_ids) != len(set(self.fund_holding_ids)):
+            raise ValueError("snapshot fund holding IDs must be unique")
+        if len(self.fund_holding_ids) != len(self.fund_holding_hashes):
+            raise ValueError("snapshot fund holding hash count mismatch")
+        if len(self.fund_holding_hashes) != len(set(self.fund_holding_hashes)):
+            raise ValueError("snapshot fund holding hashes must be unique")
+        if any(item != item.lower() or len(item) != 64 for item in self.fund_holding_hashes):
+            raise ValueError("snapshot fund holding hashes must be sha256 values")
         expected = canonical_sha256(
             self.model_dump(mode="json", exclude={"built_at", "manifest_hash"})
         )

@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+from aegis.contracts import canonical_json, canonical_sha256
 from aegis.pit_data import (
     PITArtifact,
     PITAvailabilityLedger,
@@ -13,6 +14,7 @@ from aegis.pit_data import (
     SecurityMasterRecord,
     load_snapshot,
 )
+from aegis.pit_data.models import PITSnapshotManifest
 from aegis.pit_data.nport import NPortHolding
 
 
@@ -120,11 +122,15 @@ def test_snapshot_excludes_nport_holdings_not_yet_public(tmp_path: Path) -> None
     holding = NPortHolding(
         fund_id="S1",
         fund_name="Fund",
+        holding_id="H1",
         holding_name="Apple",
         report_at=datetime(2021, 6, 30, tzinfo=UTC),
         public_available_at=datetime(2021, 9, 16, tzinfo=UTC),
         accession="accession",
-        raw_artifact_id="raw",
+        raw_artifact_id=f"sec-nport:{'d' * 64}",
+        raw_content_hash="d" * 64,
+        raw_uri="raw://nport",
+        archive_retrieved_at=datetime(2021, 9, 16, tzinfo=UTC),
     )
     snapshot = ledger.write_snapshot(
         tmp_path,
@@ -264,3 +270,81 @@ def test_snapshot_manifest_model_copy_revalidates_security_lineage(tmp_path: Pat
         manifest.model_copy(update={"unknown": "field"})
     with pytest.raises(ValueError):
         manifest.model_copy(update={"manifest_hash": "f" * 64})
+
+
+def test_snapshot_hash_binds_nport_holdings_and_archive_bytes(tmp_path: Path) -> None:
+    nport_source = tmp_path / "nport.zip"
+    nport_source.write_bytes(b"retained N-PORT archive")
+    digest = hashlib.sha256(nport_source.read_bytes()).hexdigest()
+    holding = NPortHolding(
+        fund_id="S1",
+        fund_name="Fund",
+        holding_id="H1",
+        holding_name="Apple",
+        report_at=datetime(2021, 6, 30, tzinfo=UTC),
+        filed_at=datetime(2021, 8, 1, tzinfo=UTC),
+        public_available_at=datetime(2021, 8, 2, tzinfo=UTC),
+        accession="0001",
+        raw_artifact_id=f"sec-nport:{digest}",
+        raw_content_hash=digest,
+        raw_uri=nport_source.as_posix(),
+        archive_retrieved_at=datetime(2021, 8, 2, tzinfo=UTC),
+    )
+    ledger = PITAvailabilityLedger(
+        (artifact("old", datetime(2021, 8, 1, tzinfo=UTC), "a" * 64),),
+        (security(tmp_path),),
+    )
+    snapshot = ledger.write_snapshot(
+        tmp_path / "snapshots",
+        datetime(2021, 9, 15, tzinfo=UTC),
+        ("AAPL",),
+        dataset_version="sec-v1",
+        fund_holdings=(holding,),
+    )
+
+    assert (snapshot / "nport_sources" / f"{digest}.bin").read_bytes() == nport_source.read_bytes()
+    holdings = snapshot / "fund_holdings.jsonl"
+    holdings.write_text(
+        holdings.read_text().replace('"holding_name":"Apple"', '"holding_name":"X"')
+    )
+    with pytest.raises(PITLedgerError, match="fund holding hash mismatch"):
+        load_snapshot(snapshot)
+
+
+def test_snapshot_load_rejects_resealed_future_nport_holding(tmp_path: Path) -> None:
+    source = tmp_path / "nport.zip"
+    source.write_bytes(b"retained N-PORT archive")
+    digest = hashlib.sha256(source.read_bytes()).hexdigest()
+    holding = NPortHolding(
+        fund_id="S1",
+        fund_name="Fund",
+        holding_id="H1",
+        holding_name="Apple",
+        report_at=datetime(2021, 6, 30, tzinfo=UTC),
+        public_available_at=datetime(2021, 8, 2, tzinfo=UTC),
+        accession="0001",
+        raw_artifact_id=f"sec-nport:{digest}",
+        raw_content_hash=digest,
+        raw_uri=source.as_posix(),
+        archive_retrieved_at=datetime(2021, 8, 2, tzinfo=UTC),
+    )
+    snapshot = PITAvailabilityLedger(
+        (artifact("old", datetime(2021, 8, 1, tzinfo=UTC), "a" * 64),),
+        (security(tmp_path),),
+    ).write_snapshot(
+        tmp_path / "snapshots",
+        datetime(2021, 9, 15, tzinfo=UTC),
+        ("AAPL",),
+        dataset_version="sec-v1",
+        fund_holdings=(holding,),
+    )
+    future = holding.model_copy(update={"public_available_at": datetime(2025, 1, 1, tzinfo=UTC)})
+    (snapshot / "fund_holdings.jsonl").write_text(canonical_json(future) + "\n")
+    manifest = PITSnapshotManifest.model_validate_json((snapshot / "manifest.json").read_bytes())
+    forged = manifest.model_copy(
+        update={"fund_holding_hashes": (canonical_sha256(future),), "manifest_hash": None}
+    ).sealed()
+    (snapshot / "manifest.json").write_text(canonical_json(forged) + "\n")
+
+    with pytest.raises(PITLedgerError, match="future fund holding"):
+        load_snapshot(snapshot)

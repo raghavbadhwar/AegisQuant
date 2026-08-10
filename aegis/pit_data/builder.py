@@ -242,18 +242,36 @@ def normalize_nport(
     root: str | Path,
     archive_path: str | Path,
     *,
-    raw_artifact_id: str,
+    raw_receipt: RawDocumentReceipt,
     series_ids: frozenset[str],
 ) -> tuple[NPortHolding, ...]:
     """Persist selected real N-PORT rows; source zip remains immutable in raw store."""
     lake = bootstrap(root)
-    rows = normalize_nport_holdings(
-        archive_path, raw_artifact_id=raw_artifact_id, series_ids=series_ids
-    )
+    rows = normalize_nport_holdings(archive_path, raw_receipt=raw_receipt, series_ids=series_ids)
     output = lake / "normalized" / "nport_holdings.jsonl"
-    existing = set(output.read_text().splitlines()) if output.exists() else set()
-    additions = [canonical_json(item) for item in rows]
+    existing = (
+        tuple(
+            NPortHolding.model_validate_json(line)
+            for line in output.read_text().splitlines()
+            if line
+        )
+        if output.exists()
+        else ()
+    )
+    known = {(item.accession, item.holding_id): item for item in existing}
+    if len(known) != len(existing):
+        raise PITBuildError("duplicate immutable N-PORT holding")
+    additions: list[NPortHolding] = []
+    for row in rows:
+        key = (row.accession, row.holding_id)
+        previous = known.get(key)
+        if previous is not None:
+            if previous != row:
+                raise PITBuildError("conflicting immutable N-PORT holding")
+            continue
+        known[key] = row
+        additions.append(row)
     if additions:
         with output.open("a") as handle:
-            handle.write("".join(item + "\n" for item in additions if item not in existing))
+            handle.write("".join(canonical_json(item) + "\n" for item in additions))
     return rows

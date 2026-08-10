@@ -55,7 +55,9 @@ receipt. The projection itself does not read, write, or authorize that register.
 1. There is no approved survivorship-safe, PIT market/universe/corporate-action/delisting source.
 2. Archived accession XBRL parsing is implemented, but a governed real-filing corpus and externally retained original-record receipts remain unavailable.
 3. Receipt-bound dated security-master import is implemented, but no approved identifier-history source has been supplied.
-4. N-PORT disclosure timing and raw archive-to-receipt binding need production hardening.
+4. N-PORT receipt, holding-identity, observed-availability, and snapshot-source
+   binding are implemented, but governed historical dissemination evidence and
+   externally retained original receipts remain unavailable.
 
 The local Yahoo fixture and all reports bound to it are engineering-only
 plumbing evidence. They cannot support release acceptance, eligibility,

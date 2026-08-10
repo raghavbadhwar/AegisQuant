@@ -80,7 +80,10 @@ class PITAvailabilityLedger:
         cutoff = self._cutoff(at)
         selected = self.get_artifacts_as_of(cutoff, universe)
         selected_holdings = tuple(
-            item for item in fund_holdings if item.public_available_at <= cutoff
+            sorted(
+                (item for item in fund_holdings if item.public_available_at <= cutoff),
+                key=canonical_sha256,
+            )
         )
         if any(item.available_at > cutoff for item in selected):
             raise PITLedgerError("future artifact contamination")
@@ -113,6 +116,15 @@ class PITAvailabilityLedger:
             if hashlib.sha256(source_bytes).hexdigest() != item.source_content_hash:
                 raise PITLedgerError("security source hash mismatch")
             security_sources[item.source_content_hash] = source_bytes
+        nport_sources: dict[str, bytes] = {}
+        for holding in selected_holdings:
+            try:
+                source_bytes = Path(holding.raw_uri).read_bytes()
+            except OSError as exc:
+                raise PITLedgerError("N-PORT source is unavailable") from exc
+            if hashlib.sha256(source_bytes).hexdigest() != holding.raw_content_hash:
+                raise PITLedgerError("N-PORT source hash mismatch")
+            nport_sources[holding.raw_content_hash] = source_bytes
         destination.parent.mkdir(parents=True, exist_ok=True)
         manifest = PITSnapshotManifest(
             simulation_at=cutoff,
@@ -123,6 +135,10 @@ class PITAvailabilityLedger:
             artifact_hashes=tuple(item.sha256 for item in selected),
             security_record_ids=tuple(item.source_record_id for item in security_rows),
             security_record_hashes=tuple(canonical_sha256(item) for item in security_rows),
+            fund_holding_ids=tuple(
+                f"{item.accession}:{item.holding_id}" for item in selected_holdings
+            ),
+            fund_holding_hashes=tuple(canonical_sha256(item) for item in selected_holdings),
             dataset_version=dataset_version,
             parser_versions=tuple(sorted({item.parser_version for item in selected})),
             warnings=warnings,
@@ -130,8 +146,11 @@ class PITAvailabilityLedger:
         temporary = destination.with_name(f".{destination.name}.{os.getpid()}.tmp")
         temporary.mkdir()
         (temporary / "security_sources").mkdir()
+        (temporary / "nport_sources").mkdir()
         for digest, source_bytes in security_sources.items():
             (temporary / "security_sources" / f"{digest}.bin").write_bytes(source_bytes)
+        for digest, source_bytes in nport_sources.items():
+            (temporary / "nport_sources" / f"{digest}.bin").write_bytes(source_bytes)
         (temporary / "manifest.json").write_text(canonical_json(manifest) + "\n")
         (temporary / "artifacts.jsonl").write_text(
             "".join(canonical_json(item) + "\n" for item in selected)
@@ -160,6 +179,11 @@ def load_snapshot(path: str | Path) -> tuple[PITSnapshotManifest, tuple[PITArtif
             for line in (root / "security_master.jsonl").read_text().splitlines()
             if line
         )
+        holdings = tuple(
+            NPortHolding.model_validate_json(line)
+            for line in (root / "fund_holdings.jsonl").read_text().splitlines()
+            if line
+        )
     except Exception as exc:
         raise PITLedgerError(f"invalid PIT snapshot: {path}") from exc
     universe = set(manifest.universe)
@@ -177,6 +201,8 @@ def load_snapshot(path: str | Path) -> tuple[PITSnapshotManifest, tuple[PITArtif
         raise PITLedgerError("snapshot security mapping is not valid at its cutoff")
     if any(item.available_at > manifest.simulation_at for item in rows):
         raise PITLedgerError("snapshot contains future artifact")
+    if any(item.public_available_at > manifest.simulation_at for item in holdings):
+        raise PITLedgerError("snapshot contains future fund holding")
     if tuple(item.artifact_id for item in rows) != manifest.artifact_ids:
         raise PITLedgerError("snapshot artifact lineage mismatch")
     if tuple(item.sha256 for item in rows) != manifest.artifact_hashes:
@@ -185,6 +211,12 @@ def load_snapshot(path: str | Path) -> tuple[PITSnapshotManifest, tuple[PITArtif
         raise PITLedgerError("snapshot security mapping lineage mismatch")
     if tuple(canonical_sha256(item) for item in securities) != manifest.security_record_hashes:
         raise PITLedgerError("snapshot security mapping hash mismatch")
+    if tuple(canonical_sha256(item) for item in holdings) != manifest.fund_holding_hashes:
+        raise PITLedgerError("snapshot fund holding hash mismatch")
+    if tuple(f"{item.accession}:{item.holding_id}" for item in holdings) != (
+        manifest.fund_holding_ids
+    ):
+        raise PITLedgerError("snapshot fund holding lineage mismatch")
     for item in securities:
         try:
             source_bytes = (
@@ -194,5 +226,12 @@ def load_snapshot(path: str | Path) -> tuple[PITSnapshotManifest, tuple[PITArtif
             raise PITLedgerError("snapshot security source hash mismatch") from exc
         if hashlib.sha256(source_bytes).hexdigest() != item.source_content_hash:
             raise PITLedgerError("snapshot security source hash mismatch")
+    for holding in holdings:
+        try:
+            source_bytes = (root / "nport_sources" / f"{holding.raw_content_hash}.bin").read_bytes()
+        except OSError as exc:
+            raise PITLedgerError("snapshot N-PORT source hash mismatch") from exc
+        if hashlib.sha256(source_bytes).hexdigest() != holding.raw_content_hash:
+            raise PITLedgerError("snapshot N-PORT source hash mismatch")
     PITAvailabilityLedger((), securities)
     return manifest, rows
