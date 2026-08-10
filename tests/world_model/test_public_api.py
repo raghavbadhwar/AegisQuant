@@ -47,3 +47,10 @@ def test_world_model_exports_candidate_only_v4d_contracts() -> None:
     assert world_model.PortfolioScenarioImpactReport
     assert world_model.CausalExposureReport
     assert world_model.CounterfactualPostMortem
+
+
+def test_world_model_exports_candidate_only_v4e_contracts() -> None:
+    assert world_model.MicrostructureScenario
+    assert world_model.MicrostructureAdapterConfig
+    assert world_model.MicrostructureResearchOutcome
+    assert world_model.ExternalMicrostructureAdapterAbstention

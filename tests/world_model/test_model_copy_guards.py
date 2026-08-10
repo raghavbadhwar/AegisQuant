@@ -64,6 +64,12 @@ from aegis.world_model.market_response import (
     MarketResponseOutcome,
     MarketResponseRequest,
 )
+from aegis.world_model.microstructure import (
+    ExternalMicrostructureAdapterAbstention,
+    MicrostructureAdapterConfig,
+    MicrostructureResearchOutcome,
+    MicrostructureScenario,
+)
 from aegis.world_model.optional_adapters import OptionalAdapterAbstention
 from aegis.world_model.portfolio_intelligence import (
     CausalExposureReport,
@@ -186,6 +192,10 @@ def test_every_public_v4_candidate_contract_uses_the_revalidating_base() -> None
         PortfolioScenarioImpactReport,
         CausalPathExposure,
         CausalExposureReport,
+        MicrostructureScenario,
+        MicrostructureAdapterConfig,
+        MicrostructureResearchOutcome,
+        ExternalMicrostructureAdapterAbstention,
         FrozenParameterArtifact,
         OutcomeParameterTerm,
         BoundedOutcomeModel,

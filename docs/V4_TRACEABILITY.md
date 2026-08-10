@@ -18,6 +18,13 @@ orders, risk decisions, approvals, or promotion output. Event calibration,
 baseline comparison, and any outperformance assertion remain release-gated
 until governed survivorship-safe PIT evidence and retained receipts exist.
 
+The v4E microstructure module is an isolated engineering-only stress adapter.
+It retains the fixed `aegis-v3-simulated-execution-cost-seam` boundary label but
+does not import or invoke the v3 broker/execution path and accepts no order
+inputs. ABIDES, StockSim, and DeepMarket are represented only by explicit
+`integration_not_approved` abstentions until their dependencies, licences, and
+separate validation are approved.
+
 `aegis.reporting.traceability.EngineeringTraceabilityReport` is the governed,
 read-only projection for the engineering evidence that accompanies this work.
 It records hash references only; it neither reads external sources nor emits a

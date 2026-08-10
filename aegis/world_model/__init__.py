@@ -42,6 +42,17 @@ from .market_response import (
     MarketResponseRequest,
     MarketResponseStatus,
 )
+from .microstructure import (
+    V3_SIMULATED_EXECUTION_BOUNDARY_ID,
+    DeterministicMicrostructureResearchAdapter,
+    ExternalMicrostructureAdapterAbstention,
+    MicrostructureAdapterConfig,
+    MicrostructureResearchOutcome,
+    MicrostructureScenario,
+    MicrostructureSimulator,
+    MicrostructureStatus,
+    probe_external_microstructure_adapter,
+)
 from .optional_adapters import OptionalAdapterAbstention, probe_optional_adapter
 from .portfolio_intelligence import (
     CausalExposureReport,
@@ -99,6 +110,7 @@ from .uncertainty import (
 
 __all__ = [
     "AI_INFRASTRUCTURE_DOMAIN",
+    "V3_SIMULATED_EXECUTION_BOUNDARY_ID",
     "BoundedOutcomeModel",
     "CapexToSupplierRevenueParameters",
     "CapexToSupplierRevenueTwin",
@@ -113,6 +125,7 @@ __all__ = [
     "CounterfactualRequest",
     "CounterfactualStatus",
     "DeterministicInvestorResponseAdapter",
+    "DeterministicMicrostructureResearchAdapter",
     "DigitalTwin",
     "DistributionKind",
     "DistributionSpec",
@@ -121,6 +134,7 @@ __all__ = [
     "EffectContribution",
     "EffectContributionLedger",
     "ExperimentStatus",
+    "ExternalMicrostructureAdapterAbstention",
     "FeedbackConvergencePolicy",
     "FeedbackRule",
     "FeedbackSolveResult",
@@ -136,6 +150,11 @@ __all__ = [
     "MarketResponseRequest",
     "MarketResponseStatus",
     "MechanismRegistry",
+    "MicrostructureAdapterConfig",
+    "MicrostructureResearchOutcome",
+    "MicrostructureScenario",
+    "MicrostructureSimulator",
+    "MicrostructureStatus",
     "ModelRiskTier",
     "MonteCarloRunManifest",
     "MonteCarloRunResult",
@@ -180,6 +199,7 @@ __all__ = [
     "derive_causal_exposure_report",
     "evaluate_scenario_grid",
     "one_at_a_time_sensitivity",
+    "probe_external_microstructure_adapter",
     "probe_optional_adapter",
     "propagate_effect",
     "resolve_counterfactual",
