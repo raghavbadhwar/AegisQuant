@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from itertools import pairwise
 from typing import Literal, Self
 
 from pydantic import AwareDatetime, Field, model_validator
@@ -424,4 +425,233 @@ def build_candidate_recommendation(
         blocking_evidence_ids=blocking,
         disposition=disposition,
         reason=reason,
+    ).sealed()
+
+
+AdaptiveLoopStopReason = Literal[
+    "iteration_cap",
+    "cycle_detected",
+    "budget_exhausted",
+    "deadline_reached",
+    "non_positive_voi",
+    "decision_robust",
+    "non_decision_changing_uncertainty",
+]
+
+
+class AdaptiveLoopPolicy(_SealedAdaptiveModel):
+    """Frozen logical bounds for the no-I/O candidate history builder."""
+
+    policy_id: str = Field(min_length=1)
+    as_of: AwareDatetime
+    max_iterations: int = Field(ge=1, le=16)
+    budget_units: int = Field(ge=0)
+    deadline_reached: bool
+    decision_robust: bool
+    uncertainty_can_change_decision: bool
+    authority: Literal["candidate_only"] = "candidate_only"
+    evidence_status: Literal["engineering_only"] = "engineering_only"
+    release_status: Literal["release_gated"] = "release_gated"
+
+
+class AdaptiveHistoryEntry(_SealedAdaptiveModel):
+    """One immutable candidate recommendation in linear adaptive history."""
+
+    sequence: int = Field(ge=1)
+    recommendation: CandidateRecommendation
+    predecessor_hash: str | None = Field(default=None, pattern=_SHA256)
+    iteration_cost_units: int = Field(ge=0)
+    expected_voi_units: int
+    authority: Literal["candidate_only"] = "candidate_only"
+    evidence_status: Literal["engineering_only"] = "engineering_only"
+    release_status: Literal["release_gated"] = "release_gated"
+
+    @model_validator(mode="after")
+    def binds_sealed_recommendation(self) -> AdaptiveHistoryEntry:
+        recommendation = CandidateRecommendation.model_validate(
+            self.recommendation.model_dump(mode="json")
+        )
+        if recommendation.content_hash is None:
+            raise ValueError("adaptive history entry requires a sealed recommendation")
+        if self.sequence == 1 and self.predecessor_hash is not None:
+            raise ValueError("first adaptive history entry cannot have a predecessor")
+        if self.sequence > 1 and self.predecessor_hash is None:
+            raise ValueError("later adaptive history entry requires a predecessor")
+        return self
+
+
+class AdaptiveHistory(_SealedAdaptiveModel):
+    """Bounded append-only candidate history; it never advances a live state."""
+
+    history_id: str = Field(min_length=1)
+    policy: AdaptiveLoopPolicy
+    entries: tuple[AdaptiveHistoryEntry, ...] = ()
+    total_cost_units: int = Field(ge=0)
+    stop_reason: AdaptiveLoopStopReason | None = None
+    cycle_attempt: CandidateRecommendation | None = None
+    budget_blocked_attempt: AdaptiveHistoryEntry | None = None
+    authority: Literal["candidate_only"] = "candidate_only"
+    evidence_status: Literal["engineering_only"] = "engineering_only"
+    release_status: Literal["release_gated"] = "release_gated"
+
+    @model_validator(mode="after")
+    def has_exact_linear_history_and_stop(self) -> AdaptiveHistory:
+        policy = AdaptiveLoopPolicy.model_validate(self.policy.model_dump(mode="json"))
+        entries = tuple(
+            AdaptiveHistoryEntry.model_validate(entry.model_dump(mode="json"))
+            for entry in self.entries
+        )
+        if policy.content_hash is None or any(entry.content_hash is None for entry in entries):
+            raise ValueError("adaptive history requires sealed policy and entries")
+        if any(entry.recommendation.as_of > policy.as_of for entry in entries):
+            raise ValueError("adaptive history recommendation is after policy cutoff")
+        if [entry.sequence for entry in entries] != list(range(1, len(entries) + 1)):
+            raise ValueError("adaptive history entry sequences must be contiguous")
+        if len(entries) > policy.max_iterations:
+            raise ValueError("adaptive history exceeds iteration cap")
+        for previous, current in pairwise(entries):
+            if current.predecessor_hash != previous.content_hash:
+                raise ValueError("adaptive history predecessor hash mismatch")
+        recommendation_hashes = [
+            _required_content_hash(entry.recommendation.content_hash) for entry in entries
+        ]
+        if len(recommendation_hashes) != len(set(recommendation_hashes)):
+            raise ValueError("adaptive history cannot append a recommendation cycle")
+        if self.total_cost_units != sum(entry.iteration_cost_units for entry in entries):
+            raise ValueError("adaptive history total cost must reconcile exactly")
+        expected_stop = _adaptive_history_stop_reason(policy, entries)
+        if self.total_cost_units > policy.budget_units:
+            raise ValueError("adaptive history cannot exceed its budget")
+        if self.cycle_attempt is not None:
+            attempted = CandidateRecommendation.model_validate(
+                self.cycle_attempt.model_dump(mode="json")
+            )
+            attempted_hash = _required_content_hash(attempted.content_hash)
+            if expected_stop is not None:
+                raise ValueError("adaptive history cannot override a bounded stop with a cycle")
+            if attempted_hash not in recommendation_hashes:
+                raise ValueError("adaptive history cycle attempt must reference an existing entry")
+            expected_stop = "cycle_detected"
+        elif self.stop_reason == "cycle_detected":
+            raise ValueError("adaptive history cycle stop requires a recorded cycle attempt")
+        if self.budget_blocked_attempt is not None:
+            blocked = AdaptiveHistoryEntry.model_validate(
+                self.budget_blocked_attempt.model_dump(mode="json")
+            )
+            if blocked.recommendation.as_of > policy.as_of:
+                raise ValueError("adaptive history blocked recommendation is after policy cutoff")
+            if expected_stop is not None:
+                raise ValueError(
+                    "adaptive history cannot override a bounded stop with a budget block"
+                )
+            if blocked.sequence != len(entries) + 1 or blocked.predecessor_hash != (
+                entries[-1].content_hash if entries else None
+            ):
+                raise ValueError("adaptive history blocked attempt must extend the exact lineage")
+            if _required_content_hash(blocked.recommendation.content_hash) in recommendation_hashes:
+                raise ValueError("adaptive history blocked attempt cannot repeat a recommendation")
+            if self.total_cost_units + blocked.iteration_cost_units <= policy.budget_units:
+                raise ValueError("adaptive history budget block must exceed remaining budget")
+            expected_stop = "budget_exhausted"
+        elif self.stop_reason == "budget_exhausted" and expected_stop != "budget_exhausted":
+            raise ValueError("adaptive history budget stop requires a blocked iteration")
+        if self.stop_reason != expected_stop:
+            raise ValueError("adaptive history stop reason does not match bounded inputs")
+        return self
+
+
+def _adaptive_history_stop_reason(
+    policy: AdaptiveLoopPolicy, entries: tuple[AdaptiveHistoryEntry, ...]
+) -> AdaptiveLoopStopReason | None:
+    if policy.deadline_reached:
+        return "deadline_reached"
+    if sum(entry.iteration_cost_units for entry in entries) >= policy.budget_units:
+        return "budget_exhausted"
+    if policy.decision_robust:
+        return "decision_robust"
+    if not policy.uncertainty_can_change_decision:
+        return "non_decision_changing_uncertainty"
+    if any(entry.expected_voi_units <= 0 for entry in entries):
+        return "non_positive_voi"
+    if len(entries) >= policy.max_iterations:
+        return "iteration_cap"
+    return None
+
+
+def build_adaptive_history(
+    *,
+    policy: AdaptiveLoopPolicy,
+    recommendations: tuple[CandidateRecommendation, ...],
+    iteration_cost_units: tuple[int, ...],
+    expected_voi_units: tuple[int, ...],
+    history_id: str = "adaptive-history",
+) -> AdaptiveHistory:
+    """Build a bounded, deterministic candidate history from sealed recommendations only."""
+
+    validated_policy = AdaptiveLoopPolicy.model_validate(policy.model_dump(mode="json"))
+    validated_recommendations = tuple(
+        CandidateRecommendation.model_validate(recommendation.model_dump(mode="json"))
+        for recommendation in recommendations
+    )
+    if validated_policy.content_hash is None or any(
+        recommendation.content_hash is None for recommendation in validated_recommendations
+    ):
+        raise ValueError("adaptive history builder requires sealed policy and recommendations")
+    if (
+        not (len(validated_recommendations) == len(iteration_cost_units) == len(expected_voi_units))
+        or not validated_recommendations
+    ):
+        raise ValueError("adaptive history inputs must be nonempty and equal length")
+    entries: list[AdaptiveHistoryEntry] = []
+    seen_recommendations: set[str] = set()
+    cycle_attempt: CandidateRecommendation | None = None
+    budget_blocked_attempt: AdaptiveHistoryEntry | None = None
+    for recommendation, cost, voi in zip(
+        validated_recommendations, iteration_cost_units, expected_voi_units, strict=True
+    ):
+        if _adaptive_history_stop_reason(validated_policy, tuple(entries)) is not None:
+            break
+        recommendation_hash = _required_content_hash(recommendation.content_hash)
+        if recommendation_hash in seen_recommendations:
+            cycle_attempt = recommendation
+            break
+        if len(entries) >= validated_policy.max_iterations:
+            break
+        if (
+            sum(entry.iteration_cost_units for entry in entries) + cost
+            > validated_policy.budget_units
+        ):
+            budget_blocked_attempt = AdaptiveHistoryEntry(
+                sequence=len(entries) + 1,
+                recommendation=recommendation,
+                predecessor_hash=entries[-1].content_hash if entries else None,
+                iteration_cost_units=cost,
+                expected_voi_units=voi,
+            ).sealed()
+            break
+        entries.append(
+            AdaptiveHistoryEntry(
+                sequence=len(entries) + 1,
+                recommendation=recommendation,
+                predecessor_hash=entries[-1].content_hash if entries else None,
+                iteration_cost_units=cost,
+                expected_voi_units=voi,
+            ).sealed()
+        )
+        seen_recommendations.add(recommendation_hash)
+        if _adaptive_history_stop_reason(validated_policy, tuple(entries)) is not None:
+            break
+    expected_stop = _adaptive_history_stop_reason(validated_policy, tuple(entries))
+    if cycle_attempt is not None:
+        expected_stop = "cycle_detected"
+    elif budget_blocked_attempt is not None:
+        expected_stop = "budget_exhausted"
+    return AdaptiveHistory(
+        history_id=history_id,
+        policy=validated_policy,
+        entries=tuple(entries),
+        total_cost_units=sum(entry.iteration_cost_units for entry in entries),
+        stop_reason=expected_stop,
+        cycle_attempt=cycle_attempt,
+        budget_blocked_attempt=budget_blocked_attempt,
     ).sealed()

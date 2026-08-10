@@ -9,8 +9,10 @@ from aegis.contracts import canonical_sha256
 from aegis.research_lab.adaptation import (
     AdaptationPolicy,
     AdaptiveEvaluationManifest,
+    AdaptiveLoopPolicy,
     AdaptiveTargetEnvelope,
     CandidateRecommendation,
+    build_adaptive_history,
     build_belief_adaptation_proposal,
     build_candidate_recommendation,
     evaluate_registered_adaptive_fixture,
@@ -329,3 +331,166 @@ def test_adaptation_proposal_rejects_future_belief_revision(tmp_path) -> None:
                 policy_id="policy", as_of=as_of, max_probability_delta=0.2, policy_deadline=as_of
             ).sealed(),
         )
+
+
+def test_adaptive_history_stops_at_iteration_cap_with_exact_lineage(tmp_path) -> None:
+    as_of = datetime(2026, 1, 15, tzinfo=UTC)
+    index = AdaptiveEvidenceIndex(tmp_path / "adaptive-evidence.sqlite")
+    payload = {"verification_package_id": "verification-1"}
+    receipt_payload = {"receipt_id": "receipt-1", "observed_at": as_of.isoformat()}
+    index.append(
+        AdaptiveEvidenceRecord(
+            evidence_id="verification-1",
+            record_kind="verification",
+            payload=payload,
+            payload_content_hash=canonical_sha256(payload),
+            receipt_id="receipt-1",
+            receipt_payload=receipt_payload,
+            receipt_content_hash=canonical_sha256(receipt_payload),
+            observed_at=as_of,
+        ).sealed()
+    )
+    prior = BeliefRevision(
+        revision_id="r1",
+        belief_id="b1",
+        sequence=1,
+        as_of=as_of,
+        prior_probability=0.4,
+        posterior_probability=0.4,
+        assumption_ids=("a1",),
+    ).sealed()
+    proposed = BeliefRevision(
+        revision_id="r2",
+        belief_id="b1",
+        sequence=2,
+        as_of=as_of,
+        prior_probability=0.4,
+        posterior_probability=0.5,
+        evidence_ids=("verification-1",),
+        assumption_ids=("a1",),
+        parent_revision_hash=prior.content_hash,
+    ).sealed()
+    proposal = build_belief_adaptation_proposal(
+        proposal_id="p1",
+        index=index,
+        as_of=as_of,
+        envelope=AdaptiveTargetEnvelope(
+            target_id="t1",
+            basis_revision_hash=prior.content_hash,
+            origin_receipt_id="o1",
+            origin_receipt_hash="b" * 64,
+            declared_origin_label="one",
+            revision_proposer_label="two",
+            version=1,
+        ).sealed(),
+        prior=prior,
+        proposed=proposed,
+        policy=AdaptationPolicy(
+            policy_id="policy", as_of=as_of, max_probability_delta=0.2, policy_deadline=as_of
+        ).sealed(),
+    )
+    result = evaluate_registered_adaptive_fixture(
+        AdaptiveEvaluationManifest(
+            manifest_id="m1",
+            proposal=proposal,
+            candidate_primary_score=11,
+            incumbent_primary_score=10,
+            candidate_protected_score=10,
+            incumbent_protected_score=10,
+            primary_threshold=1,
+            protected_regression_tolerance=0,
+        ).sealed()
+    )
+    recommendation = build_candidate_recommendation(
+        recommendation_id="recommendation-1", index=index, as_of=as_of, result=result
+    )
+
+    history = build_adaptive_history(
+        policy=AdaptiveLoopPolicy(
+            policy_id="loop-1",
+            as_of=as_of,
+            max_iterations=1,
+            budget_units=2,
+            deadline_reached=False,
+            decision_robust=False,
+            uncertainty_can_change_decision=True,
+        ).sealed(),
+        recommendations=(recommendation,),
+        iteration_cost_units=(1,),
+        expected_voi_units=(1,),
+    )
+
+    assert history.stop_reason == "iteration_cap"
+    assert history.entries[0].predecessor_hash is None
+    assert history.content_hash is not None
+
+    def stopped(policy_id: str, **overrides: bool | int) -> str | None:
+        policy_values: dict[str, bool | int] = {
+            "max_iterations": 2,
+            "budget_units": 2,
+            "deadline_reached": False,
+            "decision_robust": False,
+            "uncertainty_can_change_decision": True,
+        }
+        policy_values.update(overrides)
+        return build_adaptive_history(
+            policy=AdaptiveLoopPolicy(policy_id=policy_id, as_of=as_of, **policy_values).sealed(),
+            recommendations=(recommendation,),
+            iteration_cost_units=(1,),
+            expected_voi_units=(1,),
+        ).stop_reason
+
+    assert stopped("deadline", deadline_reached=True) == "deadline_reached"
+    assert stopped("budget", budget_units=1) == "budget_exhausted"
+    overspend = build_adaptive_history(
+        policy=AdaptiveLoopPolicy(
+            policy_id="hard-budget",
+            as_of=as_of,
+            max_iterations=2,
+            budget_units=1,
+            deadline_reached=False,
+            decision_robust=False,
+            uncertainty_can_change_decision=True,
+        ).sealed(),
+        recommendations=(recommendation,),
+        iteration_cost_units=(2,),
+        expected_voi_units=(1,),
+    )
+    assert overspend.stop_reason == "budget_exhausted"
+    assert overspend.entries == ()
+    assert stopped("robust", decision_robust=True) == "decision_robust"
+    assert stopped("unchanged", uncertainty_can_change_decision=False) == (
+        "non_decision_changing_uncertainty"
+    )
+    assert (
+        build_adaptive_history(
+            policy=AdaptiveLoopPolicy(
+                policy_id="voi",
+                as_of=as_of,
+                max_iterations=2,
+                budget_units=2,
+                deadline_reached=False,
+                decision_robust=False,
+                uncertainty_can_change_decision=True,
+            ).sealed(),
+            recommendations=(recommendation,),
+            iteration_cost_units=(1,),
+            expected_voi_units=(0,),
+        ).stop_reason
+        == "non_positive_voi"
+    )
+    cycle = build_adaptive_history(
+        policy=AdaptiveLoopPolicy(
+            policy_id="cycle",
+            as_of=as_of,
+            max_iterations=2,
+            budget_units=3,
+            deadline_reached=False,
+            decision_robust=False,
+            uncertainty_can_change_decision=True,
+        ).sealed(),
+        recommendations=(recommendation, recommendation),
+        iteration_cost_units=(1, 1),
+        expected_voi_units=(1, 1),
+    )
+    assert cycle.stop_reason == "cycle_detected"
