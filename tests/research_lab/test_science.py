@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from aegis.contracts import ExperimentRecord, canonical_sha256
+from aegis.contracts import ExperimentRecord, canonical_json, canonical_sha256
 from aegis.harness.capability_broker import CapabilityDenied
 from aegis.reporting.traceability import SnapshotReference, SourceProvenanceReference
 from aegis.research_lab.experiments import ExperimentIntegrityError, ExperimentLedger
@@ -34,11 +34,13 @@ from aegis.research_lab.science import (
     ResearchTeam,
     ResearchTree,
     ResearchTreeNode,
+    ScienceReport,
     VerificationPackage,
     authorize_v6_research_tool,
     load_experiment_run,
     rank_research_portfolio,
     record_experiment_run,
+    science_report_view,
 )
 
 AS_OF = datetime(2026, 1, 15, tzinfo=UTC)
@@ -451,6 +453,97 @@ def test_verified_claim_requires_independent_replication_and_identities(tmp_path
         package.model_copy(
             update={"replications": (replication, duplicate_wrapper), "content_hash": None}
         )
+
+
+def test_science_report_cannot_exceed_verification_package_and_is_byte_stable(
+    tmp_path: Path,
+) -> None:
+    tree, plan = _reviewed_tree_and_plan()
+    run = _experiment_run(tree, plan)
+    ledger = ExperimentLedger(tmp_path / "science-report.sqlite")
+    assert record_experiment_run(ledger, run, tree) == run
+    package = VerificationPackage(
+        package_id="verification-report",
+        original_run=run,
+        original_record=ledger.get(run.experiment_id),
+        verifier_id="verifier-report",
+        approver_id="approver-report",
+        limitations=("Registered fixture evidence only.",),
+        claim_strength_ceiling="limited",
+        verified_at=AS_OF + timedelta(minutes=6),
+    ).sealed()
+    archive = ResearchArchive(
+        archive_id="archive-report",
+        programme_id=tree.programme.programme_id,
+    ).sealed()
+
+    with pytest.raises(ValidationError, match="verification strength"):
+        ScienceReport(
+            report_id="report-inflated",
+            programme=tree.programme,
+            archive=archive,
+            verification_package=package,
+            declared_strength="verified",
+            declared_limitations=package.limitations,
+        )
+
+    report = ScienceReport(
+        report_id="report-1",
+        programme=tree.programme,
+        archive=archive,
+        verification_package=package,
+        declared_strength=package.claim_strength_ceiling,
+        declared_limitations=package.limitations,
+    ).sealed()
+    first = canonical_json(science_report_view(report))
+    second = canonical_json(science_report_view(report))
+    assert first.encode() == second.encode()
+    assert science_report_view(report)["verification"] == {
+        "claim_strength": "limited",
+        "limitations": ["Registered fixture evidence only."],
+        "package_id": "verification-report",
+        "replication_ids": [],
+    }
+
+    alien_hypothesis = plan.hypothesis.model_copy(
+        update={"statement": "Substituted hypothesis.", "content_hash": None}
+    ).sealed()
+    alien_plan = plan.model_copy(
+        update={"hypothesis": alien_hypothesis, "content_hash": None}
+    ).sealed()
+    alien_run = run.model_copy(update={"plan": alien_plan, "content_hash": None}).sealed()
+    alien_negative = NegativeResult(
+        negative_result_id="negative-alien",
+        run=alien_run,
+        disposition="inconclusive",
+        category="causal",
+        reason="Substituted run.",
+        reopen_condition="Never use this report lineage.",
+        mechanism_id=alien_hypothesis.mechanism_id,
+        assumption_ids=alien_hypothesis.assumption_ids,
+        recorded_at=AS_OF + timedelta(minutes=5),
+        evidence_binding=tree.programme.evidence_binding,
+    ).sealed()
+    alien_archive = ResearchArchive(
+        archive_id="archive-alien",
+        programme_id=tree.programme.programme_id,
+        negative_results=(alien_negative,),
+    ).sealed()
+    with pytest.raises(ValidationError, match="lineage"):
+        report.model_copy(update={"archive": alien_archive, "content_hash": None})
+
+    alien_postmortem = ResearchPostmortem(
+        postmortem_id="postmortem-alien",
+        run=alien_run,
+        outcome="inconclusive",
+        negative_result=alien_negative,
+        reviewer_id="reviewer-alien",
+        limitations=("Substituted run.",),
+        recorded_at=AS_OF + timedelta(minutes=6),
+        evidence_binding=tree.programme.evidence_binding,
+    ).sealed()
+    with pytest.raises(ValidationError, match="lineage"):
+        report.model_copy(update={"postmortems": (alien_postmortem,), "content_hash": None})
 
 
 def test_archive_surfaces_prior_negative_results_and_reconciles_contributions() -> None:
@@ -1265,6 +1358,7 @@ def test_v6_science_contracts_are_public_and_model_copy_fail_closed() -> None:
         "ResearchPostmortem",
         "ResearchPortfolio",
         "ResearchPortfolioCandidate",
+        "ScienceReport",
         "ResearchTeam",
         "ResearchTree",
         "ResearchTreeNode",
@@ -1274,6 +1368,7 @@ def test_v6_science_contracts_are_public_and_model_copy_fail_closed() -> None:
         "load_experiment_run",
         "record_experiment_run",
         "rank_research_portfolio",
+        "science_report_view",
     ):
         assert getattr(research_lab, name)
 

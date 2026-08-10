@@ -1065,6 +1065,82 @@ class ResearchContributionReport(_SealedScienceModel):
         return self
 
 
+class ScienceReport(_SealedScienceModel):
+    """Sealed candidate-only report whose wording cannot exceed its package."""
+
+    report_id: str = Field(min_length=1)
+    programme: ResearchProgramme
+    archive: ResearchArchive
+    verification_package: VerificationPackage
+    postmortems: tuple[ResearchPostmortem, ...] = ()
+    declared_strength: Literal["limited", "verified"]
+    declared_limitations: tuple[str, ...] = Field(min_length=1)
+    authority: Literal["candidate_only"] = "candidate_only"
+    release_disposition: Literal["engineering_only"] = "engineering_only"
+
+    @model_validator(mode="after")
+    def binds_programme_archive_package_and_wording(self) -> ScienceReport:
+        programme = ResearchProgramme.model_validate_json(self.programme.model_dump_json())
+        archive = ResearchArchive.model_validate_json(self.archive.model_dump_json())
+        package = VerificationPackage.model_validate_json(
+            self.verification_package.model_dump_json()
+        )
+        postmortems = tuple(
+            ResearchPostmortem.model_validate_json(item.model_dump_json())
+            for item in self.postmortems
+        )
+        if any(item.content_hash is None for item in (programme, archive, package, *postmortems)):
+            raise ValueError("science report requires sealed source artifacts")
+        if self.declared_strength != package.claim_strength_ceiling:
+            raise ValueError("science report cannot exceed verification strength")
+        if self.declared_limitations != package.limitations:
+            raise ValueError("science report limitations must match the verification package")
+        if (
+            archive.programme_id != programme.programme_id
+            or package.original_run.programme_id != programme.programme_id
+            or any(item.run.programme_id != programme.programme_id for item in postmortems)
+        ):
+            raise ValueError("science report artifacts must share one programme")
+        hypotheses = {
+            hypothesis.content_hash
+            for family in programme.hypothesis_families
+            for hypothesis in family.hypotheses
+        }
+        report_runs = (
+            package.original_run,
+            *(item.run for item in archive.negative_results),
+            *(item.run for item in postmortems),
+        )
+        if any(
+            run.plan.hypothesis.content_hash not in hypotheses
+            or run.plan.evidence_binding.content_hash != programme.evidence_binding.content_hash
+            for run in report_runs
+        ):
+            raise ValueError("science report run lineage does not match the programme")
+        return self
+
+
+def science_report_view(report: ScienceReport) -> dict[str, Any]:
+    """Return deterministic JSON-safe candidate-only report data."""
+
+    validated = ScienceReport.model_validate_json(report.model_dump_json())
+    package = validated.verification_package
+    return {
+        "report_id": validated.report_id,
+        "authority": validated.authority,
+        "release_disposition": validated.release_disposition,
+        "programme": validated.programme.model_dump(mode="json"),
+        "archive": validated.archive.model_dump(mode="json"),
+        "verification": {
+            "package_id": package.package_id,
+            "claim_strength": package.claim_strength_ceiling,
+            "limitations": list(package.limitations),
+            "replication_ids": [item.replication_id for item in package.replications],
+        },
+        "postmortems": [item.model_dump(mode="json") for item in validated.postmortems],
+    }
+
+
 class ResearchPortfolioCandidate(_SealedScienceModel):
     """Finite read-only research candidate; scoring grants no spending authority."""
 

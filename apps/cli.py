@@ -45,6 +45,7 @@ from aegis.quant_research.demo import (
     demo_universe,
 )
 from aegis.reporting import dossier_html, dossier_json, dossier_markdown
+from aegis.research_lab import ScienceReport, science_report_view
 from aegis.sources import RawStore, SourceGateway, SourcePlanner, SourceRegistry
 from aegis.sources.adapters import DirectHTTPConnector
 
@@ -61,18 +62,30 @@ demo_app = typer.Typer(
 strategy_app = typer.Typer(help="Honest predeclared strategy evaluation.")
 fund_app = typer.Typer(help="Multi-strategy simulated fund workflows.")
 pit_app = typer.Typer(help="Real-source, availability-gated historical PIT dataset builder.")
+science_app = typer.Typer(help="Candidate-only read-only science reports.")
 app.add_typer(source_app, name="sources")
 app.add_typer(research_app, name="research")
 app.add_typer(demo_app, name="demo")
 app.add_typer(strategy_app, name="strategy")
 app.add_typer(fund_app, name="fund")
 app.add_typer(pit_app, name="pit")
+app.add_typer(science_app, name="science")
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 def _project_path(value: str | Path) -> Path:
     path = Path(value)
     return path.resolve() if path.is_absolute() else (PROJECT_ROOT / path).resolve()
+
+
+@science_app.command("view")
+def science_view(
+    report_path: Annotated[Path, typer.Argument(help="Sealed local v6 science report JSON")],
+) -> None:
+    """Validate and print one local report without creating or mutating records."""
+
+    report = ScienceReport.model_validate_json(_project_path(report_path).read_bytes())
+    typer.echo(canonical_json(science_report_view(report)))
 
 
 @pit_app.command("bootstrap")

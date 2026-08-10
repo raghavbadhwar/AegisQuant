@@ -2,11 +2,20 @@ from __future__ import annotations
 
 import json
 import socket
+from datetime import timedelta
 from pathlib import Path
 
 from typer.testing import CliRunner
 
+from aegis.research_lab import (
+    ExperimentLedger,
+    ResearchArchive,
+    ScienceReport,
+    VerificationPackage,
+    record_experiment_run,
+)
 from apps.cli import app
+from tests.research_lab.test_science import AS_OF, _experiment_run, _reviewed_tree_and_plan
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -139,3 +148,50 @@ def test_v3b_cli_surface_is_offline_typed_and_byte_stable(tmp_path: Path, monkey
     help_result = runner.invoke(app, ["fund", "--help"])
     assert help_result.exit_code == 0
     assert "backtest" in help_result.stdout
+
+
+def _science_report_path(tmp_path: Path) -> Path:
+    tree, plan = _reviewed_tree_and_plan()
+    run = _experiment_run(tree, plan)
+    ledger = ExperimentLedger(tmp_path / "science.sqlite")
+    assert record_experiment_run(ledger, run, tree) == run
+    package = VerificationPackage(
+        package_id="verification-cli",
+        original_run=run,
+        original_record=ledger.get(run.experiment_id),
+        verifier_id="verifier-cli",
+        approver_id="approver-cli",
+        limitations=("Registered fixture evidence only.",),
+        claim_strength_ceiling="limited",
+        verified_at=AS_OF + timedelta(minutes=6),
+    ).sealed()
+    report = ScienceReport(
+        report_id="report-cli",
+        programme=tree.programme,
+        archive=ResearchArchive(
+            archive_id="archive-cli",
+            programme_id=tree.programme.programme_id,
+        ).sealed(),
+        verification_package=package,
+        declared_strength=package.claim_strength_ceiling,
+        declared_limitations=package.limitations,
+    ).sealed()
+    report_path = tmp_path / "report.json"
+    report_path.write_text(report.model_dump_json())
+    return report_path
+
+
+def test_science_view_is_read_only_byte_stable_and_rejects_action_flags(tmp_path: Path) -> None:
+    report_path = _science_report_path(tmp_path)
+    before = report_path.read_bytes()
+
+    first = CliRunner().invoke(app, ["science", "view", str(report_path)])
+    second = CliRunner().invoke(app, ["science", "view", str(report_path)])
+    assert first.exit_code == 0, first.output
+    assert first.stdout.encode() == second.stdout.encode()
+    assert json.loads(first.stdout)["verification"]["claim_strength"] == "limited"
+    assert report_path.read_bytes() == before
+    for flag in ("--create", "--run", "--approve", "--promote", "--acquire"):
+        denied = CliRunner().invoke(app, ["science", "view", str(report_path), flag])
+        assert denied.exit_code != 0
+        assert "No such option" in denied.output
