@@ -114,6 +114,19 @@ def test_structural_edge_requires_domain_validated_status() -> None:
         )
 
 
+def test_c3_support_requires_a_structural_mechanism_edge() -> None:
+    with pytest.raises(ValueError, match="structural mechanism edge"):
+        candidate(
+            kind=CausalEdgeKind.IDENTIFIED_CAUSE,
+            status=EdgeStatus.SUPPORTED,
+            support_level=CausalSupportLevel.C3_STRUCTURAL,
+            identification=passing_identification(),
+            mechanism_model_id="mechanism-1",
+            evidence_ids=("e-1",),
+            assumption_ids=("parallel-trends",),
+        )
+
+
 def test_identification_record_must_bind_edge_evidence_assumptions_and_confounders() -> None:
     with pytest.raises(ValueError, match="bind the causal edge"):
         candidate(
@@ -188,6 +201,24 @@ def test_identification_record_rejects_undeclared_refutation_assumptions() -> No
                     evaluated_at=NOW,
                     evaluator_id="validator-1",
                     reason="Placebo test used an undeclared assumption.",
+                ),
+            )
+        )
+
+
+def test_identification_record_rejects_a_refutation_after_validation() -> None:
+    with pytest.raises(ValueError, match="after validation"):
+        passing_identification(
+            refutations=(
+                RefutationRecord(
+                    refutation_id="late-placebo-pass",
+                    method="placebo-treatment",
+                    status=RefutationStatus.PASSED,
+                    assumption_ids=("parallel-trends",),
+                    evidence_ids=("e-1",),
+                    evaluated_at=NOW + timedelta(days=1),
+                    evaluator_id="validator-1",
+                    reason="The refutation completed after validation.",
                 ),
             )
         )

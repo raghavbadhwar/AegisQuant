@@ -1,5 +1,13 @@
 """Candidate-only v4 world-model contracts; no portfolio or execution authority."""
 
+from .ai_infrastructure import (
+    AI_INFRASTRUCTURE_DOMAIN,
+    CapexToSupplierRevenueParameters,
+    CapexToSupplierRevenueTwin,
+    CompiledScenarioTwin,
+    MechanismRegistry,
+    VersionedMechanism,
+)
 from .contracts import ScenarioIntervention, WorldSnapshot, WorldVariable
 from .contributions import EffectContribution, EffectContributionLedger, TargetEffectReconciliation
 from .counterfactual import (
@@ -30,8 +38,12 @@ from .uncertainty import (
 )
 
 __all__ = [
+    "AI_INFRASTRUCTURE_DOMAIN",
+    "CapexToSupplierRevenueParameters",
+    "CapexToSupplierRevenueTwin",
     "CausalMechanismApproval",
     "CompiledScenario",
+    "CompiledScenarioTwin",
     "CounterfactualOutcome",
     "CounterfactualRequest",
     "CounterfactualStatus",
@@ -44,6 +56,7 @@ __all__ = [
     "EffectContributionLedger",
     "ExperimentStatus",
     "InvariantViolation",
+    "MechanismRegistry",
     "ModelRiskTier",
     "ProbabilityCalibrationStatus",
     "ProbabilityProvenance",
@@ -56,6 +69,7 @@ __all__ = [
     "TwinState",
     "TwinTransition",
     "UncertaintyDecomposition",
+    "VersionedMechanism",
     "WorldModelExperimentLedger",
     "WorldModelExperimentManifest",
     "WorldSnapshot",

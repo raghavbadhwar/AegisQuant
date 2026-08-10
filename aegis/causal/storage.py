@@ -150,16 +150,10 @@ class CausalGraphStore:
         return graph
 
     def get(self, domain_pack: str, graph_version: int) -> CausalGraphSnapshot:
-        with sqlite3.connect(self.path) as connection:
-            row = connection.execute(
-                """SELECT domain_pack, graph_version, snapshot_id, parent_snapshot_hash,
-                          content_hash, graph_json
-                   FROM causal_graphs WHERE domain_pack = ? AND graph_version = ?""",
-                (domain_pack, graph_version),
-            ).fetchone()
-        if row is None:
-            raise CausalGraphIntegrityError("causal graph version not found")
-        return self._decode(row)
+        for graph in self.history(domain_pack):
+            if graph.graph_version == graph_version:
+                return graph
+        raise CausalGraphIntegrityError("causal graph version not found")
 
     def latest(self, domain_pack: str) -> CausalGraphSnapshot:
         history = self.history(domain_pack)

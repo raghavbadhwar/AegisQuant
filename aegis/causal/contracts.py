@@ -99,6 +99,8 @@ class IdentificationRecord(CandidateContractModel):
             raise ValueError("identification refutation IDs must be unique")
         if any(refutation.status != RefutationStatus.PASSED for refutation in self.refutations):
             raise ValueError("identified status is unavailable after a failed refutation")
+        if any(refutation.evaluated_at > self.validated_at for refutation in self.refutations):
+            raise ValueError("identification refutation cannot be evaluated after validation")
         if any(
             not set(refutation.evidence_ids).issubset(self.evidence_ids)
             for refutation in self.refutations
@@ -144,6 +146,11 @@ class CausalEdge(CandidateContractModel):
             raise ValueError("causal edge cannot self-reference")
         if self.valid_from and self.valid_to and self.valid_to < self.valid_from:
             raise ValueError("causal edge validity interval is inverted")
+        if (
+            self.support_level == CausalSupportLevel.C3_STRUCTURAL
+            and self.kind != CausalEdgeKind.STRUCTURAL_MECHANISM
+        ):
+            raise ValueError("C3 support requires a structural mechanism edge")
         if self.kind == CausalEdgeKind.IDENTIFIED_CAUSE and self.support_level not in {
             CausalSupportLevel.C2_IDENTIFIED,
             CausalSupportLevel.C3_STRUCTURAL,

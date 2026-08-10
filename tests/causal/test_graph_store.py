@@ -157,3 +157,6 @@ def test_graph_store_history_rejects_a_manually_persisted_pit_reversal(tmp_path)
 
     with pytest.raises(CausalGraphIntegrityError, match="travel backward"):
         store.history(DOMAIN)
+
+    with pytest.raises(CausalGraphIntegrityError, match="travel backward"):
+        store.get(DOMAIN, 2)

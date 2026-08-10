@@ -24,6 +24,7 @@ from .discovery import CausalDiscoveryCandidate
 from .mechanisms import MechanismDefinition
 from .service import CausalIdentificationService
 from .storage import CausalGraphIntegrityError, CausalGraphStore
+from .view import causal_graph_view
 
 __all__ = [
     "BeliefState",
@@ -47,4 +48,5 @@ __all__ = [
     "MechanismDefinition",
     "RefutationRecord",
     "RefutationStatus",
+    "causal_graph_view",
 ]

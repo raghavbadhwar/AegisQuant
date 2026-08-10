@@ -23,6 +23,11 @@ from aegis.reporting.traceability import (
     TraceabilityReceiptReference,
 )
 from aegis.research_planner.contracts import ResearchAction, ValueOfInformationResult
+from aegis.world_model.ai_infrastructure import (
+    CapexToSupplierRevenueParameters,
+    MechanismRegistry,
+    VersionedMechanism,
+)
 from aegis.world_model.contracts import (
     ScenarioIntervention,
     VariableProvenance,
@@ -92,6 +97,9 @@ def test_every_public_v4_candidate_contract_uses_the_revalidating_base() -> None
         CausalDiscoveryCandidate,
         CausalGraphSnapshot,
         MechanismDefinition,
+        VersionedMechanism,
+        MechanismRegistry,
+        CapexToSupplierRevenueParameters,
         WorldVariable,
         WorldSnapshot,
         ScenarioIntervention,

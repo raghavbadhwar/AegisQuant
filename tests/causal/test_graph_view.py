@@ -11,8 +11,8 @@ from aegis.causal import (
     IdentificationRecord,
     RefutationRecord,
     RefutationStatus,
+    causal_graph_view,
 )
-from aegis.causal.view import causal_graph_view
 
 NOW = datetime(2024, 1, 1, tzinfo=UTC)
 
