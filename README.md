@@ -118,14 +118,40 @@ The dashboard is read-only and cannot run cases, approve changes, or submit orde
 ## Architecture rule
 
 ```mermaid
-flowchart LR
-  E["Point-in-time evidence"] --> R["Specialist research provider"]
-  R --> F["Evidence-linked forecasts"]
-  F --> P["Deterministic portfolio constructor"]
-  P --> G{"Immutable risk gate"}
-  G -->|"pass"| S["Simulated broker"]
-  G -->|"reject"| X["Abstain or revise"]
-  S --> L["Append-only cycle ledger"]
+flowchart TD
+  I["Case intake + point-in-time evidence + memory"] --> RC["Research Coordinator"]
+  subgraph Specialists["Specialist agents"]
+    Q["Quant Analyst"]
+    F["Fundamental Analyst"]
+    EB["Event & Behavioral Analyst"]
+    RA["Relationship Analyst<br/>(when required)"]
+    PC["Portfolio Context Analyst<br/>(when required)"]
+  end
+  RC --> Q
+  RC --> F
+  RC --> EB
+  RC -.-> RA
+  RC -.-> PC
+  Q --> EA["Evidence Auditor"]
+  F --> EA
+  EB --> EA
+  RA --> EA
+  PC --> EA
+  EA --> BU["Bull Reviewer"]
+  EA --> BE["Bear Reviewer"]
+  EA --> BR["Base-Rate Reviewer"]
+  BU --> CIO["CIO Forecast Synthesis"]
+  BE --> CIO
+  BR --> CIO
+  CIO --> FV{"Forecast Verifier"}
+  FV -->|"verified forecast"| DP["Deterministic portfolio constructor"]
+  FV -->|"insufficient evidence"| X["Abstain"]
+  DP --> G{"Immutable risk gate"}
+  G -->|"pass"| SB["Simulated broker"]
+  G -->|"reject"| X
+  SB --> L["Append-only cycle ledger"]
+  L --> PM["Postmortem Agent"]
+  PM --> LC["Learning candidate<br/>human promotion required"]
 ```
 
 The agent graph is a forecast provider. It never crosses the portfolio/risk/execution boundary.
