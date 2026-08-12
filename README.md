@@ -117,14 +117,15 @@ The dashboard is read-only and cannot run cases, approve changes, or submit orde
 
 ## Architecture rule
 
-```text
-point-in-time snapshot and evidence
-→ specialist research provider
-→ evidence-linked AlphaForecast batch
-→ deterministic portfolio constructor
-→ immutable hard risk gate
-→ simulated broker
-→ append-only cycle ledger
+```mermaid
+flowchart LR
+  E["Point-in-time evidence"] --> R["Specialist research provider"]
+  R --> F["Evidence-linked forecasts"]
+  F --> P["Deterministic portfolio constructor"]
+  P --> G{"Immutable risk gate"}
+  G -->|"pass"| S["Simulated broker"]
+  G -->|"reject"| X["Abstain or revise"]
+  S --> L["Append-only cycle ledger"]
 ```
 
 The agent graph is a forecast provider. It never crosses the portfolio/risk/execution boundary.
