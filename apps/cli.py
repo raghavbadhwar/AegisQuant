@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sqlite3
 from datetime import date, datetime
 from pathlib import Path
 from typing import Annotated
@@ -46,6 +47,8 @@ from aegis.quant_research.demo import (
 )
 from aegis.reporting import dossier_html, dossier_json, dossier_markdown
 from aegis.research_lab import ExperimentLedger, ScienceReport, science_report_view
+from aegis.research_lab.adaptive_evidence import AdaptiveEvidenceIndexError
+from aegis.research_lab.adaptive_report import adaptive_report_view, load_validated_adaptive_report
 from aegis.sources import RawStore, SourceGateway, SourcePlanner, SourceRegistry
 from aegis.sources.adapters import DirectHTTPConnector
 
@@ -98,6 +101,25 @@ def science_view(
         _project_path(report_path).read_bytes(), context=context
     )
     typer.echo(canonical_json(science_report_view(report, ledger=ledger)))
+
+
+@science_app.command("adaptive-view")
+def science_adaptive_view(
+    report_path: Annotated[Path, typer.Argument(help="Sealed local v7 adaptive report JSON")],
+    evidence_index: Annotated[
+        Path,
+        typer.Option("--evidence-index", help="Required validated local adaptive evidence index"),
+    ],
+) -> None:
+    """Validate and print a candidate-only v7 report without creating or mutating records."""
+
+    try:
+        report = load_validated_adaptive_report(
+            _project_path(report_path), index_path=_project_path(evidence_index)
+        )
+    except (AdaptiveEvidenceIndexError, OSError, sqlite3.Error, ValueError) as exc:
+        raise typer.BadParameter(f"adaptive report was rejected: {exc}") from exc
+    typer.echo(canonical_json(adaptive_report_view(report)))
 
 
 @pit_app.command("bootstrap")

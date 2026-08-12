@@ -10,6 +10,7 @@ from typer.testing import CliRunner
 
 from apps.cli import app
 from tests.acceptance.test_cli_demo import _science_report_path
+from tests.research_lab.test_adaptive_report import _sealed_report
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -98,3 +99,48 @@ def test_dashboard_science_report_is_read_only_and_fails_safe(tmp_path: Path, mo
     invalid = AppTest.from_file(str(ROOT / "apps/dashboard.py")).run(timeout=20)
     assert not invalid.exception
     assert any("Science report unavailable" in item.value for item in invalid.error)
+
+
+def test_dashboard_adaptive_report_is_independent_and_read_only(
+    tmp_path: Path, monkeypatch
+) -> None:
+    _, report_path, index_path = _sealed_report(tmp_path)
+    report_before = hashlib.sha256(report_path.read_bytes()).hexdigest()
+    index_before = hashlib.sha256(index_path.read_bytes()).hexdigest()
+    missing_cycle_ledger = tmp_path / "missing-cycle.sqlite"
+    monkeypatch.setenv("AEGIS_LEDGER_PATH", str(missing_cycle_ledger))
+    monkeypatch.setenv("AEGIS_ADAPTIVE_REPORT_PATH", str(report_path))
+    monkeypatch.setenv("AEGIS_ADAPTIVE_EVIDENCE_INDEX_PATH", str(index_path))
+
+    dashboard = AppTest.from_file(str(ROOT / "apps/dashboard.py")).run(timeout=20)
+
+    assert not dashboard.exception
+    assert any(item.value == "Adaptive Research (read-only)" for item in dashboard.subheader)
+    assert any(
+        json.loads(item.value).get("status", {}).get("authority") == "candidate_only"
+        for item in dashboard.json
+    )
+    assert hashlib.sha256(report_path.read_bytes()).hexdigest() == report_before
+    assert hashlib.sha256(index_path.read_bytes()).hexdigest() == index_before
+    assert not missing_cycle_ledger.exists()
+
+
+def test_dashboard_rejects_invalid_adaptive_report_without_writes(
+    tmp_path: Path, monkeypatch
+) -> None:
+    _, report_path, index_path = _sealed_report(tmp_path)
+    report_path.write_text("not valid JSON")
+    report_before = hashlib.sha256(report_path.read_bytes()).hexdigest()
+    index_before = hashlib.sha256(index_path.read_bytes()).hexdigest()
+    missing_cycle_ledger = tmp_path / "missing-cycle.sqlite"
+    monkeypatch.setenv("AEGIS_LEDGER_PATH", str(missing_cycle_ledger))
+    monkeypatch.setenv("AEGIS_ADAPTIVE_REPORT_PATH", str(report_path))
+    monkeypatch.setenv("AEGIS_ADAPTIVE_EVIDENCE_INDEX_PATH", str(index_path))
+
+    dashboard = AppTest.from_file(str(ROOT / "apps/dashboard.py")).run(timeout=20)
+
+    assert not dashboard.exception
+    assert any("Adaptive report rejected" in item.value for item in dashboard.error)
+    assert hashlib.sha256(report_path.read_bytes()).hexdigest() == report_before
+    assert hashlib.sha256(index_path.read_bytes()).hexdigest() == index_before
+    assert not missing_cycle_ledger.exists()

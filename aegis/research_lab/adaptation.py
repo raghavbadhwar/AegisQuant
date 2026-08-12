@@ -337,10 +337,6 @@ class CandidateRecommendation(_SealedAdaptiveModel):
             AdaptiveEvidenceRecord.model_validate(record.model_dump(mode="json"))
             for record in self.evidence_records
         )
-        records = tuple(
-            AdaptiveEvidenceRecord.model_validate(record.model_dump(mode="json"))
-            for record in self.evidence_records
-        )
         if result.content_hash is None or checkpoint.content_hash is None:
             raise ValueError("candidate recommendation requires sealed result and checkpoint")
         if self.as_of != checkpoint.as_of:

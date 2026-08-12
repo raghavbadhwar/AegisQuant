@@ -133,6 +133,12 @@ AEGIS_LEDGER_PATH=run_data/aegisquant.sqlite \
 
 The dashboard is read-only and cannot run cases, approve changes, or submit orders.
 
+## v7 adaptive research observer
+
+The adaptive slice is candidate-only, engineering-only, and release-gated. Its report
+viewer requires a sealed local evidence index and has no promotion, portfolio, broker, or
+order authority. See [v7 adaptive research operations](docs/operations/v7-adaptive-research.md).
+
 ## Architecture rule
 
 ```text

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib
 import os
+import sqlite3
 from pathlib import Path
 from typing import Any
 
@@ -17,6 +18,8 @@ from aegis.reporting.view_models import (
     run_summary,
 )
 from aegis.research_lab import ExperimentLedger, ScienceReport, science_report_view
+from aegis.research_lab.adaptive_evidence import AdaptiveEvidenceIndexError
+from aegis.research_lab.adaptive_report import adaptive_report_view, load_validated_adaptive_report
 
 BANNER = (
     "Research, backtest, and paper simulation only — read-only dashboard — "
@@ -48,10 +51,23 @@ def render(
     ledger_path: Path,
     science_report_path: Path | None = None,
     science_ledger_path: Path | None = None,
+    adaptive_report_path: Path | None = None,
+    adaptive_evidence_index_path: Path | None = None,
 ) -> None:
     st.set_page_config(page_title="AegisQuant", layout="wide")
     st.title("AegisQuant Research & Paper Portfolio Console")
     st.warning(BANNER)
+    st.subheader("Adaptive Research (read-only)")
+    if adaptive_report_path is None or adaptive_evidence_index_path is None:
+        st.info("Set AEGIS_ADAPTIVE_REPORT_PATH and AEGIS_ADAPTIVE_EVIDENCE_INDEX_PATH to view v7.")
+    else:
+        try:
+            adaptive = load_validated_adaptive_report(
+                adaptive_report_path, index_path=adaptive_evidence_index_path
+            )
+            st.json(adaptive_report_view(adaptive))
+        except (AdaptiveEvidenceIndexError, OSError, sqlite3.Error, ValueError) as exc:
+            st.error(f"Adaptive report rejected: {exc}")
     try:
         records = ReadOnlyRunLedger(ledger_path).list_records()
     except Exception as exc:
@@ -143,11 +159,15 @@ def main() -> None:
     ledger_path = Path(os.environ.get("AEGIS_LEDGER_PATH", "run_data/aegisquant.sqlite"))
     science_path = os.environ.get("AEGIS_SCIENCE_REPORT_PATH")
     science_ledger = os.environ.get("AEGIS_SCIENCE_LEDGER_PATH")
+    adaptive_report = os.environ.get("AEGIS_ADAPTIVE_REPORT_PATH")
+    adaptive_index = os.environ.get("AEGIS_ADAPTIVE_EVIDENCE_INDEX_PATH")
     render(
         _streamlit(),
         ledger_path,
         Path(science_path) if science_path else None,
         Path(science_ledger) if science_ledger else None,
+        Path(adaptive_report) if adaptive_report else None,
+        Path(adaptive_index) if adaptive_index else None,
     )
 
 
