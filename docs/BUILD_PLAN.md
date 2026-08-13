@@ -28,7 +28,7 @@ Supported profile: **personal and local-first** — one workstation and operator
 ## M2 — controlled intelligence
 
 - Egress-proxied Source Gateway and rights engine.
-- Agent Reach and Scrapling only behind typed, allowlisted adapters; runtime installation disabled.
+- Last30Days and Scrapling only behind typed, exact-domain allowlisted adapters; runtime installation disabled.
 - Quarantine, malware/active-content controls, injection taint, and capability mediation.
 - PydanticAI under Temporal; LiteLLM alias allowlist and privacy policy.
 - GBrain adapter as a derived projection only.
