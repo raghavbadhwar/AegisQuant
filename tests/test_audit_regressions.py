@@ -124,16 +124,26 @@ def test_negative_tool_cost_is_rejected() -> None:
 
 
 def test_workflow_result_rejects_cross_tenant_activity_references() -> None:
+    case_id = uuid4()
     with pytest.raises(ValidationError, match="result tenant"):
         ResearchCaseWorkflowResult(
             tenant_id="tenant-a",
-            case_id=uuid4(),
+            case_id=case_id,
             snapshot=SnapshotRef(tenant_id="tenant-b", snapshot_id="snapshot", manifest_digest=D),
             evidence=RegisteredEvidenceRef(
-                tenant_id="tenant-b", evidence_id=uuid4(), evidence_digest=D
+                tenant_id="tenant-b",
+                case_id=case_id,
+                evidence_id=uuid4(),
+                source_content_digest=D,
+                evidence_digest=D,
             ),
             artifact=FixtureArtifactRef(
-                tenant_id="tenant-b", artifact_id=uuid4(), artifact_digest=D
+                tenant_id="tenant-b",
+                case_id=case_id,
+                snapshot_id="snapshot",
+                evidence_digest=D,
+                artifact_id=uuid4(),
+                artifact_digest=D,
             ),
         )
 

@@ -2,6 +2,8 @@
 
 Status legend: `[ ]` not started, `[~]` active, `[x]` verified.
 
+Supported profile: **personal and local-first** — one workstation and operator, local services, no public ingress, and no enterprise cluster requirement. Logical tenant scoping remains for portfolio/experiment isolation and defense in depth. See ADR-0003.
+
 ## M0 — security kernel (active)
 
 - [x] Consolidated architecture reviewed by independent engineering, quant, risk, execution, and security roles.

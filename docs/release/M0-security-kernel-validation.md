@@ -26,7 +26,7 @@ Closure probes included:
 
 ## Reproduction
 
-CWD: `/Users/raghav/aegisquant`
+CWD: `/Users/raghav/Desktop/AegisQuant`
 
 ```bash
 uv lock --check
