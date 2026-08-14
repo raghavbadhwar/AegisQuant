@@ -26,6 +26,10 @@ uv run aegisquant-case run data/fixtures/cases/multi_asset_control.json --output
 uv run aegisquant-case verify data/fixtures/cases/multi_asset_control.json report.json
 uv run aegisquant-case replay data/fixtures/cases/multi_asset_control.json report.json
 uv run aegisquant-case inspect report.json
+uv run aegisquant-case learning propose propose.json
+uv run aegisquant-case learning evaluate evaluate.json
+uv run aegisquant-case learning approve approve.json
+uv run aegisquant-case learning verify verify.json
 uv run run-fixture-case data/fixtures/cases/multi_asset_control.json
 ```
 
@@ -42,6 +46,14 @@ the append-only reference ledger, and an explicitly underpowered performance rep
 schema and read privileges; Temporal must expose the configured namespace and matching
 `aegisquant-m0` deployment version on the durable task queue. The API remains health-only and
 exposes no mutation or execution route.
+
+The `learning` commands consume strict local JSON and emit immutable proposal, evaluation, and
+manual approval records. `learning verify` checks their deterministic bindings but deliberately
+returns `promotion_authorized: false`; applying a candidate additionally requires trusted,
+role-scoped Ed25519 evaluator and human-approver attestations. The commands never train, promote,
+or run a case automatically. Only that fully attested strategy proposal can later change the
+allowlisted forecast uncertainty floor; risk policy, permissions, evaluation thresholds, and
+locked holdouts remain outside the learning path.
 
 See [`docs/BUILD_PLAN.md`](docs/BUILD_PLAN.md), [`docs/architecture/ADR-0001-security-kernel-first.md`](docs/architecture/ADR-0001-security-kernel-first.md), and [`docs/research/design-validation-2026-08-08.md`](docs/research/design-validation-2026-08-08.md).
 

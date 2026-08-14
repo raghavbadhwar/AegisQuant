@@ -12,7 +12,18 @@ from aegisquant.contracts.artifact import ArtifactEnvelope, ValidationReceipt
 from aegisquant.contracts.capability import CapabilityGrant, ToolAuthorizationRequest
 from aegisquant.contracts.case import InvestmentCase, InvestmentCaseRequest
 from aegisquant.contracts.evidence import EvidenceRecord, NumericClaim, RightsManifest
-from aegisquant.contracts.learning import LearningCandidate, LearningEvaluation, PromotionApproval
+from aegisquant.contracts.learning import (
+    LearningAttestationHeader,
+    LearningCandidate,
+    LearningCycleResult,
+    LearningEvaluation,
+    LearningEvaluationV2,
+    LearningProposalManifest,
+    PromotionApproval,
+    PromotionApprovalV2,
+    SignedLearningEvaluation,
+    SignedPromotionApproval,
+)
 from aegisquant.contracts.research import (
     CashLedgerEntry,
     CorporateAction,
@@ -53,7 +64,11 @@ SCHEMAS: dict[str, Any] = {
     "investment-case-request-v1": InvestmentCaseRequest,
     "investment-case-v1": InvestmentCase,
     "learning-candidate-v1": LearningCandidate,
+    "learning-cycle-result-v1": LearningCycleResult,
+    "learning-attestation-header-v1": LearningAttestationHeader,
     "learning-evaluation-v1": LearningEvaluation,
+    "learning-evaluation-v2": LearningEvaluationV2,
+    "learning-proposal-manifest-v1": LearningProposalManifest,
     "last30days-research-record-v1": Last30DaysResearchRecord,
     "market-bar-v1": MarketBar,
     "multi-period-case-report-v1": MultiPeriodCaseReport,
@@ -64,12 +79,15 @@ SCHEMAS: dict[str, Any] = {
     "performance-report-v1": PerformanceReport,
     "position-ledger-entry-v1": PositionLedgerEntry,
     "promotion-approval-v1": PromotionApproval,
+    "promotion-approval-v2": PromotionApprovalV2,
     "research-manifest-v1": ResearchManifest,
     "rights-manifest-v1": RightsManifest,
     "risk-decision-payload-v1": RiskDecisionPayload,
     "security-version-v1": SecurityVersion,
     "source-receipt-v1": SourceReceipt,
     "signed-risk-decision-v1": SignedRiskDecision,
+    "signed-learning-evaluation-v1": SignedLearningEvaluation,
+    "signed-promotion-approval-v1": SignedPromotionApproval,
     "signed-human-approval-v1": SignedHumanApproval,
     "tool-authorization-request-v1": ToolAuthorizationRequest,
     "trial-manifest-v1": TrialManifest,

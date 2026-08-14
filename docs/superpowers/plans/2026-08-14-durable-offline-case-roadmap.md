@@ -440,35 +440,36 @@ Expected: all exit 0; compatibility output remains deterministic.
   `verify_approved_candidate(...) -> LearningProposalManifest`.
 - `LearningCycleResult.outcome` is exactly `ABSTAIN` or `CANDIDATE`.
 
-- [ ] **Step 1: Write failing abstention and proposal tests**
+- [x] **Step 1: Write failing abstention and proposal tests**
 
 An insufficient, immature, unlocked, or non-independent outcome must return `ABSTAIN` and no
 candidate. A sufficient matured outcome creates a candidate bound to source, baseline, proposal,
 evaluation plan, and rollback digests.
 
-- [ ] **Step 2: Write failing promotion/application tests**
+- [x] **Step 2: Write failing promotion/application tests**
 
 Approval must reject wrong tenant/case/candidate/evaluation/proposal/rollback binding, failed
-shadow/canary, and non-human approver. An exact approved allowlisted strategy proposal may change
-only a later fixture strategy parameter; risk policy, permissions, thresholds, and holdout remain
-unchanged. No function applies an unapproved candidate.
+shadow/canary, and an unattested or non-human approver. An exact approved allowlisted strategy
+proposal may change only a later fixture strategy parameter after trusted evaluator and human
+Ed25519 attestations; risk policy, permissions, thresholds, and holdout remain unchanged. No
+function applies an unapproved candidate.
 
-- [ ] **Step 3: Run and observe RED**
+- [x] **Step 3: Run and observe RED**
 
 Run: `uv run pytest -q tests/test_learning_loop.py`
 
-- [ ] **Step 4: Implement the minimal loop around existing governance**
+- [x] **Step 4: Implement the minimal loop around existing governance**
 
 Reuse `LearningCandidate`, `evaluate_candidate`, and `approve_candidate`; add proposal binding and
 ABSTAIN orchestration only. Do not add training, online updates, autonomous proposal generation,
 or automatic promotion.
 
-- [ ] **Step 5: Add CLI lifecycle commands**
+- [x] **Step 5: Add CLI lifecycle commands**
 
 Add `learning propose`, `learning evaluate`, `learning approve`, and `learning verify` as offline
 JSON-in/JSON-out operations. Approval creates a record only; it never runs a case automatically.
 
-- [ ] **Step 6: Export schemas and run GREEN checks**
+- [x] **Step 6: Export schemas and run GREEN checks**
 
 Run:
 

@@ -1,0 +1,33 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "alg": {
+      "const": "Ed25519",
+      "default": "Ed25519",
+      "title": "Alg",
+      "type": "string"
+    },
+    "key_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Key Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "typ": {
+      "const": "AQ-LEARNING-ATTESTATION",
+      "default": "AQ-LEARNING-ATTESTATION",
+      "title": "Typ",
+      "type": "string"
+    }
+  },
+  "required": [
+    "key_id"
+  ],
+  "title": "LearningAttestationHeader",
+  "type": "object"
+}

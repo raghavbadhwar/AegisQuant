@@ -6,7 +6,7 @@ from uuid import UUID, uuid4
 import pytest
 from pydantic import ValidationError
 
-from aegisquant.contracts.learning import LearningCandidate
+from aegisquant.contracts.learning import LearningCandidate, LearningProposalManifest
 from aegisquant.contracts.research import (
     CorporateAction,
     CorporateActionKind,
@@ -26,7 +26,7 @@ from aegisquant.contracts.risk import (
     TimeInForce,
     TradingEnvironment,
 )
-from aegisquant.learning.governance import approve_candidate, evaluate_candidate
+from aegisquant.learning.governance import approve_candidate_v2, evaluate_candidate_v2
 from aegisquant.quant.metrics import (
     performance_report,
     placebo_returns,
@@ -821,50 +821,79 @@ def test_metrics_are_deterministic_and_underpowered_results_are_not_overclaimed(
 
 def test_learning_requires_maturity_independent_evaluation_and_manual_approval() -> None:
     now = datetime(2026, 1, 1, tzinfo=UTC)
+    case_id = uuid4()
+    proposal = LearningProposalManifest(
+        tenant_id="tenant-a",
+        case_id=case_id,
+        source_case_id=case_id,
+        candidate_id="candidate-1",
+        source_actor_id="strategy-owner",
+        independent_evaluator_id="independent-review",
+        source_outcome_digest=DIGEST,
+        baseline_digest=DIGEST,
+        proposal_digest=digest_canonical(
+            {
+                "strategy_parameter": "portfolio_policy.uncertainty_floor",
+                "proposed_value": Decimal("0.02"),
+            }
+        ),
+        evaluation_plan_digest=DIGEST,
+        rollback_manifest_digest=DIGEST,
+        locked_holdout_digest=DIGEST,
+        strategy_parameter="portfolio_policy.uncertainty_floor",
+        proposed_value="0.02",
+        created_at=now,
+    )
     candidate = LearningCandidate(
         tenant_id="tenant-a",
-        case_id=uuid4(),
+        case_id=case_id,
         candidate_id="candidate-1",
         candidate_type="STRATEGY",
-        source_manifest_digest=DIGEST,
+        source_manifest_digest=digest_canonical(proposal),
         created_at=now,
         matures_at=now + timedelta(days=20),
     )
     with pytest.raises(ValueError, match="not reached"):
-        evaluate_candidate(
+        evaluate_candidate_v2(
             candidate,
+            proposal,
             evaluator_id="independent-review",
             evaluation_manifest_digest=DIGEST,
             shadow_passed=True,
             canary_passed=True,
             now=now,
         )
-    evaluation = evaluate_candidate(
+    evaluation = evaluate_candidate_v2(
         candidate,
+        proposal,
         evaluator_id="independent-review",
         evaluation_manifest_digest=DIGEST,
         shadow_passed=True,
         canary_passed=True,
         now=candidate.matures_at,
     )
-    approval = approve_candidate(
+    approval = approve_candidate_v2(
         candidate,
+        proposal,
         evaluation,
         approver_id="human-risk-owner",
-        approval_digest=DIGEST,
+        approver_is_human=True,
         rollback_manifest_digest=DIGEST,
         now=candidate.matures_at,
+        expires_at=candidate.matures_at + timedelta(days=1),
     )
     assert approval.candidate_id == candidate.candidate_id
     future_evaluation = evaluation.model_copy(
         update={"evaluated_at": candidate.matures_at + timedelta(seconds=1)}
     )
     with pytest.raises(ValueError, match="cannot precede evaluation"):
-        approve_candidate(
+        approve_candidate_v2(
             candidate,
+            proposal,
             future_evaluation,
             approver_id="human-risk-owner",
-            approval_digest=DIGEST,
+            approver_is_human=True,
             rollback_manifest_digest=DIGEST,
             now=candidate.matures_at,
+            expires_at=candidate.matures_at + timedelta(days=1),
         )

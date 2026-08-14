@@ -1,0 +1,99 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "approval_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Approval Digest",
+      "type": "string"
+    },
+    "approved_at": {
+      "format": "date-time",
+      "title": "Approved At",
+      "type": "string"
+    },
+    "approver_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Approver Id",
+      "type": "string"
+    },
+    "approver_kind": {
+      "const": "HUMAN",
+      "default": "HUMAN",
+      "title": "Approver Kind",
+      "type": "string"
+    },
+    "candidate_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Candidate Id",
+      "type": "string"
+    },
+    "case_id": {
+      "format": "uuid",
+      "title": "Case Id",
+      "type": "string"
+    },
+    "evaluation_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Evaluation Digest",
+      "type": "string"
+    },
+    "evaluation_manifest_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Evaluation Manifest Digest",
+      "type": "string"
+    },
+    "expires_at": {
+      "format": "date-time",
+      "title": "Expires At",
+      "type": "string"
+    },
+    "not_before": {
+      "format": "date-time",
+      "title": "Not Before",
+      "type": "string"
+    },
+    "proposal_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Proposal Digest",
+      "type": "string"
+    },
+    "proposal_manifest_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Proposal Manifest Digest",
+      "type": "string"
+    },
+    "rollback_manifest_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Rollback Manifest Digest",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 2,
+      "default": 2,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "tenant_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Tenant Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "case_id",
+    "candidate_id",
+    "proposal_manifest_digest",
+    "proposal_digest",
+    "evaluation_digest",
+    "evaluation_manifest_digest",
+    "approver_id",
+    "approval_digest",
+    "rollback_manifest_digest",
+    "approved_at",
+    "not_before",
+    "expires_at"
+  ],
+  "title": "PromotionApprovalV2",
+  "type": "object"
+}

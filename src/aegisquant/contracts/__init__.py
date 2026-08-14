@@ -3,7 +3,18 @@
 from aegisquant.contracts.capability import CapabilityGrant, ToolAuthorizationRequest
 from aegisquant.contracts.case import InvestmentCase, InvestmentCaseRequest
 from aegisquant.contracts.evidence import EvidenceRecord, NumericClaim, RightsManifest
-from aegisquant.contracts.learning import LearningCandidate, LearningEvaluation, PromotionApproval
+from aegisquant.contracts.learning import (
+    LearningAttestationHeader,
+    LearningCandidate,
+    LearningCycleResult,
+    LearningEvaluation,
+    LearningEvaluationV2,
+    LearningProposalManifest,
+    PromotionApproval,
+    PromotionApprovalV2,
+    SignedLearningEvaluation,
+    SignedPromotionApproval,
+)
 from aegisquant.contracts.research import (
     CashLedgerEntry,
     CorporateAction,
@@ -37,8 +48,12 @@ __all__ = [
     "InvestmentCase",
     "InvestmentCaseRequest",
     "Last30DaysResearchRecord",
+    "LearningAttestationHeader",
     "LearningCandidate",
+    "LearningCycleResult",
     "LearningEvaluation",
+    "LearningEvaluationV2",
+    "LearningProposalManifest",
     "MarketBar",
     "NumericClaim",
     "OrderBundle",
@@ -47,11 +62,14 @@ __all__ = [
     "PerformanceReport",
     "PositionLedgerEntry",
     "PromotionApproval",
+    "PromotionApprovalV2",
     "ResearchManifest",
     "RightsManifest",
     "RiskDecisionPayload",
     "SecurityVersion",
     "SignedHumanApproval",
+    "SignedLearningEvaluation",
+    "SignedPromotionApproval",
     "SignedRiskDecision",
     "SourceReceipt",
     "ToolAuthorizationRequest",
