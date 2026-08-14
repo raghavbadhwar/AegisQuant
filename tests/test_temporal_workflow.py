@@ -1,4 +1,5 @@
 import asyncio
+from datetime import UTC, datetime
 from pathlib import Path
 from uuid import uuid4
 
@@ -7,19 +8,24 @@ from temporalio import activity
 from temporalio.client import WorkflowFailureError
 from temporalio.contrib.pydantic import pydantic_data_converter
 from temporalio.testing import WorkflowEnvironment
-from temporalio.worker import Worker
+from temporalio.worker import Replayer, Worker
 
+from aegisquant.contracts.research import ResearchManifest
 from aegisquant.object_store import LocalImmutableObjectStore
+from aegisquant.security.digests import digest_canonical
 from aegisquant.workflows.contracts import (
     EmitFixtureArtifactInput,
     FixtureArtifactRef,
     RegisteredEvidenceRef,
     RegisterFixtureEvidenceInput,
+    ReproducibleResearchWorkflowInput,
     ResearchCaseWorkflowInput,
     SnapshotRef,
 )
 from aegisquant.workflows.fixture_activities import FIXTURE_ACTIVITIES
+from aegisquant.workflows.reproducible_activities import REPRODUCIBLE_ACTIVITIES
 from aegisquant.workflows.research_case import ResearchCaseWorkflow
+from aegisquant.workflows.research_case_v2 import ReproducibleResearchCaseWorkflow
 from aegisquant.workflows.start_policy import (
     RESEARCH_CASE_ID_CONFLICT_POLICY,
     RESEARCH_CASE_ID_REUSE_POLICY,
@@ -227,3 +233,105 @@ def test_workflow_identity_is_tenant_bound() -> None:
     assert str(case_id) in tenant_a
     with pytest.raises(ValueError, match="tenant_id"):
         research_case_workflow_id("   ", case_id)
+
+
+@pytest.mark.asyncio
+async def test_v2_workflow_replays_only_frozen_manifest_references(tmp_path: Path) -> None:
+    store = LocalImmutableObjectStore(tmp_path)
+    blob = store.put_if_absent(
+        tenant_id="tenant-a",
+        data=b"frozen multi-asset fixture",
+        media_type="application/json",
+        retention_class="test",
+    )
+    case_id = uuid4()
+    manifest = ResearchManifest(
+        tenant_id="tenant-a",
+        case_id=case_id,
+        snapshot_id="multi-asset-v1",
+        snapshot_manifest_digest="sha256:" + "a" * 64,
+        snapshot_content_digest=blob.content_digest,
+        data_manifest_digests=(blob.content_digest,),
+        rights_manifest_ids=("fixture-rights-v1",),
+        frozen_at=datetime(2026, 1, 1, tzinfo=UTC),
+    )
+    command = ReproducibleResearchWorkflowInput(
+        tenant_id="tenant-a", case_id=case_id, manifest=manifest, fixture_evidence=blob
+    )
+    assert (
+        ReproducibleResearchWorkflowInput.model_validate_json(command.model_dump_json()) == command
+    )
+    async with await WorkflowEnvironment.start_time_skipping(
+        data_converter=pydantic_data_converter
+    ) as env:
+        async with Worker(
+            env.client,
+            task_queue="m1-reproducible-test",
+            workflows=[ReproducibleResearchCaseWorkflow],
+            activities=REPRODUCIBLE_ACTIVITIES,
+        ):
+            handle = await env.client.start_workflow(
+                ReproducibleResearchCaseWorkflow.run,
+                command,
+                id=research_case_workflow_id(command.tenant_id, command.case_id),
+                task_queue="m1-reproducible-test",
+            )
+            result = await handle.result()
+            history = await handle.fetch_history()
+    assert result.tenant_id == command.tenant_id
+    assert result.research_manifest_digest.startswith("sha256:")
+    replay = await Replayer(
+        workflows=[ReproducibleResearchCaseWorkflow], data_converter=pydantic_data_converter
+    ).replay_workflow(history)
+    assert replay.replay_failure is None
+
+
+@pytest.mark.asyncio
+async def test_v2_workflow_rejects_incoherent_artifact_activity_result(tmp_path: Path) -> None:
+    store = LocalImmutableObjectStore(tmp_path)
+    blob = store.put_if_absent(
+        tenant_id="tenant-a",
+        data=b"frozen multi-asset fixture",
+        media_type="application/json",
+        retention_class="test",
+    )
+    case_id = uuid4()
+    manifest = ResearchManifest(
+        tenant_id="tenant-a",
+        case_id=case_id,
+        snapshot_id="multi-asset-v1",
+        snapshot_manifest_digest="sha256:" + "a" * 64,
+        snapshot_content_digest=blob.content_digest,
+        data_manifest_digests=(blob.content_digest,),
+        rights_manifest_ids=("fixture-rights-v1",),
+        frozen_at=datetime(2026, 1, 1, tzinfo=UTC),
+    )
+    command = ReproducibleResearchWorkflowInput(
+        tenant_id="tenant-a", case_id=case_id, manifest=manifest, fixture_evidence=blob
+    )
+
+    @activity.defn(name="verify_reproducible_manifest_v1")
+    async def manifest_activity(value: ReproducibleResearchWorkflowInput) -> str:
+        return digest_canonical(value.manifest)
+
+    @activity.defn(name="emit_reproducible_artifact_v1")
+    async def bad_artifact_activity(value: ReproducibleResearchWorkflowInput) -> str:
+        del value
+        return "sha256:" + "f" * 64
+
+    async with await WorkflowEnvironment.start_time_skipping(
+        data_converter=pydantic_data_converter
+    ) as environment:
+        async with Worker(
+            environment.client,
+            task_queue="m1-incoherent-artifact-test",
+            workflows=[ReproducibleResearchCaseWorkflow],
+            activities=[manifest_activity, bad_artifact_activity],
+        ):
+            with pytest.raises(WorkflowFailureError):
+                await environment.client.execute_workflow(
+                    ReproducibleResearchCaseWorkflow.run,
+                    command,
+                    id=research_case_workflow_id(command.tenant_id, command.case_id),
+                    task_queue="m1-incoherent-artifact-test",
+                )

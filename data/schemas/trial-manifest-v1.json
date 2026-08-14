@@ -1,0 +1,76 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "case_id": {
+      "format": "uuid",
+      "title": "Case Id",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "initial_nav": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "title": "Initial Nav"
+    },
+    "policy_bundle_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Policy Bundle Digest",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "snapshot_content_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Snapshot Content Digest",
+      "type": "string"
+    },
+    "snapshot_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Snapshot Id",
+      "type": "string"
+    },
+    "snapshot_manifest_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Snapshot Manifest Digest",
+      "type": "string"
+    },
+    "strategy_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Strategy Id",
+      "type": "string"
+    },
+    "tenant_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Tenant Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "case_id",
+    "snapshot_id",
+    "snapshot_manifest_digest",
+    "snapshot_content_digest",
+    "strategy_id",
+    "policy_bundle_digest",
+    "initial_nav",
+    "created_at"
+  ],
+  "title": "TrialManifest",
+  "type": "object"
+}

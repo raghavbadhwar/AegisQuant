@@ -1,9 +1,12 @@
 # M0 security-kernel slice — validation record
 
-- **Validated code commit:** `a6a70b3d805d4405037dd342763bceab9cd258cc`
-- **Date:** 2026-08-08
-- **Scope:** strict contracts, tenant boundary, case ledger, capability core, risk authorization cryptography, local immutable-object reference backend, fixture-only Temporal skeleton, and no-execution API boundary.
-- **Release meaning:** pass for this implemented slice only; it is not full M0 completion, production approval, or live-trading readiness.
+- **Validated code commit:** `a6a70b3d805d4405037dd342763bceab9cd258cc`.
+- **Validation date:** 2026-08-08.
+- **Scope:** the original M0 strict contracts, tenant boundary, case ledger, capability core, risk
+  authorization cryptography, local immutable-object reference backend, fixture-only Temporal
+  skeleton, and no-execution API boundary.
+- **Release meaning:** historical validation for that exact commit only; it does not validate the
+  current M1-M5 fixture candidate, production use, or live-trading readiness.
 
 ## Independent review
 
@@ -33,7 +36,7 @@ uv lock --check
 scripts/verify.sh
 ```
 
-Validated toolchain and outcomes:
+Historical validated toolchain and outcomes for the exact commit above:
 
 ```text
 uv 0.11.15                              exit 0
@@ -50,8 +53,8 @@ The PostgreSQL script creates uniquely named temporary roles/database, runs boun
 ## Still open before full M0 exit
 
 - production object-store conformance/WORM/restore selection;
-- Temporal historical replay, worker versioning, crash-after-side-effect and uncertain-outcome fixtures;
+- durable Temporal/PostgreSQL paper execution and recovery validation;
 - production identity/mTLS/secrets/network policies;
-- SBOM/AIBOM, provenance, signing, vulnerability/license/secret/container gates;
+- deployment provenance/signing and recovery drills beyond the local CI gate;
 - production PostgreSQL role provisioning and migration ownership runbook;
 - complete clean-room release evidence and recovery drills.

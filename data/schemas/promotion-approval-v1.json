@@ -1,0 +1,64 @@
+{
+  "additionalProperties": false,
+  "description": "A manual record, not an instruction to change a running system.",
+  "properties": {
+    "approval_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Approval Digest",
+      "type": "string"
+    },
+    "approved_at": {
+      "format": "date-time",
+      "title": "Approved At",
+      "type": "string"
+    },
+    "approver_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Approver Id",
+      "type": "string"
+    },
+    "candidate_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Candidate Id",
+      "type": "string"
+    },
+    "case_id": {
+      "format": "uuid",
+      "title": "Case Id",
+      "type": "string"
+    },
+    "evaluation_manifest_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Evaluation Manifest Digest",
+      "type": "string"
+    },
+    "rollback_manifest_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Rollback Manifest Digest",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "tenant_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Tenant Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "case_id",
+    "candidate_id",
+    "evaluation_manifest_digest",
+    "approver_id",
+    "approval_digest",
+    "rollback_manifest_digest",
+    "approved_at"
+  ],
+  "title": "PromotionApproval",
+  "type": "object"
+}

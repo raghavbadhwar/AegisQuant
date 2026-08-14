@@ -1,0 +1,85 @@
+{
+  "$defs": {
+    "CorporateActionKind": {
+      "enum": [
+        "CASH_DIVIDEND",
+        "SPLIT"
+      ],
+      "title": "CorporateActionKind",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "available_at": {
+      "format": "date-time",
+      "title": "Available At",
+      "type": "string"
+    },
+    "cash_per_share": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Cash Per Share"
+    },
+    "effective_at": {
+      "format": "date-time",
+      "title": "Effective At",
+      "type": "string"
+    },
+    "instrument_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Instrument Id",
+      "type": "string"
+    },
+    "instrument_version": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Instrument Version",
+      "type": "string"
+    },
+    "kind": {
+      "$ref": "#/$defs/CorporateActionKind"
+    },
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "split_ratio": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Split Ratio"
+    }
+  },
+  "required": [
+    "instrument_id",
+    "instrument_version",
+    "kind",
+    "effective_at",
+    "available_at"
+  ],
+  "title": "CorporateAction",
+  "type": "object"
+}

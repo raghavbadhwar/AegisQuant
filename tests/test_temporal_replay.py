@@ -7,13 +7,20 @@ from temporalio.client import WorkflowHistory
 from temporalio.common import VersioningBehavior
 from temporalio.contrib.pydantic import pydantic_data_converter
 from temporalio.worker import Replayer
+from temporalio.worker.workflow_sandbox import SandboxedWorkflowRunner, SandboxRestrictions
 
 from aegisquant.workflows.contracts import ResearchCaseWorkflowInput, SnapshotRef
 from aegisquant.workflows.research_case import ResearchCaseWorkflow
+from aegisquant.workflows.research_case_v2 import ReproducibleResearchCaseWorkflow
 from aegisquant.workflows.versioning import DEPLOYMENT_NAME, worker_deployment_config
 
 FIXTURE = Path("tests/fixtures/temporal/research_case_workflow_v1.json")
+V2_FIXTURE = Path("tests/fixtures/temporal/research_case_workflow_v2.json")
 WORKFLOW_ID = "m0-golden-research-case-v1"
+V2_WORKFLOW_ID = "m1-golden-research-case-v2"
+V2_RUNNER = SandboxedWorkflowRunner(
+    restrictions=SandboxRestrictions.default.with_passthrough_modules("pydantic_core")
+)
 
 
 @workflow.defn(name="ResearchCaseWorkflowV1", sandboxed=True)
@@ -40,6 +47,19 @@ async def test_research_case_v1_golden_history_replays_offline() -> None:
         data_converter=pydantic_data_converter,
         build_id="m0-golden-v1",
     ).replay_workflow(round_tripped)
+    assert result.replay_failure is None
+
+
+@pytest.mark.asyncio
+async def test_research_case_v2_golden_history_replays_offline() -> None:
+    assert V2_FIXTURE.exists()
+    history = WorkflowHistory.from_json(V2_WORKFLOW_ID, V2_FIXTURE.read_text())
+    result = await Replayer(
+        workflows=[ReproducibleResearchCaseWorkflow],
+        data_converter=pydantic_data_converter,
+        build_id="m1-golden-v2",
+        workflow_runner=V2_RUNNER,
+    ).replay_workflow(history)
     assert result.replay_failure is None
 
 

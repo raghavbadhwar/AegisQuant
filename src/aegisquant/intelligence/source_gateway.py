@@ -15,12 +15,13 @@ from urllib.parse import urlsplit
 from uuid import UUID
 
 from aegisquant.contracts.capability import ToolAuthorizationRequest, ToolRequirement
-from aegisquant.contracts.common import Identifier, Sha256Digest, StrictModel, require_utc
+from aegisquant.contracts.common import Identifier, StrictModel, require_utc
+from aegisquant.contracts.research import SourceReceipt
 from aegisquant.security.capability_broker import CapabilityBroker
 from aegisquant.security.digests import sha256_bytes
 
-LAST30DAYS_TOOL_ID = "last30days-public-research"
-SCRAPLING_TOOL_ID = "scrapling-public-fetch"
+LAST30DAYS_TOOL_ID: Literal["last30days-public-research"] = "last30days-public-research"
+SCRAPLING_TOOL_ID: Literal["scrapling-public-fetch"] = "scrapling-public-fetch"
 
 
 def source_tool_requirements() -> tuple[ToolRequirement, ...]:
@@ -58,16 +59,6 @@ class TransportResponse:
 
 class PublicHttpTransport(Protocol):
     def get(self, url: str, *, maximum_response_bytes: int) -> TransportResponse: ...
-
-
-@dataclass(frozen=True)
-class SourceReceipt:
-    tenant_id: str
-    case_id: UUID
-    tool_id: str
-    url: str
-    content_digest: Sha256Digest
-    captured_at: datetime
 
 
 def _public_https_host(url: str) -> str:

@@ -16,7 +16,7 @@ Proceed with a **controlled build**, not a production or live-trading release. T
 
 ## Independent financial guidance
 
-The first quant workflow is a pipeline/control experiment, not an alpha product: one daily US ETF plus cash, a pre-registered deterministic monthly signal, next-session eligibility, immutable trial accounting, corporate-action/cash reconciliation, deterministic baselines, PIT checks, and forward paper observation. Behavioral/graph features and portfolio optimization are excluded initially.
+The first quant workflow is a pipeline/control experiment, not an alpha product: a frozen multi-asset, long-only fixture universe with explicit residual cash, next-session eligibility, immutable trial accounting, corporate-action/cash reconciliation, deterministic baselines, PIT checks, and forward paper observation. Behavioral/graph features and portfolio optimization are excluded initially. ADR-0005 supersedes the earlier single-ETF control choice.
 
 ## Primary sources
 

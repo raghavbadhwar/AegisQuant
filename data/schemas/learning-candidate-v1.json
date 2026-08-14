@@ -1,0 +1,63 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "candidate_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Candidate Id",
+      "type": "string"
+    },
+    "candidate_type": {
+      "enum": [
+        "PROMPT",
+        "SKILL",
+        "ROUTE",
+        "FEATURE",
+        "STRATEGY"
+      ],
+      "title": "Candidate Type",
+      "type": "string"
+    },
+    "case_id": {
+      "format": "uuid",
+      "title": "Case Id",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "matures_at": {
+      "format": "date-time",
+      "title": "Matures At",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "source_manifest_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Source Manifest Digest",
+      "type": "string"
+    },
+    "tenant_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Tenant Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "case_id",
+    "candidate_id",
+    "candidate_type",
+    "source_manifest_digest",
+    "created_at",
+    "matures_at"
+  ],
+  "title": "LearningCandidate",
+  "type": "object"
+}

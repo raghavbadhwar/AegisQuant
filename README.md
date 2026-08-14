@@ -22,7 +22,12 @@ uv run pytest
 uv run ruff check .
 uv run mypy
 uv run uvicorn aegisquant.control_api:app --reload
+uv run run-fixture-case data/fixtures/cases/multi_asset_control.json
 ```
+
+`run-fixture-case` executes one fully offline, deterministic fixture path through frozen
+forecasts, portfolio construction, signed risk authorization, paper fills, reconciliation,
+the append-only reference ledger, and an explicitly underpowered performance report.
 
 See [`docs/BUILD_PLAN.md`](docs/BUILD_PLAN.md), [`docs/architecture/ADR-0001-security-kernel-first.md`](docs/architecture/ADR-0001-security-kernel-first.md), and [`docs/research/design-validation-2026-08-08.md`](docs/research/design-validation-2026-08-08.md).
 

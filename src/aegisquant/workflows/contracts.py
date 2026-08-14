@@ -7,6 +7,7 @@ from pydantic import model_validator
 
 from aegisquant.contracts.artifact import BlobRef
 from aegisquant.contracts.common import Identifier, Sha256Digest, StrictModel
+from aegisquant.contracts.research import ResearchManifest
 
 
 class ResearchCaseWorkflowInput(StrictModel):
@@ -105,3 +106,32 @@ class ResearchCaseWorkflowResult(StrictModel):
         if self.artifact.evidence_digest != self.evidence.evidence_digest:
             raise ValueError("artifact must bind the registered evidence")
         return self
+
+
+class ReproducibleResearchWorkflowInput(StrictModel):
+    """V2 history contains only a frozen manifest and immutable evidence reference."""
+
+    schema_version: Literal[2] = 2
+    tenant_id: Identifier
+    case_id: UUID
+    manifest: ResearchManifest
+    fixture_evidence: BlobRef
+
+    @model_validator(mode="after")
+    def references_are_bound(self) -> "ReproducibleResearchWorkflowInput":
+        if (
+            self.manifest.tenant_id != self.tenant_id
+            or self.fixture_evidence.tenant_id != self.tenant_id
+        ):
+            raise ValueError("manifest and fixture evidence must belong to the workflow tenant")
+        if self.manifest.case_id != self.case_id:
+            raise ValueError("manifest must belong to the workflow case")
+        return self
+
+
+class ReproducibleResearchWorkflowResult(StrictModel):
+    schema_version: Literal[2] = 2
+    tenant_id: Identifier
+    case_id: UUID
+    research_manifest_digest: Sha256Digest
+    artifact_digest: Sha256Digest

@@ -47,7 +47,13 @@ def next_tradable_bar(
 ) -> TradableBar:
     after = require_utc(after)
     eligible = sorted(
-        (bar for bar in bars if bar.instrument_id == instrument_id and bar.tradable_at > after),
+        (
+            bar
+            for bar in bars
+            if bar.instrument_id == instrument_id
+            and bar.observed_at > after
+            and bar.tradable_at > after
+        ),
         key=lambda bar: (bar.tradable_at, bar.observed_at),
     )
     if not eligible:

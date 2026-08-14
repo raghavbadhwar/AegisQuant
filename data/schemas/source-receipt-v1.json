@@ -1,0 +1,54 @@
+{
+  "additionalProperties": false,
+  "description": "Immutable receipt for content captured through the source gateway.",
+  "properties": {
+    "captured_at": {
+      "format": "date-time",
+      "title": "Captured At",
+      "type": "string"
+    },
+    "case_id": {
+      "format": "uuid",
+      "title": "Case Id",
+      "type": "string"
+    },
+    "content_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Content Digest",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "tenant_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Tenant Id",
+      "type": "string"
+    },
+    "tool_id": {
+      "enum": [
+        "last30days-public-research",
+        "scrapling-public-fetch"
+      ],
+      "title": "Tool Id",
+      "type": "string"
+    },
+    "url": {
+      "title": "Url",
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "case_id",
+    "tool_id",
+    "url",
+    "content_digest",
+    "captured_at"
+  ],
+  "title": "SourceReceipt",
+  "type": "object"
+}

@@ -169,6 +169,11 @@
     "environment": {
       "$ref": "#/$defs/TradingEnvironment"
     },
+    "execution_plan_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Execution Plan Digest",
+      "type": "string"
+    },
     "expires_at": {
       "format": "date-time",
       "title": "Expires At",
@@ -342,6 +347,7 @@
     "reference_data_snapshot_digest",
     "fx_snapshot_digest",
     "model_validation_manifest_digest",
+    "execution_plan_digest",
     "requested_order_bundle_digest",
     "rule_results",
     "created_at",

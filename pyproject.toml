@@ -12,6 +12,9 @@ dependencies = [
   "uvicorn[standard]==0.52.1",
 ]
 
+[project.scripts]
+run-fixture-case = "aegisquant.fixture_case:main"
+
 [dependency-groups]
 dev = [
   "hypothesis==6.165.2",

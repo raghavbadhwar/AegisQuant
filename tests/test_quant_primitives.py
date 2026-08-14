@@ -60,6 +60,17 @@ def test_timeline_rejects_same_close_and_selects_next_tradable_bar() -> None:
             order_submitted_at=now,
             fill_at=now + timedelta(seconds=1),
         )
-    first = TradableBar(instrument_id="AAA", observed_at=now, tradable_at=now + timedelta(days=1))
-    second = TradableBar(instrument_id="AAA", observed_at=now, tradable_at=now + timedelta(days=2))
-    assert next_tradable_bar((second, first), instrument_id="AAA", after=now) == first
+    known_ahead = TradableBar(
+        instrument_id="AAA", observed_at=now, tradable_at=now + timedelta(hours=1)
+    )
+    first = TradableBar(
+        instrument_id="AAA",
+        observed_at=now + timedelta(hours=1),
+        tradable_at=now + timedelta(days=1),
+    )
+    second = TradableBar(
+        instrument_id="AAA",
+        observed_at=now + timedelta(hours=2),
+        tradable_at=now + timedelta(days=2),
+    )
+    assert next_tradable_bar((second, known_ahead, first), instrument_id="AAA", after=now) == first

@@ -1,0 +1,65 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "instrument_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Instrument Id",
+      "type": "string"
+    },
+    "instrument_version": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Instrument Version",
+      "type": "string"
+    },
+    "mark_price": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "title": "Mark Price"
+    },
+    "marked_at": {
+      "format": "date-time",
+      "title": "Marked At",
+      "type": "string"
+    },
+    "quantity": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "title": "Quantity"
+    },
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "source_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Source Digest",
+      "type": "string"
+    }
+  },
+  "required": [
+    "instrument_id",
+    "instrument_version",
+    "quantity",
+    "mark_price",
+    "marked_at",
+    "source_digest"
+  ],
+  "title": "PositionLedgerEntry",
+  "type": "object"
+}

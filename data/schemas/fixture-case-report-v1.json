@@ -1,0 +1,520 @@
+{
+  "$defs": {
+    "OrderSide": {
+      "enum": [
+        "BUY",
+        "SELL"
+      ],
+      "title": "OrderSide",
+      "type": "string"
+    },
+    "PaperAccountState": {
+      "additionalProperties": false,
+      "properties": {
+        "account_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Account Id",
+          "type": "string"
+        },
+        "case_id": {
+          "format": "uuid",
+          "title": "Case Id",
+          "type": "string"
+        },
+        "cash": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Cash"
+        },
+        "positions": {
+          "items": {
+            "$ref": "#/$defs/PositionLedgerEntry"
+          },
+          "title": "Positions",
+          "type": "array"
+        },
+        "state_sequence": {
+          "minimum": 0,
+          "title": "State Sequence",
+          "type": "integer"
+        },
+        "tenant_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Tenant Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "tenant_id",
+        "case_id",
+        "account_id",
+        "cash",
+        "positions",
+        "state_sequence"
+      ],
+      "title": "PaperAccountState",
+      "type": "object"
+    },
+    "PaperFill": {
+      "additionalProperties": false,
+      "properties": {
+        "client_order_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Client Order Id",
+          "type": "string"
+        },
+        "filled_at": {
+          "format": "date-time",
+          "title": "Filled At",
+          "type": "string"
+        },
+        "instrument_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Instrument Id",
+          "type": "string"
+        },
+        "instrument_version": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Instrument Version",
+          "type": "string"
+        },
+        "market_data_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Market Data Digest",
+          "type": "string"
+        },
+        "price": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Price"
+        },
+        "quantity": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Quantity"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "side": {
+          "$ref": "#/$defs/OrderSide"
+        },
+        "transaction_cost": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Transaction Cost"
+        }
+      },
+      "required": [
+        "client_order_id",
+        "instrument_id",
+        "instrument_version",
+        "side",
+        "quantity",
+        "price",
+        "transaction_cost",
+        "filled_at",
+        "market_data_digest"
+      ],
+      "title": "PaperFill",
+      "type": "object"
+    },
+    "PerformanceReport": {
+      "additionalProperties": false,
+      "properties": {
+        "annualization_periods": {
+          "minimum": 1,
+          "title": "Annualization Periods",
+          "type": "integer"
+        },
+        "annualized_return": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Annualized Return"
+        },
+        "annualized_volatility": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Annualized Volatility"
+        },
+        "deflated_sharpe_ratio": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Deflated Sharpe Ratio"
+        },
+        "observations": {
+          "minimum": 0,
+          "title": "Observations",
+          "type": "integer"
+        },
+        "probabilistic_sharpe_ratio": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Probabilistic Sharpe Ratio"
+        },
+        "probability_of_backtest_overfitting": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Probability Of Backtest Overfitting"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "sortino_ratio": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sortino Ratio"
+        },
+        "sufficient_evidence": {
+          "title": "Sufficient Evidence",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "observations",
+        "annualization_periods",
+        "sufficient_evidence"
+      ],
+      "title": "PerformanceReport",
+      "type": "object"
+    },
+    "PortfolioTarget": {
+      "additionalProperties": false,
+      "description": "A fully accounted-for target: capped holdings plus explicit cash.",
+      "properties": {
+        "cash_weight": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Cash Weight"
+        },
+        "weights": {
+          "items": {
+            "$ref": "#/$defs/TargetWeight"
+          },
+          "title": "Weights",
+          "type": "array"
+        }
+      },
+      "required": [
+        "weights",
+        "cash_weight"
+      ],
+      "title": "PortfolioTarget",
+      "type": "object"
+    },
+    "PositionLedgerEntry": {
+      "additionalProperties": false,
+      "properties": {
+        "instrument_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Instrument Id",
+          "type": "string"
+        },
+        "instrument_version": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Instrument Version",
+          "type": "string"
+        },
+        "mark_price": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Mark Price"
+        },
+        "marked_at": {
+          "format": "date-time",
+          "title": "Marked At",
+          "type": "string"
+        },
+        "quantity": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Quantity"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "source_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Source Digest",
+          "type": "string"
+        }
+      },
+      "required": [
+        "instrument_id",
+        "instrument_version",
+        "quantity",
+        "mark_price",
+        "marked_at",
+        "source_digest"
+      ],
+      "title": "PositionLedgerEntry",
+      "type": "object"
+    },
+    "TargetWeight": {
+      "additionalProperties": false,
+      "properties": {
+        "instrument_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Instrument Id",
+          "type": "string"
+        },
+        "weight": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Weight"
+        }
+      },
+      "required": [
+        "instrument_id",
+        "weight"
+      ],
+      "title": "TargetWeight",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "case_id": {
+      "format": "uuid",
+      "title": "Case Id",
+      "type": "string"
+    },
+    "execution_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Execution Digest",
+      "type": "string"
+    },
+    "fills": {
+      "items": {
+        "$ref": "#/$defs/PaperFill"
+      },
+      "title": "Fills",
+      "type": "array"
+    },
+    "final_account": {
+      "$ref": "#/$defs/PaperAccountState"
+    },
+    "final_nav": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "title": "Final Nav"
+    },
+    "ledger_event_count": {
+      "minimum": 1,
+      "title": "Ledger Event Count",
+      "type": "integer"
+    },
+    "ledger_event_types": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Ledger Event Types",
+      "type": "array"
+    },
+    "ledger_verified": {
+      "const": true,
+      "title": "Ledger Verified",
+      "type": "boolean"
+    },
+    "manifest_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Manifest Digest",
+      "type": "string"
+    },
+    "mode": {
+      "const": "OFFLINE_FIXTURE_PAPER",
+      "default": "OFFLINE_FIXTURE_PAPER",
+      "title": "Mode",
+      "type": "string"
+    },
+    "performance": {
+      "$ref": "#/$defs/PerformanceReport"
+    },
+    "portfolio_target": {
+      "$ref": "#/$defs/PortfolioTarget"
+    },
+    "portfolio_target_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Portfolio Target Digest",
+      "type": "string"
+    },
+    "reconciled": {
+      "const": true,
+      "title": "Reconciled",
+      "type": "boolean"
+    },
+    "risk_decision_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Risk Decision Digest",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "tenant_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Tenant Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "case_id",
+    "manifest_digest",
+    "portfolio_target",
+    "portfolio_target_digest",
+    "risk_decision_digest",
+    "execution_digest",
+    "fills",
+    "final_account",
+    "final_nav",
+    "reconciled",
+    "ledger_verified",
+    "ledger_event_count",
+    "ledger_event_types",
+    "performance"
+  ],
+  "title": "FixtureCaseReport",
+  "type": "object"
+}

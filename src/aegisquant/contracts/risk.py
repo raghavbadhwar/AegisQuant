@@ -142,6 +142,7 @@ class RiskDecisionPayload(StrictModel):
     reference_data_snapshot_digest: Sha256Digest
     fx_snapshot_digest: Sha256Digest
     model_validation_manifest_digest: Sha256Digest
+    execution_plan_digest: Sha256Digest
     requested_order_bundle_digest: Sha256Digest
     approved_order_bundle_digest: Sha256Digest | None = None
     projected_portfolio_digest: Sha256Digest | None = None
@@ -209,3 +210,16 @@ class HumanApprovalPayload(StrictModel):
         if not self.created_at <= self.not_before < self.expires_at:
             raise ValueError("approval time window is invalid")
         return self
+
+
+class HumanApprovalProtectedHeader(StrictModel):
+    typ: Literal["AQ-HUMAN-APPROVAL"] = "AQ-HUMAN-APPROVAL"
+    schema_version: Literal[1] = 1
+    alg: Literal["Ed25519"] = "Ed25519"
+    key_id: Identifier
+
+
+class SignedHumanApproval(StrictModel):
+    protected: HumanApprovalProtectedHeader
+    payload: HumanApprovalPayload
+    signature_b64url: str = Field(pattern=r"^[A-Za-z0-9_-]{86}$")

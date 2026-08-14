@@ -50,6 +50,36 @@ class PortfolioPolicy(StrictModel):
         return self
 
 
+class TargetWeight(StrictModel):
+    instrument_id: Identifier
+    weight: FixedDecimal
+
+    @field_validator("weight")
+    @classmethod
+    def nonnegative(cls, value: Decimal) -> Decimal:
+        if value < 0:
+            raise ValueError("long-only target weights must be nonnegative")
+        return value
+
+
+class PortfolioTarget(StrictModel):
+    """A fully accounted-for target: capped holdings plus explicit cash."""
+
+    weights: tuple[TargetWeight, ...]
+    cash_weight: FixedDecimal
+
+    @model_validator(mode="after")
+    def weights_are_complete(self) -> "PortfolioTarget":
+        instruments = [item.instrument_id for item in self.weights]
+        if len(set(instruments)) != len(instruments):
+            raise ValueError("portfolio target contains duplicate instruments")
+        if self.cash_weight < 0:
+            raise ValueError("cash_weight must be nonnegative")
+        if sum((item.weight for item in self.weights), Decimal(0)) + self.cash_weight != Decimal(1):
+            raise ValueError("portfolio target weights and cash must sum to one")
+        return self
+
+
 def blend_forecasts(
     forecasts: tuple[Forecast, ...], *, uncertainty_floor: Decimal
 ) -> BlendedForecast:
@@ -139,6 +169,9 @@ def propose_long_only(
 ) -> dict[str, Decimal]:
     """Return sorted deterministic long weights; bearish or abstaining inputs remain cash."""
 
+    instrument_ids = [item.instrument_id for item in forecasts]
+    if len(set(instrument_ids)) != len(instrument_ids):
+        raise ValueError("only one blended forecast per instrument is allowed")
     scores = {
         item.instrument_id: max(item.expected_return, Decimal(0))
         * max(item.probability_positive - _HALF, Decimal(0))
@@ -154,3 +187,17 @@ def propose_long_only(
         for instrument_id, score in sorted(scores.items())
         if score > 0
     }
+
+
+def build_long_only_target(
+    forecasts: tuple[BlendedForecast, ...], *, policy: PortfolioPolicy
+) -> PortfolioTarget:
+    """Preserve cap-induced residual exposure as cash instead of hiding it."""
+
+    proposed = propose_long_only(forecasts, policy=policy)
+    weights = tuple(
+        TargetWeight(instrument_id=instrument_id, weight=weight)
+        for instrument_id, weight in proposed.items()
+    )
+    invested = sum((item.weight for item in weights), Decimal(0))
+    return PortfolioTarget(weights=weights, cash_weight=Decimal(1) - invested)

@@ -1,9 +1,16 @@
 from datetime import UTC, datetime, timedelta
-from uuid import uuid4
+from decimal import Decimal
+from typing import Literal
+from uuid import UUID, uuid4
 
 import pytest
 
 from aegisquant.contracts.capability import CapabilityGrant
+from aegisquant.contracts.research import DataSnapshot
+from aegisquant.intelligence.last30days_adapter import (
+    Last30DaysAdapterError,
+    record_last30days_capture,
+)
 from aegisquant.intelligence.source_gateway import (
     LAST30DAYS_TOOL_ID,
     SCRAPLING_TOOL_ID,
@@ -40,7 +47,7 @@ def gateway(
         allowed_data_scopes=("public-research",),
         allowed_domains=(domain,),
         maximum_tool_calls=2,
-        maximum_cost_usd="0",
+        maximum_cost_usd=Decimal("0"),
         issued_at=now - timedelta(minutes=1),
         expires_at=now + timedelta(minutes=1),
         issued_by_policy="source-policy-v1",
@@ -54,7 +61,8 @@ def gateway(
 
 
 def request(
-    tool_id: str = LAST30DAYS_TOOL_ID, url: str = "https://public.example/report"
+    tool_id: Literal["last30days-public-research", "scrapling-public-fetch"] = LAST30DAYS_TOOL_ID,
+    url: str = "https://public.example/report",
 ) -> SourceRequest:
     return SourceRequest(
         tenant_id="tenant-a",
@@ -67,6 +75,18 @@ def request(
 
 
 CASE_ID = uuid4()
+
+
+def snapshot(*, tenant_id: str, case_id: UUID) -> DataSnapshot:
+    return DataSnapshot(
+        tenant_id=tenant_id,
+        case_id=case_id,
+        snapshot_id="snapshot-v1",
+        manifest_digest="sha256:" + "a" * 64,
+        content_digest="sha256:" + "b" * 64,
+        as_of=datetime(2026, 1, 1, tzinfo=UTC),
+        frozen_at=datetime(2026, 1, 1, tzinfo=UTC),
+    )
 
 
 def test_gateway_authorizes_last30days_and_scrapling_before_fetching() -> None:
@@ -140,4 +160,58 @@ def test_gateway_rejects_cross_host_redirect_after_fetch() -> None:
             authenticated_tenant_id="tenant-a",
             authenticated_agent_id="research-agent",
             now=datetime(2026, 1, 1, tzinfo=UTC),
+        )
+
+
+def test_last30days_record_binds_gateway_capture_to_snapshot() -> None:
+    source_gateway, _, grant = gateway()
+    source_request = request().model_copy(update={"case_id": grant.case_id})
+    receipt, body = source_gateway.fetch(
+        source_request,
+        grant_id=grant.grant_id,
+        agent_id="research-agent",
+        authenticated_tenant_id="tenant-a",
+        authenticated_agent_id="research-agent",
+        now=datetime(2026, 1, 1, tzinfo=UTC),
+    )
+    record = record_last30days_capture(
+        receipt,
+        body,
+        snapshot=snapshot(tenant_id=receipt.tenant_id, case_id=receipt.case_id),
+    )
+    assert record.tenant_id == receipt.tenant_id
+    assert record.case_id == receipt.case_id
+    assert record.source_content_digest == receipt.content_digest
+    assert record.available_at == receipt.captured_at
+
+
+def test_last30days_record_rejects_wrong_tool_and_tampered_body() -> None:
+    source_gateway, _, grant = gateway()
+    scrapling_request = request(SCRAPLING_TOOL_ID).model_copy(update={"case_id": grant.case_id})
+    receipt, _ = source_gateway.fetch(
+        scrapling_request,
+        grant_id=grant.grant_id,
+        agent_id="research-agent",
+        authenticated_tenant_id="tenant-a",
+        authenticated_agent_id="research-agent",
+        now=datetime(2026, 1, 1, tzinfo=UTC),
+    )
+    with pytest.raises(Last30DaysAdapterError, match="Last30Days source receipt"):
+        record_last30days_capture(
+            receipt,
+            b"safe",
+            snapshot=snapshot(tenant_id=receipt.tenant_id, case_id=receipt.case_id),
+        )
+    last30days_receipt = receipt.model_copy(update={"tool_id": LAST30DAYS_TOOL_ID})
+    with pytest.raises(Last30DaysAdapterError, match="does not match"):
+        record_last30days_capture(
+            last30days_receipt,
+            b"tampered",
+            snapshot=snapshot(tenant_id=receipt.tenant_id, case_id=receipt.case_id),
+        )
+    with pytest.raises(Last30DaysAdapterError, match="share tenant and case"):
+        record_last30days_capture(
+            last30days_receipt,
+            b"safe",
+            snapshot=snapshot(tenant_id="tenant-b", case_id=receipt.case_id),
         )

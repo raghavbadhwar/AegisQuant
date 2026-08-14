@@ -1,0 +1,138 @@
+{
+  "schema_version": 1,
+  "manifest": {
+    "schema_version": 1,
+    "tenant_id": "tenant-fixture",
+    "case_id": "00000000-0000-0000-0000-000000000101",
+    "snapshot_id": "multi-asset-snapshot-v1",
+    "snapshot_manifest_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "snapshot_content_digest": "sha256:006d53d8ccfc73eb580a06f7c36f8207cb3f738ba572e6f889f85988d95e17db",
+    "data_manifest_digests": [
+      "sha256:40af24ec24b3a1d42cf7a0efc27cd3b303a81365bb38fbcf01ebcc193d085f24",
+      "sha256:06343ea7567e67cffc9e734260c6ccb4c9eea059702e6df4572acfa1bdada41f"
+    ],
+    "rights_manifest_ids": ["fixture-public-rights-v1"],
+    "relation_manifest_digests": [],
+    "model_fixture_digests": [
+      "sha256:7ed7c7fc7fd4c4c67fa44830bb112b5a5f62f2a055d0096e60e85af3cbaabe9e"
+    ],
+    "skill_manifest_digests": [],
+    "source_receipt_digests": [],
+    "frozen_at": "2026-01-02T00:00:00Z"
+  },
+  "snapshot": {
+    "schema_version": 1,
+    "tenant_id": "tenant-fixture",
+    "case_id": "00000000-0000-0000-0000-000000000101",
+    "snapshot_id": "multi-asset-snapshot-v1",
+    "manifest_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "content_digest": "sha256:006d53d8ccfc73eb580a06f7c36f8207cb3f738ba572e6f889f85988d95e17db",
+    "as_of": "2026-01-01T00:00:00Z",
+    "frozen_at": "2026-01-02T00:00:00Z"
+  },
+  "forecasts": [
+    {
+      "instrument_id": "AAA",
+      "horizon_days": 20,
+      "expected_return": "0.10",
+      "probability_positive": "0.60",
+      "confidence": "0.80",
+      "uncertainty": "0.20",
+      "feature_provenance": ["aaa-fixture-features-v1"]
+    },
+    {
+      "instrument_id": "BBB",
+      "horizon_days": 20,
+      "expected_return": "0.05",
+      "probability_positive": "0.55",
+      "confidence": "0.70",
+      "uncertainty": "0.25",
+      "feature_provenance": ["bbb-fixture-features-v1"]
+    }
+  ],
+  "bars": [
+    {
+      "schema_version": 1,
+      "instrument_id": "AAA",
+      "instrument_version": "aaa-sec-v1",
+      "observed_at": "2026-01-01T00:00:00Z",
+      "available_at": "2026-01-01T00:00:00Z",
+      "tradable_at": "2026-01-01T00:00:00Z",
+      "open_price": "99",
+      "close_price": "100",
+      "volume": "1000000",
+      "currency": "USD"
+    },
+    {
+      "schema_version": 1,
+      "instrument_id": "AAA",
+      "instrument_version": "aaa-sec-v1",
+      "observed_at": "2026-01-03T00:00:00Z",
+      "available_at": "2026-01-03T00:00:00Z",
+      "tradable_at": "2026-01-03T00:00:00Z",
+      "open_price": "101",
+      "close_price": "102",
+      "volume": "1000000",
+      "currency": "USD"
+    },
+    {
+      "schema_version": 1,
+      "instrument_id": "BBB",
+      "instrument_version": "bbb-sec-v1",
+      "observed_at": "2026-01-01T00:00:00Z",
+      "available_at": "2026-01-01T00:00:00Z",
+      "tradable_at": "2026-01-01T00:00:00Z",
+      "open_price": "51",
+      "close_price": "50",
+      "volume": "750000",
+      "currency": "USD"
+    },
+    {
+      "schema_version": 1,
+      "instrument_id": "BBB",
+      "instrument_version": "bbb-sec-v1",
+      "observed_at": "2026-01-03T00:00:00Z",
+      "available_at": "2026-01-03T00:00:00Z",
+      "tradable_at": "2026-01-03T00:00:00Z",
+      "open_price": "49",
+      "close_price": "48",
+      "volume": "750000",
+      "currency": "USD"
+    }
+  ],
+  "securities": [
+    {
+      "schema_version": 1,
+      "instrument_id": "AAA",
+      "instrument_version": "aaa-sec-v1",
+      "sector_id": "technology",
+      "valid_from": "2020-01-01T00:00:00Z",
+      "valid_until": null
+    },
+    {
+      "schema_version": 1,
+      "instrument_id": "BBB",
+      "instrument_version": "bbb-sec-v1",
+      "sector_id": "industrials",
+      "valid_from": "2020-01-01T00:00:00Z",
+      "valid_until": null
+    }
+  ],
+  "portfolio_policy": {
+    "maximum_position_weight": "0.30",
+    "uncertainty_floor": "0.01"
+  },
+  "risk_policy": {
+    "schema_version": 1,
+    "policy_id": "fixture-paper-policy",
+    "policy_version": "1",
+    "maximum_position_weight": "0.35",
+    "maximum_sector_weight": "0.50",
+    "maximum_gross_exposure": "1",
+    "maximum_turnover": "0.60",
+    "maximum_order_notional": "10000",
+    "maximum_staleness_seconds": 172800
+  },
+  "initial_cash": "10000",
+  "annualization_periods": 252
+}
