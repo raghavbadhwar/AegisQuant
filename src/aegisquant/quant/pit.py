@@ -54,10 +54,15 @@ def apply_available_corporate_actions(
         if action.available_at > cutoff or action.effective_at > cutoff:
             continue
         quantity = updated.get(action.instrument_id, Decimal(0))
-        if action.kind == CorporateActionKind.CASH_DIVIDEND:
+        if action.kind in {
+            CorporateActionKind.CASH_DIVIDEND,
+            CorporateActionKind.DELISTING_CASH,
+        }:
             if action.cash_per_share is None:
-                raise ValueError("cash dividend is missing cash_per_share")
+                raise ValueError("cash action is missing cash_per_share")
             updated_cash += quantity * action.cash_per_share
+            if action.kind == CorporateActionKind.DELISTING_CASH:
+                updated.pop(action.instrument_id, None)
         else:
             if action.split_ratio is None:
                 raise ValueError("split is missing split_ratio")

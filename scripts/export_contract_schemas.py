@@ -36,6 +36,7 @@ from aegisquant.contracts.risk import (
 )
 from aegisquant.fixture_case import FixtureCaseReport, FixtureCaseSpec
 from aegisquant.intelligence.forecast_evidence import ForecastAssessment, ForecastEvidenceBundle
+from aegisquant.quant.multi_period import MultiPeriodCaseReport, MultiPeriodCaseSpec
 
 SCHEMAS: dict[str, Any] = {
     "artifact-envelope-v1": ArtifactEnvelope,
@@ -55,6 +56,8 @@ SCHEMAS: dict[str, Any] = {
     "learning-evaluation-v1": LearningEvaluation,
     "last30days-research-record-v1": Last30DaysResearchRecord,
     "market-bar-v1": MarketBar,
+    "multi-period-case-report-v1": MultiPeriodCaseReport,
+    "multi-period-case-spec-v1": MultiPeriodCaseSpec,
     "numeric-claim-v1": NumericClaim,
     "order-bundle-v1": OrderBundle,
     "paper-fill-v1": PaperFill,

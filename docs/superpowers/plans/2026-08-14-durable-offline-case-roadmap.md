@@ -287,34 +287,34 @@ Expected: all exit 0.
   `run_multi_period_case(spec) -> MultiPeriodCaseReport`, and
   `verify_multi_period_report(spec, report) -> bool`.
 
-- [ ] **Step 1: Write failing fixture behavior tests**
+- [x] **Step 1: Write failing fixture behavior tests**
 
 The frozen fixture must include at least six rebalance dates, a benchmark, one split, one cash
 dividend, one delisting-to-cash event, one stale bar rejection, one limit order left unfilled, one
 price gap, and both buy and sell fills. Assert literal ending cash/positions/NAV and benchmark
 return derived independently from the production helper.
 
-- [ ] **Step 2: Write failing evaluation tests**
+- [x] **Step 2: Write failing evaluation tests**
 
 Require non-overlapping walk-forward folds, a locked holdout digest, placebo returns, sufficient
 observation gating, and tamper detection by `verify_multi_period_report`.
 
-- [ ] **Step 3: Run and observe RED**
+- [x] **Step 3: Run and observe RED**
 
 Run: `uv run pytest -q tests/test_multi_period_case.py`
 
-- [ ] **Step 4: Implement only fixture-required execution semantics**
+- [x] **Step 4: Implement only fixture-required execution semantics**
 
 Add limit eligibility, explicit unfilled IDs, sells/rebalancing, split quantity adjustment,
 dividend cash, delisting liquidation, and stale-data rejection. Preserve long-only/no-leverage
 invariants.
 
-- [ ] **Step 5: Implement multi-period orchestration and verification**
+- [x] **Step 5: Implement multi-period orchestration and verification**
 
 Keep period processing deterministic and pure. Recompute the report from immutable fills/actions;
 do not trust the report's own totals.
 
-- [ ] **Step 6: Export schemas and run GREEN checks**
+- [x] **Step 6: Export schemas and run GREEN checks**
 
 Run:
 

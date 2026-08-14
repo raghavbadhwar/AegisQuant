@@ -3,6 +3,7 @@
     "CorporateActionKind": {
       "enum": [
         "CASH_DIVIDEND",
+        "DELISTING_CASH",
         "SPLIT"
       ],
       "title": "CorporateActionKind",

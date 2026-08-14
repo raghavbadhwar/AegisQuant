@@ -1,0 +1,419 @@
+{
+  "schema_version": 1,
+  "tenant_id": "tenant-fixture",
+  "case_id": "00000000-0000-0000-0000-000000000301",
+  "initial_cash": "1000",
+  "transaction_cost_rate": "0.001",
+  "max_bar_age_seconds": 200000,
+  "benchmark_instrument_id": "BENCH",
+  "bars": [
+    {
+      "schema_version": 1,
+      "instrument_id": "AAA",
+      "instrument_version": "aaa-v1",
+      "observed_at": "2026-01-01T15:00:00Z",
+      "available_at": "2026-01-01T15:30:00Z",
+      "tradable_at": "2026-01-01T16:00:00Z",
+      "open_price": "10",
+      "close_price": "10",
+      "volume": "100000",
+      "currency": "USD"
+    },
+    {
+      "schema_version": 1,
+      "instrument_id": "DEL",
+      "instrument_version": "del-v1",
+      "observed_at": "2026-01-01T15:00:00Z",
+      "available_at": "2026-01-01T15:30:00Z",
+      "tradable_at": "2026-01-01T16:00:00Z",
+      "open_price": "20",
+      "close_price": "20",
+      "volume": "100000",
+      "currency": "USD"
+    },
+    {
+      "schema_version": 1,
+      "instrument_id": "BBB",
+      "instrument_version": "bbb-v1",
+      "observed_at": "2025-12-24T15:00:00Z",
+      "available_at": "2025-12-24T15:30:00Z",
+      "tradable_at": "2025-12-24T16:00:00Z",
+      "open_price": "5",
+      "close_price": "5",
+      "volume": "100000",
+      "currency": "USD"
+    },
+    {
+      "schema_version": 1,
+      "instrument_id": "BENCH",
+      "instrument_version": "bench-v1",
+      "observed_at": "2026-01-01T15:00:00Z",
+      "available_at": "2026-01-01T15:30:00Z",
+      "tradable_at": "2026-01-01T16:00:00Z",
+      "open_price": "100",
+      "close_price": "100",
+      "volume": "100000",
+      "currency": "USD"
+    },
+    {
+      "schema_version": 1,
+      "instrument_id": "AAA",
+      "instrument_version": "aaa-v1",
+      "observed_at": "2026-01-02T09:15:00Z",
+      "available_at": "2026-01-02T09:30:00Z",
+      "tradable_at": "2026-01-02T10:00:00Z",
+      "open_price": "12",
+      "close_price": "12",
+      "volume": "100000",
+      "currency": "USD"
+    },
+    {
+      "schema_version": 1,
+      "instrument_id": "BENCH",
+      "instrument_version": "bench-v1",
+      "observed_at": "2026-01-02T09:15:00Z",
+      "available_at": "2026-01-02T09:30:00Z",
+      "tradable_at": "2026-01-02T10:00:00Z",
+      "open_price": "102",
+      "close_price": "102",
+      "volume": "100000",
+      "currency": "USD"
+    },
+    {
+      "schema_version": 1,
+      "instrument_id": "AAA",
+      "instrument_version": "aaa-v1",
+      "observed_at": "2026-01-03T09:15:00Z",
+      "available_at": "2026-01-03T09:30:00Z",
+      "tradable_at": "2026-01-03T10:00:00Z",
+      "open_price": "6.5",
+      "close_price": "6.5",
+      "volume": "100000",
+      "currency": "USD"
+    },
+    {
+      "schema_version": 1,
+      "instrument_id": "BENCH",
+      "instrument_version": "bench-v1",
+      "observed_at": "2026-01-03T09:15:00Z",
+      "available_at": "2026-01-03T09:30:00Z",
+      "tradable_at": "2026-01-03T10:00:00Z",
+      "open_price": "104",
+      "close_price": "104",
+      "volume": "100000",
+      "currency": "USD"
+    },
+    {
+      "schema_version": 1,
+      "instrument_id": "AAA",
+      "instrument_version": "aaa-v1",
+      "observed_at": "2026-01-04T09:15:00Z",
+      "available_at": "2026-01-04T09:30:00Z",
+      "tradable_at": "2026-01-04T10:00:00Z",
+      "open_price": "7",
+      "close_price": "7",
+      "volume": "100000",
+      "currency": "USD"
+    },
+    {
+      "schema_version": 1,
+      "instrument_id": "BENCH",
+      "instrument_version": "bench-v1",
+      "observed_at": "2026-01-04T09:15:00Z",
+      "available_at": "2026-01-04T09:30:00Z",
+      "tradable_at": "2026-01-04T10:00:00Z",
+      "open_price": "106",
+      "close_price": "106",
+      "volume": "100000",
+      "currency": "USD"
+    },
+    {
+      "schema_version": 1,
+      "instrument_id": "AAA",
+      "instrument_version": "aaa-v1",
+      "observed_at": "2026-01-05T09:15:00Z",
+      "available_at": "2026-01-05T09:30:00Z",
+      "tradable_at": "2026-01-05T10:00:00Z",
+      "open_price": "7.5",
+      "close_price": "7.5",
+      "volume": "100000",
+      "currency": "USD"
+    },
+    {
+      "schema_version": 1,
+      "instrument_id": "BENCH",
+      "instrument_version": "bench-v1",
+      "observed_at": "2026-01-05T09:15:00Z",
+      "available_at": "2026-01-05T09:30:00Z",
+      "tradable_at": "2026-01-05T10:00:00Z",
+      "open_price": "108",
+      "close_price": "108",
+      "volume": "100000",
+      "currency": "USD"
+    },
+    {
+      "schema_version": 1,
+      "instrument_id": "AAA",
+      "instrument_version": "aaa-v1",
+      "observed_at": "2026-01-06T09:15:00Z",
+      "available_at": "2026-01-06T09:30:00Z",
+      "tradable_at": "2026-01-06T10:00:00Z",
+      "open_price": "7",
+      "close_price": "7",
+      "volume": "100000",
+      "currency": "USD"
+    },
+    {
+      "schema_version": 1,
+      "instrument_id": "BENCH",
+      "instrument_version": "bench-v1",
+      "observed_at": "2026-01-06T09:15:00Z",
+      "available_at": "2026-01-06T09:30:00Z",
+      "tradable_at": "2026-01-06T10:00:00Z",
+      "open_price": "110",
+      "close_price": "110",
+      "volume": "100000",
+      "currency": "USD"
+    },
+    {
+      "schema_version": 1,
+      "instrument_id": "AAA",
+      "instrument_version": "aaa-v1",
+      "observed_at": "2026-01-07T09:15:00Z",
+      "available_at": "2026-01-07T09:30:00Z",
+      "tradable_at": "2026-01-07T10:00:00Z",
+      "open_price": "8",
+      "close_price": "8",
+      "volume": "100000",
+      "currency": "USD"
+    },
+    {
+      "schema_version": 1,
+      "instrument_id": "BENCH",
+      "instrument_version": "bench-v1",
+      "observed_at": "2026-01-07T09:15:00Z",
+      "available_at": "2026-01-07T09:30:00Z",
+      "tradable_at": "2026-01-07T10:00:00Z",
+      "open_price": "112",
+      "close_price": "112",
+      "volume": "100000",
+      "currency": "USD"
+    },
+    {
+      "schema_version": 1,
+      "instrument_id": "DEL",
+      "instrument_version": "del-v1",
+      "observed_at": "2026-01-02T09:15:00Z",
+      "available_at": "2026-01-02T09:30:00Z",
+      "tradable_at": "2026-01-02T10:00:00Z",
+      "open_price": "20",
+      "close_price": "20",
+      "volume": "100000",
+      "currency": "USD"
+    },
+    {
+      "schema_version": 1,
+      "instrument_id": "BBB",
+      "instrument_version": "bbb-v1",
+      "observed_at": "2026-01-02T09:15:00Z",
+      "available_at": "2026-01-02T09:30:00Z",
+      "tradable_at": "2026-01-02T10:00:00Z",
+      "open_price": "5",
+      "close_price": "5",
+      "volume": "100000",
+      "currency": "USD"
+    }
+  ],
+  "corporate_actions": [
+    {
+      "schema_version": 1,
+      "instrument_id": "AAA",
+      "instrument_version": "aaa-v1",
+      "kind": "SPLIT",
+      "effective_at": "2026-01-03T08:00:00Z",
+      "available_at": "2026-01-03T08:00:00Z",
+      "cash_per_share": null,
+      "split_ratio": "2"
+    },
+    {
+      "schema_version": 1,
+      "instrument_id": "AAA",
+      "instrument_version": "aaa-v1",
+      "kind": "CASH_DIVIDEND",
+      "effective_at": "2026-01-04T08:00:00Z",
+      "available_at": "2026-01-04T08:00:00Z",
+      "cash_per_share": "0.5",
+      "split_ratio": null
+    },
+    {
+      "schema_version": 1,
+      "instrument_id": "DEL",
+      "instrument_version": "del-v1",
+      "kind": "DELISTING_CASH",
+      "effective_at": "2026-01-05T08:00:00Z",
+      "available_at": "2026-01-05T08:00:00Z",
+      "cash_per_share": "21",
+      "split_ratio": null
+    }
+  ],
+  "periods": [
+    {
+      "schema_version": 1,
+      "period_id": "p1",
+      "decision_at": "2026-01-02T09:00:00Z",
+      "fill_at": "2026-01-02T10:00:00Z",
+      "orders": [
+        {
+          "schema_version": 1,
+          "client_order_id": "p1-buy-aaa",
+          "instrument_id": "AAA",
+          "instrument_version": "aaa-v1",
+          "venue_id": "fixture-venue",
+          "side": "BUY",
+          "order_type": "MARKET",
+          "time_in_force": "DAY",
+          "quantity": "10",
+          "limit_price": null,
+          "currency": "USD"
+        },
+        {
+          "schema_version": 1,
+          "client_order_id": "p1-buy-del",
+          "instrument_id": "DEL",
+          "instrument_version": "del-v1",
+          "venue_id": "fixture-venue",
+          "side": "BUY",
+          "order_type": "MARKET",
+          "time_in_force": "DAY",
+          "quantity": "5",
+          "limit_price": null,
+          "currency": "USD"
+        },
+        {
+          "schema_version": 1,
+          "client_order_id": "p1-stale-bbb",
+          "instrument_id": "BBB",
+          "instrument_version": "bbb-v1",
+          "venue_id": "fixture-venue",
+          "side": "BUY",
+          "order_type": "MARKET",
+          "time_in_force": "DAY",
+          "quantity": "1",
+          "limit_price": null,
+          "currency": "USD"
+        }
+      ]
+    },
+    {
+      "schema_version": 1,
+      "period_id": "p2",
+      "decision_at": "2026-01-03T09:00:00Z",
+      "fill_at": "2026-01-03T10:00:00Z",
+      "orders": [
+        {
+          "schema_version": 1,
+          "client_order_id": "p2-limit-aaa",
+          "instrument_id": "AAA",
+          "instrument_version": "aaa-v1",
+          "venue_id": "fixture-venue",
+          "side": "BUY",
+          "order_type": "LIMIT",
+          "time_in_force": "DAY",
+          "quantity": "1",
+          "limit_price": "5",
+          "currency": "USD"
+        }
+      ]
+    },
+    {
+      "schema_version": 1,
+      "period_id": "p3",
+      "decision_at": "2026-01-04T09:00:00Z",
+      "fill_at": "2026-01-04T10:00:00Z",
+      "orders": [
+        {
+          "schema_version": 1,
+          "client_order_id": "p3-sell-aaa",
+          "instrument_id": "AAA",
+          "instrument_version": "aaa-v1",
+          "venue_id": "fixture-venue",
+          "side": "SELL",
+          "order_type": "MARKET",
+          "time_in_force": "DAY",
+          "quantity": "5",
+          "limit_price": null,
+          "currency": "USD"
+        }
+      ]
+    },
+    {
+      "schema_version": 1,
+      "period_id": "p4",
+      "decision_at": "2026-01-05T09:00:00Z",
+      "fill_at": "2026-01-05T10:00:00Z",
+      "orders": [
+        {
+          "schema_version": 1,
+          "client_order_id": "p4-sell-aaa",
+          "instrument_id": "AAA",
+          "instrument_version": "aaa-v1",
+          "venue_id": "fixture-venue",
+          "side": "SELL",
+          "order_type": "MARKET",
+          "time_in_force": "DAY",
+          "quantity": "5",
+          "limit_price": null,
+          "currency": "USD"
+        }
+      ]
+    },
+    {
+      "schema_version": 1,
+      "period_id": "p5",
+      "decision_at": "2026-01-06T09:00:00Z",
+      "fill_at": "2026-01-06T10:00:00Z",
+      "orders": [
+        {
+          "schema_version": 1,
+          "client_order_id": "p5-buy-aaa",
+          "instrument_id": "AAA",
+          "instrument_version": "aaa-v1",
+          "venue_id": "fixture-venue",
+          "side": "BUY",
+          "order_type": "MARKET",
+          "time_in_force": "DAY",
+          "quantity": "2",
+          "limit_price": null,
+          "currency": "USD"
+        }
+      ]
+    },
+    {
+      "schema_version": 1,
+      "period_id": "p6",
+      "decision_at": "2026-01-07T09:00:00Z",
+      "fill_at": "2026-01-07T10:00:00Z",
+      "orders": [
+        {
+          "schema_version": 1,
+          "client_order_id": "p6-sell-aaa",
+          "instrument_id": "AAA",
+          "instrument_version": "aaa-v1",
+          "venue_id": "fixture-venue",
+          "side": "SELL",
+          "order_type": "MARKET",
+          "time_in_force": "DAY",
+          "quantity": "12",
+          "limit_price": null,
+          "currency": "USD"
+        }
+      ]
+    }
+  ],
+  "holdout_period_ids": ["p5", "p6"],
+  "locked_holdout_digest": "sha256:ba05af522a02838829071f2530a43761f8dc9d2e1128dd21088c2c8ed1f2edb9",
+  "walk_forward_training_periods": 2,
+  "walk_forward_test_periods": 1,
+  "walk_forward_step": 1,
+  "annualization_periods": 252
+}

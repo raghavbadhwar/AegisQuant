@@ -22,6 +22,7 @@ from aegisquant.contracts.risk import OrderSide
 
 class CorporateActionKind(StrEnum):
     CASH_DIVIDEND = "CASH_DIVIDEND"
+    DELISTING_CASH = "DELISTING_CASH"
     SPLIT = "SPLIT"
 
 
@@ -188,22 +189,29 @@ class CorporateAction(StrictModel):
     cash_per_share: FixedDecimal | None = None
     split_ratio: FixedDecimal | None = None
 
-    @field_validator("effective_at", "available_at")
+    @field_validator("effective_at", "available_at", mode="before")
     @classmethod
-    def utc(cls, value: datetime) -> datetime:
+    def utc(cls, value: object) -> datetime:
+        if isinstance(value, str):
+            value = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        if not isinstance(value, datetime):
+            raise ValueError("corporate action times must be UTC datetimes")
         return require_utc(value)
 
     @model_validator(mode="after")
     def action_shape(self) -> CorporateAction:
         if self.available_at < self.effective_at:
             raise ValueError("corporate action cannot be available before effective_at")
-        if self.kind == CorporateActionKind.CASH_DIVIDEND:
+        if self.kind in {
+            CorporateActionKind.CASH_DIVIDEND,
+            CorporateActionKind.DELISTING_CASH,
+        }:
             if (
                 self.cash_per_share is None
                 or self.cash_per_share < 0
                 or self.split_ratio is not None
             ):
-                raise ValueError("cash dividend requires nonnegative cash_per_share only")
+                raise ValueError("cash action requires nonnegative cash_per_share only")
         elif self.split_ratio is None or self.split_ratio <= 0 or self.cash_per_share is not None:
             raise ValueError("split requires positive split_ratio only")
         return self
