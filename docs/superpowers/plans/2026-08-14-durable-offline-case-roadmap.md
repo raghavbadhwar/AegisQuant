@@ -494,12 +494,12 @@ Expected: all exit 0.
 **Interfaces:**
 - Produces: source-bound validation evidence; no production-readiness claim.
 
-- [ ] **Step 1: Run exact reproducibility and recovery checks**
+- [x] **Step 1: Run exact reproducibility and recovery checks**
 
 Run the control fixture twice and compare bytes. Run the ephemeral PostgreSQL interruption/retry
 scenario and query exact counts for decisions, executions, and fills.
 
-- [ ] **Step 2: Run the full gate**
+- [x] **Step 2: Run the full gate**
 
 Run:
 
@@ -511,18 +511,18 @@ git diff --check
 
 Expected: all exit 0.
 
-- [ ] **Step 3: Request independent whole-diff review**
+- [x] **Step 3: Request independent whole-diff review**
 
 Fix all Critical and Important findings under TDD, then repeat Step 2 and request a scoped
 re-review.
 
-- [ ] **Step 4: Record evidence without overclaiming**
+- [x] **Step 4: Record evidence without overclaiming**
 
 Document exact commands, tool versions, test count, PostgreSQL recovery counts, Temporal replay
 coverage, limitations, and the commit SHA being validated. Keep production, performance, custody,
 customer, and live-readiness claims explicitly out of scope.
 
-- [ ] **Step 5: Commit release-sized slices**
+- [x] **Step 5: Commit release-sized slices**
 
 Use scoped Conventional Commit subjects. Do not push, merge, deploy, or create a PR without a new
 operator instruction.
