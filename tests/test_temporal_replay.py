@@ -13,7 +13,11 @@ from aegisquant.workflows.contracts import ResearchCaseWorkflowInput, SnapshotRe
 from aegisquant.workflows.durable_case import DurableOfflineCaseWorkflow
 from aegisquant.workflows.research_case import ResearchCaseWorkflow
 from aegisquant.workflows.research_case_v2 import ReproducibleResearchCaseWorkflow
-from aegisquant.workflows.versioning import DEPLOYMENT_NAME, worker_deployment_config
+from aegisquant.workflows.versioning import (
+    DEPLOYMENT_NAME,
+    DURABLE_CASE_TASK_QUEUE,
+    worker_deployment_config,
+)
 
 FIXTURE = Path("tests/fixtures/temporal/research_case_workflow_v1.json")
 V2_FIXTURE = Path("tests/fixtures/temporal/research_case_workflow_v2.json")
@@ -95,5 +99,6 @@ def test_worker_deployment_is_pinned_and_build_id_is_required() -> None:
     assert config.version.build_id == "candidate-build-1"
     assert config.use_worker_versioning is True
     assert config.default_versioning_behavior is VersioningBehavior.PINNED
+    assert DURABLE_CASE_TASK_QUEUE == "aegisquant-durable-case-v1"
     with pytest.raises(ValueError, match="must not be empty"):
         worker_deployment_config("   ")

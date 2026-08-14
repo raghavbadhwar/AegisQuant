@@ -14,6 +14,7 @@ dependencies = [
 ]
 
 [project.scripts]
+aegisquant-case = "aegisquant.case_cli:main"
 run-fixture-case = "aegisquant.fixture_case:main"
 
 [dependency-groups]

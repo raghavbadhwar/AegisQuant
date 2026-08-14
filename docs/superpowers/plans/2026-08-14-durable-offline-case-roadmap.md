@@ -389,28 +389,28 @@ Repeat Step 2. Expected: all exit 0.
 - Preserves: `run-fixture-case` compatibility.
 - Produces: `GET /health/ready`; no execution/write endpoint.
 
-- [ ] **Step 1: Write failing CLI behavior tests**
+- [x] **Step 1: Write failing CLI behavior tests**
 
 Use real temporary fixture/report files. Assert `run` emits a deterministic report, `verify`
 detects one-byte tamper, `replay` returns the same durable digest, `inspect` performs no writes,
 and invalid JSON exits 2 with one concise error.
 
-- [ ] **Step 2: Write failing readiness tests**
+- [x] **Step 2: Write failing readiness tests**
 
 Inject dependency probes and assert 200 only when PostgreSQL and Temporal probes are ready, 503
 otherwise. Assert the OpenAPI paths contain no execution, broker, order, ingestion, or mutation
 route.
 
-- [ ] **Step 3: Run and observe RED**
+- [x] **Step 3: Run and observe RED**
 
 Run: `uv run pytest -q tests/test_case_cli.py tests/test_control_api.py`
 
-- [ ] **Step 4: Implement argparse dispatch and readiness**
+- [x] **Step 4: Implement argparse dispatch and readiness**
 
 Reuse `FixtureCaseSpec`, `run_fixture_case`, verification helpers, and strict report contracts.
 Do not add Click/Typer, a service container, or a case API.
 
-- [ ] **Step 5: Run GREEN checks**
+- [x] **Step 5: Run GREEN checks**
 
 Run:
 

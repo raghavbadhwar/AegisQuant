@@ -5,6 +5,7 @@ from temporalio.worker import WorkerDeploymentConfig
 
 DEPLOYMENT_NAME = "aegisquant-m0"
 RESEARCH_CASE_TASK_QUEUE = "aegisquant-research-case-v1"
+DURABLE_CASE_TASK_QUEUE = "aegisquant-durable-case-v1"
 
 
 def worker_deployment_config(build_id: str) -> WorkerDeploymentConfig:
