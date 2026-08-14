@@ -16,6 +16,7 @@ for role in "$ROLE_A" "$ROLE_B"; do
 done
 psql -X -v ON_ERROR_STOP=1 -d postgres -c "CREATE DATABASE "$DB";" >/dev/null
 psql -X -v ON_ERROR_STOP=1 -d "$DB"   -f infrastructure/postgres/migrations/0001_security_kernel.sql >/dev/null
+psql -X -v ON_ERROR_STOP=1 -d "$DB"   -f infrastructure/postgres/migrations/0002_durable_offline_execution.sql >/dev/null
 
 psql -X -v ON_ERROR_STOP=1 -d "$DB" <<SQL >/dev/null
 INSERT INTO tenant_role_bindings (database_role, tenant_id)
@@ -27,6 +28,13 @@ GRANT EXECUTE ON FUNCTION aq_current_tenant_id() TO "$ROLE_A", "$ROLE_B";
 GRANT EXECUTE ON FUNCTION aq_record_idempotency(text,text,text,jsonb,text)
   TO "$ROLE_A", "$ROLE_B";
 GRANT SELECT ON idempotency_records TO "$ROLE_A", "$ROLE_B";
+GRANT EXECUTE ON FUNCTION aq_prepare_paper_account(text,uuid,text,bigint,text,jsonb)
+  TO "$ROLE_A", "$ROLE_B";
+GRANT EXECUTE ON FUNCTION aq_record_paper_execution(
+  text,uuid,text,uuid,text,text,text,text,text,jsonb,bigint,text,jsonb
+) TO "$ROLE_A", "$ROLE_B";
+GRANT SELECT, UPDATE ON paper_account_snapshots, consumed_risk_decisions, paper_execution_results
+  TO "$ROLE_A", "$ROLE_B";
 SQL
 
 insert_case() {
@@ -182,6 +190,131 @@ SELECT aq_record_idempotency(
 SQL
 then
   echo 'idempotency conflict unexpectedly succeeded' >&2
+  exit 1
+fi
+
+# A durable account transition consumes one decision and records one result exactly once.
+jsonb_golden=$(psql -X -At -v ON_ERROR_STOP=1 -d "$DB" \
+  -c "SELECT aq_jsonb_digest('{\"aaaa\":1,\"b\":2,\"cc\":3}');")
+[[ "$jsonb_golden" == "sha256:ea883663873df15b8f03c891f1cbc754fa22515473ac26d0ad4a32e741238841" ]]
+
+psql -X -v ON_ERROR_STOP=1 -d "$DB" <<SQL >/dev/null
+SET SESSION AUTHORIZATION "$ROLE_A";
+SELECT aq_prepare_paper_account(
+  'tenant-a', '00000000-0000-0000-0000-000000000001', 'paper-1', 0,
+  'sha256:ef36b4df8d2068129dfb1e91543cd8ef1075a1fb3574ded2e1923733c6fa927b',
+  '{"cash":"10000","positions":[]}'
+);
+SELECT aq_record_paper_execution(
+  'tenant-a', '00000000-0000-0000-0000-000000000001', 'paper-1',
+  '00000000-0000-0000-0000-000000000030', 'execute-1', '0123456789abcdef0123456789abcdef',
+  'sha256:2222222222222222222222222222222222222222222222222222222222222222',
+  'sha256:3333333333333333333333333333333333333333333333333333333333333333',
+  'sha256:2e119c22414bb9ad4e1e574c9d1270f37487dd035419ddf2dc10b7ba52b6b412',
+  '{"fills":[{"fill_id":"fill-1"}]}', 1,
+  'sha256:b39282781415750ed7e03bd54492c42197c5fe57bad40ec2de9b1f8094536c66',
+  '{"cash":"9900","positions":[{"instrument_id":"AAA","quantity":"1"}]}'
+);
+SELECT aq_record_paper_execution(
+  'tenant-a', '00000000-0000-0000-0000-000000000001', 'paper-1',
+  '00000000-0000-0000-0000-000000000030', 'execute-1', '0123456789abcdef0123456789abcdef',
+  'sha256:2222222222222222222222222222222222222222222222222222222222222222',
+  'sha256:3333333333333333333333333333333333333333333333333333333333333333',
+  'sha256:2e119c22414bb9ad4e1e574c9d1270f37487dd035419ddf2dc10b7ba52b6b412',
+  '{"fills":[{"fill_id":"fill-1"}]}', 1,
+  'sha256:b39282781415750ed7e03bd54492c42197c5fe57bad40ec2de9b1f8094536c66',
+  '{"cash":"9900","positions":[{"instrument_id":"AAA","quantity":"1"}]}'
+);
+SQL
+
+durable_counts=$(psql -X -At -F '|' -v ON_ERROR_STOP=1 -d "$DB" <<SQL
+SET SESSION AUTHORIZATION "$ROLE_A";
+SELECT
+  (SELECT count(*) FROM consumed_risk_decisions),
+  (SELECT count(*) FROM paper_execution_results),
+  (SELECT jsonb_array_length(result_payload->'fills') FROM paper_execution_results),
+  (SELECT count(*) FROM paper_account_snapshots);
+SQL
+)
+durable_counts=$(printf '%s\n' "$durable_counts" | grep -E '^[0-9]+\|' | tail -1)
+[[ "$durable_counts" == "1|1|1|2" ]]
+
+tenant_b_visible=$(psql -X -At -v ON_ERROR_STOP=1 -d "$DB" <<SQL
+SET SESSION AUTHORIZATION "$ROLE_B";
+SELECT count(*) FROM paper_execution_results;
+SQL
+)
+tenant_b_visible=$(printf '%s\n' "$tenant_b_visible" | grep -E '^[0-9]+$' | tail -1)
+[[ "$tenant_b_visible" == "0" ]]
+
+if psql -X -v ON_ERROR_STOP=1 -d "$DB" <<SQL >/dev/null 2>&1
+SET SESSION AUTHORIZATION "$ROLE_A";
+SELECT aq_prepare_paper_account(
+  'tenant-b', '00000000-0000-0000-0000-000000000001', 'paper-x', 0,
+  'sha256:ef36b4df8d2068129dfb1e91543cd8ef1075a1fb3574ded2e1923733c6fa927b',
+  '{"cash":"10000","positions":[]}'
+);
+SQL
+then
+  echo 'payload tenant unexpectedly replaced the authenticated database tenant' >&2
+  exit 1
+fi
+
+if psql -X -v ON_ERROR_STOP=1 -d "$DB" <<SQL >/dev/null 2>&1
+SET SESSION AUTHORIZATION "$ROLE_A";
+UPDATE paper_account_snapshots SET snapshot_payload = '{}' WHERE state_sequence = 1;
+SQL
+then
+  echo 'durable account snapshot mutation unexpectedly succeeded' >&2
+  exit 1
+fi
+
+if psql -X -v ON_ERROR_STOP=1 -d "$DB" <<SQL >/dev/null 2>&1
+SET SESSION AUTHORIZATION "$ROLE_A";
+SELECT aq_prepare_paper_account(
+  'tenant-a', '00000000-0000-0000-0000-000000000001', 'paper-1', 0,
+  'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+  '{"cash":"1","positions":[]}'
+);
+SQL
+then
+  echo 'changed paper account preparation unexpectedly succeeded' >&2
+  exit 1
+fi
+
+if psql -X -v ON_ERROR_STOP=1 -d "$DB" <<SQL >/dev/null 2>&1
+SET SESSION AUTHORIZATION "$ROLE_A";
+SELECT aq_record_paper_execution(
+  'tenant-a', '00000000-0000-0000-0000-000000000001', 'paper-1',
+  '00000000-0000-0000-0000-000000000031', 'execute-2', '0123456789abcdef0123456789abcdef',
+  'sha256:2222222222222222222222222222222222222222222222222222222222222222',
+  'sha256:6666666666666666666666666666666666666666666666666666666666666666',
+  'sha256:c754d3d0a686b2b0ed2a916fc9084ff8c3c7659dd379fa8a1f4fcde737ade312',
+  '{"fills":[]}', 2,
+  'sha256:4be01a978d923e44cc14effe36e384e528aaf2ce266b6addeed6e023faececc4',
+  '{"cash":"9900","positions":[]}'
+);
+SQL
+then
+  echo 'risk decision nonce reuse unexpectedly succeeded' >&2
+  exit 1
+fi
+
+if psql -X -v ON_ERROR_STOP=1 -d "$DB" <<SQL >/dev/null 2>&1
+SET SESSION AUTHORIZATION "$ROLE_A";
+SELECT aq_record_paper_execution(
+  'tenant-a', '00000000-0000-0000-0000-000000000001', 'paper-1',
+  '00000000-0000-0000-0000-000000000030', 'execute-1', '0123456789abcdef0123456789abcdef',
+  'sha256:2222222222222222222222222222222222222222222222222222222222222222',
+  'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+  'sha256:2e119c22414bb9ad4e1e574c9d1270f37487dd035419ddf2dc10b7ba52b6b412',
+  '{"fills":[{"fill_id":"fill-1"}]}', 1,
+  'sha256:b39282781415750ed7e03bd54492c42197c5fe57bad40ec2de9b1f8094536c66',
+  '{"cash":"9900","positions":[{"instrument_id":"AAA","quantity":"1"}]}'
+);
+SQL
+then
+  echo 'durable execution idempotency conflict unexpectedly succeeded' >&2
   exit 1
 fi
 

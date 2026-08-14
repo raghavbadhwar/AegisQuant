@@ -85,7 +85,7 @@ Expected: all checks exit 0 and tracked candidate changes are committed.
 **Files:**
 - Modify: `pyproject.toml`
 - Modify: `uv.lock`
-- Modify: `infrastructure/postgres/migrations/0001_security_kernel.sql`
+- Create: `infrastructure/postgres/migrations/0002_durable_offline_execution.sql`
 - Modify: `scripts/test-postgres-migration.sh`
 - Create: `src/aegisquant/case_ledger/postgres.py`
 - Create: `tests/test_postgres_store.py`
@@ -96,7 +96,7 @@ Expected: all checks exit 0 and tracked candidate changes are committed.
 - Produces: `PostgresCaseStore.prepare_case(...) -> DurableCaseRef`,
   `execute_once(...) -> DurableExecutionRef`, and `inspect(...) -> DurableCaseSnapshot`.
 
-- [ ] **Step 1: Write failing migration recovery assertions**
+- [x] **Step 1: Write failing migration recovery assertions**
 
 Extend the ephemeral shell test to call the same execution idempotency key twice and assert:
 
@@ -108,13 +108,13 @@ SELECT jsonb_array_length(result_payload->'fills') FROM paper_execution_results;
 
 Then reuse the key with a changed request digest and require a nonzero `psql` exit.
 
-- [ ] **Step 2: Run the migration test and observe RED**
+- [x] **Step 2: Run the migration test and observe RED**
 
 Run: `scripts/test-postgres-migration.sh`
 
 Expected: FAIL because the durable execution tables/function do not exist.
 
-- [ ] **Step 3: Add the minimum append-only schema**
+- [x] **Step 3: Add the minimum append-only schema**
 
 Add tenant-scoped tables:
 
@@ -130,30 +130,30 @@ Add primary/unique keys, digest checks, forced RLS, mutation-rejection triggers,
 `aq_record_paper_execution(...)` function that serializes by tenant/account/nonce, rejects changed
 idempotency content, and returns the original stored row on exact retry.
 
-- [ ] **Step 4: Run the migration test and observe GREEN**
+- [x] **Step 4: Run the migration test and observe GREEN**
 
 Run: `scripts/test-postgres-migration.sh`
 
 Expected: PASS with one consumed decision and one result after exact retry.
 
-- [ ] **Step 5: Add the exact PostgreSQL driver pin**
+- [x] **Step 5: Add the exact PostgreSQL driver pin**
 
 Run: `uv add --bounds exact --no-sync "psycopg[binary]" && uv sync --all-groups`
 
 Review `pyproject.toml` and `uv.lock`; no unrelated package upgrade is accepted.
 
-- [ ] **Step 6: Write failing adapter tests**
+- [x] **Step 6: Write failing adapter tests**
 
 Tests must prove that `prepare_case` rejects digest reuse, `execute_once` returns the stored result
 on exact retry, a changed digest raises `IdempotencyConflict`, and tenant-scoped inspection cannot
 cross tenant boundaries.
 
-- [ ] **Step 7: Implement the narrow adapter**
+- [x] **Step 7: Implement the narrow adapter**
 
 Use psycopg parameter binding and transactions. Do not introduce an ORM, connection pool,
 repository base class, retry framework, or schema abstraction.
 
-- [ ] **Step 8: Run focused and static checks**
+- [x] **Step 8: Run focused and static checks**
 
 Run:
 
