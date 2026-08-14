@@ -796,10 +796,14 @@ def test_metrics_are_deterministic_and_underpowered_results_are_not_overclaimed(
             test_observations=2,
             step=1,
         )
+    mature_returns = tuple(Decimal("0.01") if index % 2 else Decimal("0.02") for index in range(30))
     mature_report = performance_report(
-        tuple(Decimal("0.01") if index % 2 else Decimal("-0.005") for index in range(30)),
+        mature_returns,
         annualization_periods=252,
-        out_of_sample_fold_returns=((Decimal("-0.01"),), (Decimal("0.01"),)),
+        out_of_sample_fold_returns=((Decimal("0.01"),), (Decimal("0.02"),)),
+        holdout_returns=mature_returns[-5:],
+        benchmark_returns=(Decimal(0),) * 30,
+        placebo_returns=(Decimal(0),) * 30,
     )
     assert mature_report.sufficient_evidence
     assert mature_report.probability_of_backtest_overfitting is None
@@ -817,6 +821,35 @@ def test_metrics_are_deterministic_and_underpowered_results_are_not_overclaimed(
         Decimal("3"),
         Decimal("1"),
     )
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"out_of_sample_fold_returns": ((Decimal("-0.01"),),)},
+        {"out_of_sample_fold_returns": ((Decimal("-0.90"), Decimal("1.00")),)},
+        {"holdout_returns": (Decimal("-0.01"),)},
+        {"benchmark_returns": (Decimal("0.01"), Decimal("0.02")) * 15},
+        {"placebo_returns": (Decimal("0.01"), Decimal("0.02")) * 15},
+        {"strategy_trials": 2},
+    ],
+)
+def test_performance_evidence_fails_closed_when_a_declared_control_fails(
+    change: dict[str, object],
+) -> None:
+    returns = (Decimal("0.01"), Decimal("0.02")) * 15
+    arguments: dict[str, object] = {
+        "annualization_periods": 252,
+        "strategy_trials": 1,
+        "out_of_sample_fold_returns": ((Decimal("0.01"),), (Decimal("0.02"),)),
+        "holdout_returns": returns[-5:],
+        "benchmark_returns": (Decimal(0),) * 30,
+        "placebo_returns": (Decimal(0),) * 30,
+    }
+
+    report = performance_report(returns, **(arguments | change))
+
+    assert not report.sufficient_evidence
 
 
 def test_learning_requires_maturity_independent_evaluation_and_manual_approval() -> None:

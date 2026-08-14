@@ -26,7 +26,7 @@ from aegisquant.contracts.research import (
     PositionLedgerEntry,
 )
 from aegisquant.contracts.risk import OrderIntent, OrderSide, OrderType, TimeInForce
-from aegisquant.quant.metrics import performance_report, placebo_returns, walk_forward_windows
+from aegisquant.quant.metrics import performance_report, walk_forward_windows
 from aegisquant.quant.pit import apply_available_corporate_actions, marked_nav, next_market_bar
 from aegisquant.security.digests import digest_canonical
 
@@ -76,6 +76,8 @@ class RebalancePeriod(StrictModel):
 def multi_period_holdout_digest(
     *,
     holdout_periods: tuple[RebalancePeriod, ...],
+    state_forming_periods: tuple[RebalancePeriod, ...],
+    initial_cash: Decimal,
     bars: tuple[MarketBar, ...],
     corporate_actions: tuple[CorporateAction, ...],
     transaction_cost_rate: Decimal,
@@ -85,6 +87,8 @@ def multi_period_holdout_digest(
     return digest_canonical(
         {
             "holdout_periods": holdout_periods,
+            "state_forming_periods": state_forming_periods,
+            "initial_cash": initial_cash,
             "bars": bars,
             "corporate_actions": corporate_actions,
             "transaction_cost_rate": transaction_cost_rate,
@@ -111,6 +115,7 @@ class MultiPeriodCaseSpec(StrictModel):
     walk_forward_test_periods: int = Field(ge=1)
     walk_forward_step: int = Field(ge=1)
     annualization_periods: int = Field(default=252, ge=1)
+    strategy_trials: int = Field(default=1, ge=1)
 
     @field_validator("bars", mode="before")
     @classmethod
@@ -175,9 +180,14 @@ class MultiPeriodCaseSpec(StrictModel):
         if len(holdout_ids) != len(self.holdout_period_ids) or not holdout_ids <= set(period_ids):
             raise ValueError("holdout period IDs must be unique fixture periods")
         holdout = tuple(item for item in self.periods if item.period_id in holdout_ids)
+        last_holdout_index = max(
+            index for index, item in enumerate(self.periods) if item.period_id in holdout_ids
+        )
         if (
             multi_period_holdout_digest(
                 holdout_periods=holdout,
+                state_forming_periods=self.periods[: last_holdout_index + 1],
+                initial_cash=self.initial_cash,
                 bars=self.bars,
                 corporate_actions=self.corporate_actions,
                 transaction_cost_rate=self.transaction_cost_rate,
@@ -321,6 +331,7 @@ def run_multi_period_case(spec: MultiPeriodCaseSpec) -> MultiPeriodCaseReport:
     quantities: dict[str, Decimal] = {}
     versions: dict[str, str] = {}
     applied_action_digests: set[str] = set()
+    terminally_delisted: set[tuple[str, str]] = set()
     period_results: list[PeriodResult] = []
     strategy_returns: list[Decimal] = []
     benchmark_returns: list[Decimal] = []
@@ -347,24 +358,29 @@ def run_multi_period_case(spec: MultiPeriodCaseSpec) -> MultiPeriodCaseReport:
             and action.available_at <= period.decision_at
             and digest_canonical(action) not in applied_action_digests
         )
-        if any(
-            quantities.get(action.instrument_id, Decimal(0)) > 0
-            and versions.get(action.instrument_id) != action.instrument_version
-            for action in due_actions
-        ):
-            raise ValueError("corporate action version does not bind the open position")
-        quantities, cash = apply_available_corporate_actions(
-            quantities, cash, due_actions, as_of=period.decision_at
-        )
         for action in due_actions:
+            identity = (action.instrument_id, action.instrument_version)
+            if identity in terminally_delisted:
+                raise ValueError("corporate action targets a terminally delisted security")
+            if (
+                quantities.get(action.instrument_id, Decimal(0)) > 0
+                and versions.get(action.instrument_id) != action.instrument_version
+            ):
+                raise ValueError("corporate action version does not bind the open position")
+            quantities, cash = apply_available_corporate_actions(
+                quantities, cash, (action,), as_of=period.decision_at
+            )
             applied_action_digests.add(digest_canonical(action))
             if action.kind == CorporateActionKind.DELISTING_CASH:
                 versions.pop(action.instrument_id, None)
+                terminally_delisted.add(identity)
 
         fills: list[PaperFill] = []
         unfilled: list[str] = []
         stale_rejected: list[str] = []
         for order in period.orders:
+            if (order.instrument_id, order.instrument_version) in terminally_delisted:
+                raise ValueError("order targets a terminally delisted security")
             try:
                 current = _latest_bar(
                     spec.bars,
@@ -475,10 +491,11 @@ def run_multi_period_case(spec: MultiPeriodCaseSpec) -> MultiPeriodCaseReport:
         step=spec.walk_forward_step,
     )
     holdout_ids = set(spec.holdout_period_ids)
-    holdout_returns = tuple(
+    returns = tuple(strategy_returns)
+    placebo = (Decimal(0),) * len(returns)
+    holdout_return_values = tuple(
         item.period_return for item in period_results if item.period_id in holdout_ids
     )
-    returns = tuple(strategy_returns)
     placeholder = "sha256:" + "0" * 64
     report = MultiPeriodCaseReport(
         tenant_id=spec.tenant_id,
@@ -493,14 +510,18 @@ def run_multi_period_case(spec: MultiPeriodCaseSpec) -> MultiPeriodCaseReport:
         benchmark_returns=tuple(benchmark_returns),
         walk_forward_windows=windows,
         locked_holdout_digest=spec.locked_holdout_digest,
-        holdout_returns=holdout_returns,
-        placebo_returns=placebo_returns(returns, shift=1),
+        holdout_returns=holdout_return_values,
+        placebo_returns=placebo,
         performance=performance_report(
             returns,
             annualization_periods=spec.annualization_periods,
+            strategy_trials=spec.strategy_trials,
             out_of_sample_fold_returns=tuple(
                 returns[test_start:test_end] for _, _, test_start, test_end in windows
             ),
+            holdout_returns=holdout_return_values,
+            benchmark_returns=tuple(benchmark_returns),
+            placebo_returns=placebo,
         ),
         report_digest=placeholder,
     )
@@ -524,6 +545,7 @@ def verify_multi_period_report(spec: MultiPeriodCaseSpec, report: MultiPeriodCas
         quantities: dict[str, Decimal] = {}
         versions: dict[str, str] = {}
         applied: set[str] = set()
+        terminally_delisted: set[tuple[str, str]] = set()
         previous_nav = spec.initial_cash
         initial_benchmark_bar = _latest_bar(
             spec.bars, spec.benchmark_instrument_id, spec.periods[0].decision_at
@@ -559,6 +581,9 @@ def verify_multi_period_report(spec: MultiPeriodCaseSpec, report: MultiPeriodCas
             if result.applied_actions != expected_actions:
                 return False
             for action in expected_actions:
+                identity = (action.instrument_id, action.instrument_version)
+                if identity in terminally_delisted:
+                    return False
                 applied.add(digest_canonical(action))
                 quantity = quantities.get(action.instrument_id, Decimal(0))
                 if quantity > 0 and versions.get(action.instrument_id) != action.instrument_version:
@@ -571,9 +596,10 @@ def verify_multi_period_report(spec: MultiPeriodCaseSpec, report: MultiPeriodCas
                     if action.cash_per_share is None:
                         return False
                     cash += quantity * action.cash_per_share
-                    if action.kind == CorporateActionKind.DELISTING_CASH:
-                        quantities.pop(action.instrument_id, None)
-                        versions.pop(action.instrument_id, None)
+                if action.kind == CorporateActionKind.DELISTING_CASH:
+                    quantities.pop(action.instrument_id, None)
+                    versions.pop(action.instrument_id, None)
+                    terminally_delisted.add(identity)
 
             fills_by_id = {item.client_order_id: item for item in result.fills}
             if len(fills_by_id) != len(result.fills):
@@ -590,6 +616,8 @@ def verify_multi_period_report(spec: MultiPeriodCaseSpec, report: MultiPeriodCas
             ):
                 return False
             for order in scheduled.orders:
+                if (order.instrument_id, order.instrument_version) in terminally_delisted:
+                    return False
                 try:
                     current = _latest_bar(
                         spec.bars,
@@ -702,12 +730,20 @@ def verify_multi_period_report(spec: MultiPeriodCaseSpec, report: MultiPeriodCas
             step=spec.walk_forward_step,
         )
         holdout_ids = set(spec.holdout_period_ids)
+        expected_holdout_returns = tuple(
+            item.period_return for item in report.periods if item.period_id in holdout_ids
+        )
+        expected_placebo_returns = (Decimal(0),) * len(returns)
         expected_performance = performance_report(
             returns,
             annualization_periods=spec.annualization_periods,
+            strategy_trials=spec.strategy_trials,
             out_of_sample_fold_returns=tuple(
                 returns[test_start:test_end] for _, _, test_start, test_end in windows
             ),
+            holdout_returns=expected_holdout_returns,
+            benchmark_returns=tuple(benchmark_returns),
+            placebo_returns=expected_placebo_returns,
         )
         return (
             report.final_cash == cash
@@ -717,9 +753,8 @@ def verify_multi_period_report(spec: MultiPeriodCaseSpec, report: MultiPeriodCas
             and report.strategy_returns == returns
             and report.benchmark_returns == tuple(benchmark_returns)
             and report.walk_forward_windows == windows
-            and report.holdout_returns
-            == tuple(item.period_return for item in report.periods if item.period_id in holdout_ids)
-            and report.placebo_returns == placebo_returns(returns, shift=1)
+            and report.holdout_returns == expected_holdout_returns
+            and report.placebo_returns == expected_placebo_returns
             and report.performance == expected_performance
         )
     except (KeyError, ValueError):

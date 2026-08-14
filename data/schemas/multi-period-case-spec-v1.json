@@ -403,6 +403,12 @@
       "title": "Schema Version",
       "type": "integer"
     },
+    "strategy_trials": {
+      "default": 1,
+      "minimum": 1,
+      "title": "Strategy Trials",
+      "type": "integer"
+    },
     "tenant_id": {
       "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
       "title": "Tenant Id",

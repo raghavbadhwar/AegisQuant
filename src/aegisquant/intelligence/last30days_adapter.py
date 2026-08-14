@@ -1,15 +1,17 @@
 """Recorded-only Last30Days result binding.
 
-This module deliberately never invokes the installed Last30Days process. A
-separately verified egress proxy must first capture content through
-``SourceGateway``; this adapter only binds that immutable capture to a case.
+This module has no retrieval or transport capability. It only binds a recorded,
+immutable capture to a case.
 """
 
 from __future__ import annotations
 
+from typing import Literal
+
 from aegisquant.contracts.research import DataSnapshot, Last30DaysResearchRecord, SourceReceipt
-from aegisquant.intelligence.source_gateway import LAST30DAYS_TOOL_ID
 from aegisquant.security.digests import digest_canonical, sha256_bytes
+
+LAST30DAYS_TOOL_ID: Literal["last30days-public-research"] = "last30days-public-research"
 
 
 class Last30DaysAdapterError(ValueError):

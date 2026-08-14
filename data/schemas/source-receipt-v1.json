@@ -1,6 +1,6 @@
 {
   "additionalProperties": false,
-  "description": "Immutable receipt for content captured through the source gateway.",
+  "description": "Immutable receipt for externally recorded fixture content.",
   "properties": {
     "captured_at": {
       "format": "date-time",

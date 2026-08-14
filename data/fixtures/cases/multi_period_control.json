@@ -411,7 +411,7 @@
     }
   ],
   "holdout_period_ids": ["p5", "p6"],
-  "locked_holdout_digest": "sha256:ba05af522a02838829071f2530a43761f8dc9d2e1128dd21088c2c8ed1f2edb9",
+  "locked_holdout_digest": "sha256:c004050f1e67b9cfd20ec2b208f263c8dc8002cca0fad2cf104ba4b6d3b8603f",
   "walk_forward_training_periods": 2,
   "walk_forward_test_periods": 1,
   "walk_forward_step": 1,

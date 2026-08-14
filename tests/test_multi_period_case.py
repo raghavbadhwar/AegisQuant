@@ -1,3 +1,4 @@
+from datetime import timedelta
 from decimal import Decimal
 from itertools import pairwise
 from pathlib import Path
@@ -92,7 +93,7 @@ def test_evaluation_is_locked_nonoverlapping_and_conservative() -> None:
     assert all(left[1] <= right[0] for left, right in pairwise(test_ranges))
     assert report.locked_holdout_digest == value.locked_holdout_digest
     assert len(report.holdout_returns) == 2
-    assert report.placebo_returns == report.strategy_returns[1:] + report.strategy_returns[:1]
+    assert report.placebo_returns == (Decimal(0),) * len(report.strategy_returns)
     assert report.performance.observations == 6
     assert report.performance.sufficient_evidence is False
 
@@ -119,6 +120,18 @@ def test_evaluation_is_locked_nonoverlapping_and_conservative() -> None:
                 )
             }
         )
+    with pytest.raises(ValidationError, match="holdout"):
+        MultiPeriodCaseSpec.model_validate(raw | {"initial_cash": value.initial_cash + 1})
+    changed_first = value.periods[0].model_copy(
+        update={
+            "orders": (
+                value.periods[0].orders[0].model_copy(update={"quantity": Decimal("11")}),
+                *value.periods[0].orders[1:],
+            )
+        }
+    )
+    with pytest.raises(ValidationError, match="holdout"):
+        MultiPeriodCaseSpec.model_validate(raw | {"periods": (changed_first, *value.periods[1:])})
 
 
 @pytest.mark.parametrize("period_index", [2, 4])
@@ -156,6 +169,8 @@ def test_open_position_rejects_cross_version_buy_or_sell(period_index: int) -> N
             "periods": periods,
             "locked_holdout_digest": multi_period_holdout_digest(
                 holdout_periods=holdout,
+                state_forming_periods=periods,
+                initial_cash=value.initial_cash,
                 bars=bars,
                 corporate_actions=value.corporate_actions,
                 transaction_cost_rate=value.transaction_cost_rate,
@@ -166,4 +181,89 @@ def test_open_position_rejects_cross_version_buy_or_sell(period_index: int) -> N
     )
 
     with pytest.raises(ValueError, match="order version"):
+        run_multi_period_case(changed)
+
+
+def test_delisted_security_version_cannot_be_reacquired() -> None:
+    value = spec()
+    target = value.periods[4]
+    repurchase = (
+        value.periods[0].orders[1].model_copy(update={"client_order_id": "p5-repurchase-del"})
+    )
+    periods = tuple(
+        item.model_copy(update={"orders": (*item.orders, repurchase)}) if item is target else item
+        for item in value.periods
+    )
+    prior_bar = max(
+        (
+            item
+            for item in value.bars
+            if item.instrument_id == "AAA" and item.tradable_at < target.decision_at
+        ),
+        key=lambda item: item.tradable_at,
+    ).model_copy(update={"instrument_id": "DEL", "instrument_version": "del-v1"})
+    fill_bar = next(
+        item
+        for item in value.bars
+        if item.instrument_id == "AAA" and item.tradable_at == target.fill_at
+    ).model_copy(update={"instrument_id": "DEL", "instrument_version": "del-v1"})
+    bars = (*value.bars, prior_bar, fill_bar)
+    holdout_ids = set(value.holdout_period_ids)
+    holdout = tuple(item for item in periods if item.period_id in holdout_ids)
+    changed = MultiPeriodCaseSpec.model_validate(
+        value.model_dump(mode="python")
+        | {
+            "bars": bars,
+            "periods": periods,
+            "locked_holdout_digest": multi_period_holdout_digest(
+                holdout_periods=holdout,
+                state_forming_periods=periods,
+                initial_cash=value.initial_cash,
+                bars=bars,
+                corporate_actions=value.corporate_actions,
+                transaction_cost_rate=value.transaction_cost_rate,
+                max_bar_age_seconds=value.max_bar_age_seconds,
+                benchmark_instrument_id=value.benchmark_instrument_id,
+            ),
+        }
+    )
+
+    with pytest.raises(ValueError, match="terminally delisted"):
+        run_multi_period_case(changed)
+
+
+def test_later_action_in_same_batch_cannot_follow_delisting() -> None:
+    value = spec()
+    delisting = next(
+        item for item in value.corporate_actions if item.kind == CorporateActionKind.DELISTING_CASH
+    )
+    late_dividend = delisting.model_copy(
+        update={
+            "kind": CorporateActionKind.CASH_DIVIDEND,
+            "effective_at": delisting.effective_at + timedelta(minutes=30),
+            "available_at": delisting.available_at + timedelta(minutes=30),
+            "cash_per_share": Decimal("0.1"),
+        }
+    )
+    actions = (*value.corporate_actions, late_dividend)
+    holdout_ids = set(value.holdout_period_ids)
+    holdout = tuple(item for item in value.periods if item.period_id in holdout_ids)
+    changed = MultiPeriodCaseSpec.model_validate(
+        value.model_dump(mode="python")
+        | {
+            "corporate_actions": actions,
+            "locked_holdout_digest": multi_period_holdout_digest(
+                holdout_periods=holdout,
+                state_forming_periods=value.periods,
+                initial_cash=value.initial_cash,
+                bars=value.bars,
+                corporate_actions=actions,
+                transaction_cost_rate=value.transaction_cost_rate,
+                max_bar_age_seconds=value.max_bar_age_seconds,
+                benchmark_instrument_id=value.benchmark_instrument_id,
+            ),
+        }
+    )
+
+    with pytest.raises(ValueError, match="terminally delisted"):
         run_multi_period_case(changed)

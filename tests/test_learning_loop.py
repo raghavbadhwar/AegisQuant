@@ -102,7 +102,7 @@ def verified_source() -> tuple[MultiPeriodCaseSpec, MultiPeriodCaseReport]:
             )
         )
         aaa = Decimal(10 + index) + (Decimal("0.5") if index % 2 else Decimal("-0.25"))
-        bench = Decimal(100 + index)
+        bench = Decimal("100")
         for instrument, price in (("AAA", aaa), ("BENCH", bench)):
             bars.append(
                 MarketBar(
@@ -133,6 +133,8 @@ def verified_source() -> tuple[MultiPeriodCaseSpec, MultiPeriodCaseReport]:
         holdout_period_ids=holdout_ids,
         locked_holdout_digest=multi_period_holdout_digest(
             holdout_periods=holdout,
+            state_forming_periods=period_tuple,
+            initial_cash=Decimal("1000"),
             bars=bar_tuple,
             corporate_actions=(),
             transaction_cost_rate=Decimal("0.001"),
@@ -168,7 +170,7 @@ def proposal_inputs() -> dict[str, object]:
 
 
 def test_learning_cycle_abstains_for_unverified_insufficient_or_immature_outcome() -> None:
-    _, source_report = verified_source()
+    source_spec, source_report = verified_source()
     tampered_report = source_report.model_copy(update={"report_digest": sha("9")})
     assert (
         propose_candidate(**(proposal_inputs() | {"source_report": tampered_report})).reason_code
@@ -180,6 +182,23 @@ def test_learning_cycle_abstains_for_unverified_insufficient_or_immature_outcome
     assert (
         propose_candidate(
             **(proposal_inputs() | {"source_spec": short_spec, "source_report": short_report})
+        ).reason_code
+        == "INSUFFICIENT_EVIDENCE"
+    )
+
+    multiple_trial_spec = MultiPeriodCaseSpec.model_validate(
+        source_spec.model_dump(mode="python") | {"strategy_trials": 2}
+    )
+    multiple_trial_report = run_multi_period_case(multiple_trial_spec)
+    assert (
+        propose_candidate(
+            **(
+                proposal_inputs()
+                | {
+                    "source_spec": multiple_trial_spec,
+                    "source_report": multiple_trial_report,
+                }
+            )
         ).reason_code
         == "INSUFFICIENT_EVIDENCE"
     )

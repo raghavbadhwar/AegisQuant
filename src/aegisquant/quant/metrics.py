@@ -50,6 +50,13 @@ def _sample_standard_deviation(values: tuple[Decimal, ...]) -> Decimal:
     ).sqrt()
 
 
+def _compound(values: tuple[Decimal, ...]) -> Decimal:
+    result = Decimal(1)
+    for value in values:
+        result *= Decimal(1) + value
+    return result - Decimal(1)
+
+
 def stationary_block_bootstrap_indices(
     observations: int, *, block_length: int, seed: int, samples: int
 ) -> tuple[tuple[int, ...], ...]:
@@ -74,6 +81,9 @@ def performance_report(
     annualization_periods: int,
     strategy_trials: int = 1,
     out_of_sample_fold_returns: tuple[tuple[Decimal, ...], ...] = (),
+    holdout_returns: tuple[Decimal, ...] = (),
+    benchmark_returns: tuple[Decimal, ...] = (),
+    placebo_returns: tuple[Decimal, ...] = (),
 ) -> PerformanceReport:
     """Report only when a minimal sample supports a descriptive statistic."""
 
@@ -81,7 +91,18 @@ def performance_report(
         raise ValueError("annualization_periods and strategy_trials must be positive")
     if any(not fold for fold in out_of_sample_fold_returns):
         raise ValueError("out-of-sample folds must not be empty")
-    if len(returns) < 30:
+    controls_pass = (
+        strategy_trials == 1
+        and bool(out_of_sample_fold_returns)
+        and all(_compound(fold) > 0 for fold in out_of_sample_fold_returns)
+        and bool(holdout_returns)
+        and _compound(holdout_returns) > 0
+        and len(benchmark_returns) == len(returns)
+        and _compound(returns) > _compound(benchmark_returns)
+        and len(placebo_returns) == len(returns)
+        and _compound(returns) > _compound(placebo_returns)
+    )
+    if len(returns) < 30 or not controls_pass:
         return PerformanceReport(
             observations=len(returns),
             annualization_periods=annualization_periods,

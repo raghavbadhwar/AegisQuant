@@ -113,7 +113,7 @@ class ResearchManifest(StrictModel):
 
 
 class SourceReceipt(StrictModel):
-    """Immutable receipt for content captured through the source gateway."""
+    """Immutable receipt for externally recorded fixture content."""
 
     schema_version: Literal[1] = 1
     tenant_id: Identifier
