@@ -1,0 +1,149 @@
+{
+  "schema_version": 1,
+  "tenant_id": "tenant-fixture",
+  "case_id": "00000000-0000-0000-0000-000000000201",
+  "snapshot_id": "forecast-control-v1",
+  "snapshot": {
+    "schema_version": 1,
+    "tenant_id": "tenant-fixture",
+    "case_id": "00000000-0000-0000-0000-000000000201",
+    "snapshot_id": "forecast-control-v1",
+    "manifest_digest": "sha256:4ed75e5b0b0b7f0d60e4358b54c6c10735e23df1f1f3639e39833dc03fd9b1c3",
+    "content_digest": "sha256:d0dd028cb1033a2c1688adadf85b8acaaff4e5cd783bd9491483387490532777",
+    "as_of": "2026-01-10T00:00:00Z",
+    "frozen_at": "2026-01-10T00:00:00Z"
+  },
+  "evaluation_cutoff": "2026-01-10T00:00:00Z",
+  "forecast": {
+    "instrument_id": "AAA",
+    "horizon_days": 20,
+    "expected_return": "0.08",
+    "probability_positive": "0.65",
+    "confidence": "0.75",
+    "uncertainty": "0.20",
+    "feature_provenance": ["recorded-evidence-v1"]
+  },
+  "forecast_digest": "sha256:06bf9e6f2204a40d9320b486256514e353be92f7f78ae639aa5c83cca03debad",
+  "evidence": [
+    {
+      "schema_version": 1,
+      "tenant_id": "tenant-fixture",
+      "evidence_id": "00000000-0000-0000-0000-000000000001",
+      "source_type": "filing",
+      "source_url": "fixture://filing/source-1",
+      "entity_ids": ["AAA"],
+      "document_type": "recorded-fixture",
+      "event_time": "2026-01-08T00:00:00Z",
+      "published_at": "2026-01-08T00:00:00Z",
+      "first_observed_at": "2026-01-08T00:00:00Z",
+      "available_at": "2026-01-09T00:00:00Z",
+      "ingested_at": "2026-01-08T00:00:00Z",
+      "revised_at": null,
+      "vendor_ingested_at": null,
+      "raw_object_uri": "fixture://objects/evidence-1",
+      "raw_content_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "capture_metadata_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+      "extractor_version": "fixture-extractor-v1",
+      "parser_version": "fixture-parser-v1",
+      "rights_manifest_id": "fixture-rights-v1",
+      "source_quality": "0.90",
+      "extraction_confidence": "0.95",
+      "historical_safe": true,
+      "untrusted_content": true,
+      "prompt_injection_flags": [],
+      "revision_id": null
+    },
+    {
+      "schema_version": 1,
+      "tenant_id": "tenant-fixture",
+      "evidence_id": "00000000-0000-0000-0000-000000000002",
+      "source_type": "exchange-release",
+      "source_url": "fixture://exchange-release/source-2",
+      "entity_ids": ["AAA"],
+      "document_type": "recorded-fixture",
+      "event_time": "2026-01-08T00:00:00Z",
+      "published_at": "2026-01-08T00:00:00Z",
+      "first_observed_at": "2026-01-08T00:00:00Z",
+      "available_at": "2026-01-09T00:00:00Z",
+      "ingested_at": "2026-01-08T00:00:00Z",
+      "revised_at": null,
+      "vendor_ingested_at": null,
+      "raw_object_uri": "fixture://objects/evidence-2",
+      "raw_content_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+      "capture_metadata_digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+      "extractor_version": "fixture-extractor-v1",
+      "parser_version": "fixture-parser-v1",
+      "rights_manifest_id": "fixture-rights-v1",
+      "source_quality": "0.90",
+      "extraction_confidence": "0.95",
+      "historical_safe": true,
+      "untrusted_content": true,
+      "prompt_injection_flags": [],
+      "revision_id": null
+    }
+  ],
+  "evidence_refs": [
+    {
+      "schema_version": 1,
+      "evidence_id": "00000000-0000-0000-0000-000000000001",
+      "evidence_digest": "sha256:5f7aa8c9713ea4f5ce348092247e058a9d92ee11ae3ff189e1ccac3a37184ce8"
+    },
+    {
+      "schema_version": 1,
+      "evidence_id": "00000000-0000-0000-0000-000000000002",
+      "evidence_digest": "sha256:28af8652d080b50bf17d6764f3b15020f6215e5f36d7ff730aecaadb4aee6660"
+    }
+  ],
+  "numeric_claims": [
+    {
+      "schema_version": 1,
+      "tenant_id": "tenant-fixture",
+      "claim_id": "00000000-0000-0000-0001-000000000001",
+      "name": "forecast-expected-return",
+      "value": "0.08",
+      "unit": "ratio",
+      "evidence_id": "00000000-0000-0000-0000-000000000001",
+      "source_coordinate": "fixture-row-1",
+      "calculation_id": null
+    },
+    {
+      "schema_version": 1,
+      "tenant_id": "tenant-fixture",
+      "claim_id": "00000000-0000-0000-0001-000000000002",
+      "name": "forecast-probability-positive",
+      "value": "0.65",
+      "unit": "ratio",
+      "evidence_id": "00000000-0000-0000-0000-000000000002",
+      "source_coordinate": "fixture-row-2",
+      "calculation_id": null
+    },
+    {
+      "schema_version": 1,
+      "tenant_id": "tenant-fixture",
+      "claim_id": "00000000-0000-0000-0001-000000000003",
+      "name": "forecast-confidence",
+      "value": "0.75",
+      "unit": "ratio",
+      "evidence_id": "00000000-0000-0000-0000-000000000001",
+      "source_coordinate": "fixture-row-3",
+      "calculation_id": null
+    },
+    {
+      "schema_version": 1,
+      "tenant_id": "tenant-fixture",
+      "claim_id": "00000000-0000-0000-0001-000000000004",
+      "name": "forecast-uncertainty",
+      "value": "0.20",
+      "unit": "ratio",
+      "evidence_id": "00000000-0000-0000-0000-000000000002",
+      "source_coordinate": "fixture-row-4",
+      "calculation_id": null
+    }
+  ],
+  "supporting_evidence_ids": [
+    "00000000-0000-0000-0000-000000000001",
+    "00000000-0000-0000-0000-000000000002"
+  ],
+  "counter_evidence_ids": [],
+  "resolved_counter_evidence_ids": []
+}

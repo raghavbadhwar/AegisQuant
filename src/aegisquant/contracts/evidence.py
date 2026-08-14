@@ -91,6 +91,11 @@ class EvidenceRecord(StrictModel):
     prompt_injection_flags: tuple[Identifier, ...] = ()
     revision_id: Identifier | None = None
 
+    @field_validator("entity_ids", "prompt_injection_flags", mode="before")
+    @classmethod
+    def json_arrays_are_tuples(cls, value: object) -> object:
+        return tuple(value) if isinstance(value, list) else value
+
     @field_validator(
         "event_time",
         "published_at",
@@ -99,10 +104,17 @@ class EvidenceRecord(StrictModel):
         "ingested_at",
         "revised_at",
         "vendor_ingested_at",
+        mode="before",
     )
     @classmethod
-    def times_are_utc(cls, value: datetime | None) -> datetime | None:
-        return None if value is None else require_utc(value)
+    def times_are_utc(cls, value: object) -> datetime | None:
+        if value is None:
+            return None
+        if isinstance(value, str):
+            value = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        if not isinstance(value, datetime):
+            raise ValueError("evidence times must be UTC datetimes")
+        return require_utc(value)
 
     @field_validator("source_quality", "extraction_confidence")
     @classmethod

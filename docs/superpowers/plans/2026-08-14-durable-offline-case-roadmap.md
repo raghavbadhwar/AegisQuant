@@ -240,23 +240,23 @@ Expected: all exit 0.
   `assess_forecast_evidence(bundle, *, as_of) -> ForecastAssessment`.
 - `ForecastAssessment.outcome` is exactly `SUPPORTED` or `ABSTAIN`.
 
-- [ ] **Step 1: Write failing support and abstention tests**
+- [x] **Step 1: Write failing support and abstention tests**
 
 Require `SUPPORTED` only with at least two independently identified supporting evidence records,
 all numeric claims bound to those records, no unresolved counter-evidence, availability strictly
 before cutoff, and exact forecast/evidence digests. One missing condition must yield `ABSTAIN`;
 tenant/case/snapshot or digest mismatch must raise.
 
-- [ ] **Step 2: Run and observe RED**
+- [x] **Step 2: Run and observe RED**
 
 Run: `uv run pytest -q tests/test_forecast_evidence.py`
 
-- [ ] **Step 3: Implement the minimum pure assessment**
+- [x] **Step 3: Implement the minimum pure assessment**
 
 Use existing `EvidenceRecord`, `NumericClaim`, `Forecast`, `StrictModel`, and `digest_canonical`.
 Do not add retrieval, extraction, model invocation, scoring weights, or learned thresholds.
 
-- [ ] **Step 4: Export schemas and verify GREEN**
+- [x] **Step 4: Export schemas and verify GREEN**
 
 Run:
 

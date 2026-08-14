@@ -35,6 +35,7 @@ from aegisquant.contracts.risk import (
     SignedRiskDecision,
 )
 from aegisquant.fixture_case import FixtureCaseReport, FixtureCaseSpec
+from aegisquant.intelligence.forecast_evidence import ForecastAssessment, ForecastEvidenceBundle
 
 SCHEMAS: dict[str, Any] = {
     "artifact-envelope-v1": ArtifactEnvelope,
@@ -45,6 +46,8 @@ SCHEMAS: dict[str, Any] = {
     "evidence-record-v1": EvidenceRecord,
     "fixture-case-report-v1": FixtureCaseReport,
     "fixture-case-spec-v1": FixtureCaseSpec,
+    "forecast-assessment-v1": ForecastAssessment,
+    "forecast-evidence-bundle-v1": ForecastEvidenceBundle,
     "human-approval-payload-v1": HumanApprovalPayload,
     "investment-case-request-v1": InvestmentCaseRequest,
     "investment-case-v1": InvestmentCase,

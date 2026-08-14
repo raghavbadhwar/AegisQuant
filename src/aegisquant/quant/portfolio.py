@@ -18,6 +18,11 @@ class Forecast(StrictModel):
     uncertainty: FixedDecimal
     feature_provenance: tuple[Identifier, ...] | None = None
 
+    @field_validator("feature_provenance", mode="before")
+    @classmethod
+    def json_array_is_tuple(cls, value: object) -> object:
+        return tuple(value) if isinstance(value, list) else value
+
     @field_validator("probability_positive", "confidence")
     @classmethod
     def unit_interval(cls, value: Decimal) -> Decimal:

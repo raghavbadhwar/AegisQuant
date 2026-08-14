@@ -55,9 +55,13 @@ class DataSnapshot(StrictModel):
     as_of: datetime
     frozen_at: datetime
 
-    @field_validator("as_of", "frozen_at")
+    @field_validator("as_of", "frozen_at", mode="before")
     @classmethod
-    def utc(cls, value: datetime) -> datetime:
+    def utc(cls, value: object) -> datetime:
+        if isinstance(value, str):
+            value = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        if not isinstance(value, datetime):
+            raise ValueError("snapshot times must be UTC datetimes")
         return require_utc(value)
 
     @model_validator(mode="after")
