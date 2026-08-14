@@ -39,6 +39,7 @@ CASE_ID = UUID("00000000-0000-0000-0000-000000000101")
 
 
 class FaultPoint(StrEnum):
+    BEFORE_AUTHORIZATION = "before_authorization"
     BEFORE_COMMIT = "before_commit"
     AFTER_COMMIT = "after_commit"
     AFTER_RECONCILE_COMMIT = "after_reconcile_commit"
@@ -177,10 +178,23 @@ def test_durable_activity_does_not_persist_any_authorization_denial(
 @pytest.mark.parametrize("fault", list(FaultPoint))
 async def test_durable_workflow_recovers_one_execution_across_activity_retry(
     fault: FaultPoint,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     store = RecoveryStore(fault)
     activities = DurableCaseActivities(store, fixture_root=FIXTURE_ROOT)
     value = command()
+    runner_attempts = 0
+    if fault is FaultPoint.BEFORE_AUTHORIZATION:
+        original_runner = durable_activities.run_fixture_case
+
+        def interrupted_runner(spec: FixtureCaseSpec) -> FixtureCaseReport:
+            nonlocal runner_attempts
+            runner_attempts += 1
+            if runner_attempts == 1:
+                raise RuntimeError("injected failure before authorization")
+            return original_runner(spec)
+
+        monkeypatch.setattr(durable_activities, "run_fixture_case", interrupted_runner)
     task_queue = f"durable-recovery-{fault.value}"
     async with await WorkflowEnvironment.start_time_skipping(
         data_converter=pydantic_data_converter
@@ -198,10 +212,14 @@ async def test_durable_workflow_recovers_one_execution_across_activity_retry(
                 task_queue=task_queue,
             )
 
-    assert store.attempts == (1 if fault is FaultPoint.AFTER_RECONCILE_COMMIT else 2)
+    assert store.attempts == (
+        1 if fault in {FaultPoint.BEFORE_AUTHORIZATION, FaultPoint.AFTER_RECONCILE_COMMIT} else 2
+    )
     assert store.reconcile_attempts == (2 if fault is FaultPoint.AFTER_RECONCILE_COMMIT else 1)
     assert store.reconciliation is not None
     assert store.execution is not None
+    if fault is FaultPoint.BEFORE_AUTHORIZATION:
+        assert runner_attempts == 2
     assert result.execution.result_digest == store.execution.result_digest
     assert result.reconciliation.result_digest == result.execution.result_digest
     assert result.reconciliation.reconciled is True
