@@ -1,3 +1,4 @@
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
@@ -154,9 +155,14 @@ def test_mutated_order_is_rejected_even_with_valid_decision_signature() -> None:
     mutated_order["quantity"] = "11"
     mutated_data["orders"] = (mutated_order,)
     mutated = OrderBundle.model_validate(mutated_data)
-    verifier = RiskDecisionVerifier({"risk-key-1": trusted_key(private_key, now)})
+    gate = ExecutionAuthorizationGate(
+        RiskDecisionVerifier({"risk-key-1": trusted_key(private_key, now)}),
+        InMemoryDecisionConsumptionStore(),
+    )
     with pytest.raises(RiskVerificationError, match="digest"):
-        verifier.verify(signed, mutated, context(bundle), now=now)
+        gate.authorize_once(signed, mutated, context(bundle), now=now)
+
+    assert gate.authorize_once(signed, bundle, context(bundle), now=now) == signed.payload
 
 
 def test_expiry_is_exclusive() -> None:
@@ -167,6 +173,27 @@ def test_expiry_is_exclusive() -> None:
     verifier = RiskDecisionVerifier({"risk-key-1": trusted_key(private_key, now)})
     with pytest.raises(RiskVerificationError, match="validity window"):
         verifier.verify(signed, bundle, context(bundle), now=now + timedelta(seconds=30))
+
+
+def test_expired_decision_does_not_consume_its_nonce() -> None:
+    now = datetime(2026, 1, 1, tzinfo=UTC)
+    bundle = make_bundle()
+    private_key = Ed25519PrivateKey.generate()
+    signed = RiskDecisionSigner("risk-key-1", private_key).sign(make_payload(bundle, now))
+    gate = ExecutionAuthorizationGate(
+        RiskDecisionVerifier({"risk-key-1": trusted_key(private_key, now)}),
+        InMemoryDecisionConsumptionStore(),
+    )
+
+    with pytest.raises(RiskVerificationError, match="validity window"):
+        gate.authorize_once(
+            signed,
+            bundle,
+            context(bundle),
+            now=now + timedelta(seconds=30),
+        )
+
+    assert gate.authorize_once(signed, bundle, context(bundle), now=now) == signed.payload
 
 
 def test_revoked_key_is_rejected() -> None:
@@ -200,6 +227,52 @@ def test_changed_open_order_snapshot_is_rejected() -> None:
     )
     with pytest.raises(RiskVerificationError, match="stale or mismatched"):
         verifier.verify(signed, bundle, stale_context, now=now)
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("portfolio_state_sequence", 8),
+        ("portfolio_snapshot_digest", "sha256:" + "b" * 64),
+        ("kill_switch_epoch", 3),
+    ],
+)
+def test_stale_context_rejection_does_not_consume_decision(field: str, value: object) -> None:
+    now = datetime(2026, 1, 1, tzinfo=UTC)
+    bundle = make_bundle()
+    private_key = Ed25519PrivateKey.generate()
+    signed = RiskDecisionSigner("risk-key-1", private_key).sign(make_payload(bundle, now))
+    gate = ExecutionAuthorizationGate(
+        RiskDecisionVerifier({"risk-key-1": trusted_key(private_key, now)}),
+        InMemoryDecisionConsumptionStore(),
+    )
+    stale_context = replace(context(bundle), **{field: value})
+
+    with pytest.raises(RiskVerificationError, match="stale or mismatched"):
+        gate.authorize_once(signed, bundle, stale_context, now=now)
+
+    assert gate.authorize_once(signed, bundle, context(bundle), now=now) == signed.payload
+
+
+def test_rejected_decision_does_not_consume_its_nonce() -> None:
+    now = datetime(2026, 1, 1, tzinfo=UTC)
+    bundle = make_bundle()
+    private_key = Ed25519PrivateKey.generate()
+    signer = RiskDecisionSigner("risk-key-1", private_key)
+    approved_payload = make_payload(bundle, now)
+    rejected_data = approved_payload.model_dump(mode="python")
+    rejected_data.update(outcome=DecisionOutcome.REJECT, approved_order_bundle_digest=None)
+    rejected = signer.sign(RiskDecisionPayload.model_validate(rejected_data))
+    approved = signer.sign(approved_payload)
+    gate = ExecutionAuthorizationGate(
+        RiskDecisionVerifier({"risk-key-1": trusted_key(private_key, now)}),
+        InMemoryDecisionConsumptionStore(),
+    )
+
+    with pytest.raises(RiskVerificationError, match="not executable"):
+        gate.authorize_once(rejected, bundle, context(bundle), now=now)
+
+    assert gate.authorize_once(approved, bundle, context(bundle), now=now) == approved_payload
 
 
 def test_required_human_approval_digest_is_bound_before_nonce_consumption() -> None:
@@ -258,6 +331,84 @@ def test_required_human_approval_digest_is_bound_before_nonce_consumption() -> N
             context(bundle),
             now=now,
             human_approval=signed_approval,
+        )
+        == payload
+    )
+    with pytest.raises(RiskVerificationError, match="already been consumed"):
+        gate.authorize_once(
+            signed,
+            bundle,
+            context(bundle),
+            now=now,
+            human_approval=signed_approval,
+        )
+
+
+def test_wrong_human_approval_digest_does_not_consume_decision() -> None:
+    now = datetime(2026, 1, 1, tzinfo=UTC)
+    bundle = make_bundle()
+    risk_key = Ed25519PrivateKey.generate()
+    approval_key = Ed25519PrivateKey.generate()
+    approval_signer = risk_signing.HumanApprovalSigner("approval-key-1", approval_key)
+
+    def signed_approval(nonce: str) -> risk_contracts.SignedHumanApproval:
+        return approval_signer.sign(
+            risk_contracts.HumanApprovalPayload(
+                tenant_id=bundle.tenant_id,
+                environment=bundle.environment,
+                approval_id=uuid4(),
+                approver_id="human-risk-owner",
+                approver_role="RISK_OWNER",
+                account_id=bundle.account_id,
+                approved_order_bundle_digest=digest_canonical(bundle),
+                policy_epoch=3,
+                nonce=nonce,
+                created_at=now,
+                not_before=now,
+                expires_at=now + timedelta(seconds=30),
+            )
+        )
+
+    expected_approval = signed_approval("cd" * 16)
+    wrong_approval = signed_approval("ef" * 16)
+    payload = make_payload(bundle, now).model_copy(
+        update={"required_human_approval_digest": digest_canonical(expected_approval)}
+    )
+    signed_risk = RiskDecisionSigner("risk-key-1", risk_key).sign(payload)
+    gate = ExecutionAuthorizationGate(
+        RiskDecisionVerifier({"risk-key-1": trusted_key(risk_key, now)}),
+        InMemoryDecisionConsumptionStore(),
+        approval_verifier=risk_signing.HumanApprovalVerifier(
+            {
+                "approval-key-1": risk_signing.TrustedApprovalKey(
+                    public_key=approval_key.public_key(),
+                    valid_from=now - timedelta(days=1),
+                    valid_until=now + timedelta(days=1),
+                    approver_id="human-risk-owner",
+                    allowed_roles=frozenset({"RISK_OWNER"}),
+                    tenant_id=bundle.tenant_id,
+                    account_id=bundle.account_id,
+                )
+            }
+        ),
+    )
+
+    with pytest.raises(RiskVerificationError, match="digest is mismatched"):
+        gate.authorize_once(
+            signed_risk,
+            bundle,
+            context(bundle),
+            now=now,
+            human_approval=wrong_approval,
+        )
+
+    assert (
+        gate.authorize_once(
+            signed_risk,
+            bundle,
+            context(bundle),
+            now=now,
+            human_approval=expected_approval,
         )
         == payload
     )

@@ -374,6 +374,16 @@ then
   exit 1
 fi
 
+pre_denial_counts=$(psql -X -At -F '|' -v ON_ERROR_STOP=1 -d "$DB" <<SQL
+SET SESSION AUTHORIZATION "$ROLE_A";
+SELECT
+  (SELECT count(*) FROM consumed_risk_decisions),
+  (SELECT count(*) FROM paper_execution_results),
+  (SELECT count(*) FROM paper_account_snapshots);
+SQL
+)
+pre_denial_counts=$(printf '%s\n' "$pre_denial_counts" | grep -E '^[0-9]+\|' | tail -1)
+
 if psql -X -v ON_ERROR_STOP=1 -d "$DB" <<SQL >/dev/null 2>&1
 SET SESSION AUTHORIZATION "$ROLE_A";
 SELECT aq_record_paper_execution(
@@ -409,5 +419,16 @@ then
   echo 'durable execution idempotency conflict unexpectedly succeeded' >&2
   exit 1
 fi
+
+post_denial_counts=$(psql -X -At -F '|' -v ON_ERROR_STOP=1 -d "$DB" <<SQL
+SET SESSION AUTHORIZATION "$ROLE_A";
+SELECT
+  (SELECT count(*) FROM consumed_risk_decisions),
+  (SELECT count(*) FROM paper_execution_results),
+  (SELECT count(*) FROM paper_account_snapshots);
+SQL
+)
+post_denial_counts=$(printf '%s\n' "$post_denial_counts" | grep -E '^[0-9]+\|' | tail -1)
+[[ "$post_denial_counts" == "$pre_denial_counts" ]]
 
 echo 'PostgreSQL migration, bound-tenant RLS, DB-owned chain, idempotency, and append-only checks passed.'

@@ -342,13 +342,16 @@ Expected: all exit 0.
 - Consumes: existing `ExecutionAuthorizationGate`, signed decision/context, durable consumption.
 - Produces no second authorization path.
 
-- [ ] **Step 1: Add failing denial tests**
+- [x] **Step 1: Add denial tests**
 
 Cover missing/wrong human approval digest, stale portfolio sequence/snapshot, expired decision,
 kill-switch epoch mismatch, rejected order, nonce replay, and changed request after durable commit.
 For each failure, assert no account snapshot, decision consumption, or execution result was added.
 
-- [ ] **Step 2: Run and observe RED where a shared guard is missing**
+- [x] **Step 2: Run and observe RED where a shared guard is missing**
+
+No shared guard was missing: the added regression tests passed against the existing fail-closed
+authorization gate and atomic PostgreSQL function.
 
 Run:
 
@@ -357,12 +360,15 @@ uv run pytest -q tests/test_risk_signing.py tests/test_multi_period_case.py
 scripts/test-postgres-migration.sh
 ```
 
-- [ ] **Step 3: Fix only shared enforcement points**
+- [x] **Step 3: Fix only shared enforcement points**
 
 Put authorization fixes in `ExecutionAuthorizationGate` or its durable consumption boundary and
 policy fixes in the shared risk evaluator. Do not add runner-specific duplicate guards.
 
-- [ ] **Step 4: Run GREEN checks**
+No production fix was needed; retaining the existing enforcement avoided a second authorization
+path.
+
+- [x] **Step 4: Run GREEN checks**
 
 Repeat Step 2. Expected: all exit 0.
 

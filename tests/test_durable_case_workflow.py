@@ -10,6 +10,7 @@ from temporalio.contrib.pydantic import pydantic_data_converter
 from temporalio.testing import WorkflowEnvironment
 from temporalio.worker import Worker
 
+import aegisquant.workflows.durable_activities as durable_activities
 from aegisquant.case_ledger.postgres import (
     DurableAccountSnapshot,
     DurableCaseRef,
@@ -21,6 +22,7 @@ from aegisquant.case_ledger.postgres import (
 )
 from aegisquant.fixture_case import FixtureCaseReport, FixtureCaseSpec, run_fixture_case
 from aegisquant.security.digests import digest_canonical
+from aegisquant.security.risk_signing import RiskVerificationError
 from aegisquant.workflows.contracts import (
     DurableExecutionWorkflowRef,
     DurableOfflineCaseWorkflowInput,
@@ -127,6 +129,48 @@ def command() -> DurableOfflineCaseWorkflowInput:
         initial_account_digest=digest_jsonb(initial_account),
         execution_id=uuid5(NAMESPACE_URL, f"aegisquant:durable-execution:{fixture_digest}"),
     )
+
+
+@pytest.mark.parametrize(
+    "denial",
+    [
+        "missing human approval",
+        "wrong human approval digest",
+        "stale portfolio sequence",
+        "stale portfolio snapshot",
+        "expired decision",
+        "kill-switch epoch mismatch",
+        "rejected order",
+    ],
+)
+def test_durable_activity_does_not_persist_any_authorization_denial(
+    monkeypatch: pytest.MonkeyPatch, denial: str
+) -> None:
+    store = RecoveryStore(FaultPoint.AFTER_RECONCILE_COMMIT)
+    activities = DurableCaseActivities(store, fixture_root=FIXTURE_ROOT)
+    value = command()
+    activities._prepare(value)
+
+    def denied_runner(spec: FixtureCaseSpec) -> FixtureCaseReport:
+        assert spec.manifest.case_id == value.case_id
+        raise RiskVerificationError(denial)
+
+    monkeypatch.setattr(durable_activities, "run_fixture_case", denied_runner)
+    before = (
+        int(store.prepared is not None) + int(store.execution is not None),
+        int(store.execution is not None),
+        int(store.execution is not None),
+    )
+
+    with pytest.raises(RiskVerificationError, match=denial):
+        activities._execute(value)
+
+    after = (
+        int(store.prepared is not None) + int(store.execution is not None),
+        int(store.execution is not None),
+        int(store.execution is not None),
+    )
+    assert before == after == (1, 0, 0)  # account snapshots, consumptions, results
 
 
 @pytest.mark.asyncio
