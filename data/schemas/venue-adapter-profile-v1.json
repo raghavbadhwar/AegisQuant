@@ -1,0 +1,103 @@
+{
+  "$defs": {
+    "OrderType": {
+      "enum": [
+        "MARKET",
+        "LIMIT"
+      ],
+      "title": "OrderType",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Safety capabilities a future provider adapter must prove with recorded fixtures.",
+  "properties": {
+    "adapter_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Adapter Id",
+      "type": "string"
+    },
+    "allowed_hostnames": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Allowed Hostnames",
+      "type": "array"
+    },
+    "broker_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Broker Id",
+      "type": "string"
+    },
+    "compliance_policy_pack_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Compliance Policy Pack Digest",
+      "type": "string"
+    },
+    "compliance_policy_pack_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Compliance Policy Pack Id",
+      "type": "string"
+    },
+    "expires_at": {
+      "format": "date-time",
+      "title": "Expires At",
+      "type": "string"
+    },
+    "max_submission_timeout_seconds": {
+      "maximum": 60,
+      "minimum": 1,
+      "title": "Max Submission Timeout Seconds",
+      "type": "integer"
+    },
+    "reviewed_at": {
+      "format": "date-time",
+      "title": "Reviewed At",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "supported_order_types": {
+      "items": {
+        "$ref": "#/$defs/OrderType"
+      },
+      "title": "Supported Order Types",
+      "type": "array"
+    },
+    "supports_cancellation": {
+      "const": true,
+      "default": true,
+      "title": "Supports Cancellation",
+      "type": "boolean"
+    },
+    "supports_client_order_idempotency": {
+      "const": true,
+      "default": true,
+      "title": "Supports Client Order Idempotency",
+      "type": "boolean"
+    },
+    "supports_order_status_retrieval": {
+      "const": true,
+      "default": true,
+      "title": "Supports Order Status Retrieval",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "adapter_id",
+    "broker_id",
+    "compliance_policy_pack_id",
+    "compliance_policy_pack_digest",
+    "allowed_hostnames",
+    "supported_order_types",
+    "max_submission_timeout_seconds",
+    "reviewed_at",
+    "expires_at"
+  ],
+  "title": "VenueAdapterProfile",
+  "type": "object"
+}

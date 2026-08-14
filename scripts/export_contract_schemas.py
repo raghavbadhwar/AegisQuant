@@ -24,6 +24,16 @@ from aegisquant.contracts.learning import (
     SignedLearningEvaluation,
     SignedPromotionApproval,
 )
+from aegisquant.contracts.recovery import ObjectStoreRecoveryCommand, ObjectStoreRecoveryReceipt
+from aegisquant.contracts.release import (
+    ProductionReleaseManifest,
+    ReleaseApprovalPayload,
+    ReleaseAttestationHeader,
+    ReleaseTrustStore,
+    ReleaseVerificationInput,
+    SignedReleaseApproval,
+    TrustedReleaseKeyRecord,
+)
 from aegisquant.contracts.research import (
     CashLedgerEntry,
     CorporateAction,
@@ -44,6 +54,13 @@ from aegisquant.contracts.risk import (
     RiskDecisionPayload,
     SignedHumanApproval,
     SignedRiskDecision,
+)
+from aegisquant.contracts.venue import (
+    VenueAdapterProfile,
+    VenueConformanceInput,
+    VenueConformanceReport,
+    VenueOrderAcknowledgement,
+    VenueSubmissionCommand,
 )
 from aegisquant.fixture_case import FixtureCaseReport, FixtureCaseSpec
 from aegisquant.intelligence.forecast_evidence import ForecastAssessment, ForecastEvidenceBundle
@@ -80,18 +97,32 @@ SCHEMAS: dict[str, Any] = {
     "position-ledger-entry-v1": PositionLedgerEntry,
     "promotion-approval-v1": PromotionApproval,
     "promotion-approval-v2": PromotionApprovalV2,
+    "production-release-manifest-v1": ProductionReleaseManifest,
+    "object-store-recovery-command-v1": ObjectStoreRecoveryCommand,
+    "object-store-recovery-receipt-v1": ObjectStoreRecoveryReceipt,
     "research-manifest-v1": ResearchManifest,
+    "release-approval-payload-v1": ReleaseApprovalPayload,
+    "release-attestation-header-v1": ReleaseAttestationHeader,
+    "release-trust-store-v1": ReleaseTrustStore,
+    "release-verification-input-v1": ReleaseVerificationInput,
     "rights-manifest-v1": RightsManifest,
     "risk-decision-payload-v1": RiskDecisionPayload,
     "security-version-v1": SecurityVersion,
     "source-receipt-v1": SourceReceipt,
     "signed-risk-decision-v1": SignedRiskDecision,
+    "signed-release-approval-v1": SignedReleaseApproval,
     "signed-learning-evaluation-v1": SignedLearningEvaluation,
     "signed-promotion-approval-v1": SignedPromotionApproval,
     "signed-human-approval-v1": SignedHumanApproval,
     "tool-authorization-request-v1": ToolAuthorizationRequest,
     "trial-manifest-v1": TrialManifest,
+    "trusted-release-key-record-v1": TrustedReleaseKeyRecord,
     "validation-receipt-v1": ValidationReceipt,
+    "venue-adapter-profile-v1": VenueAdapterProfile,
+    "venue-conformance-input-v1": VenueConformanceInput,
+    "venue-conformance-report-v1": VenueConformanceReport,
+    "venue-order-acknowledgement-v1": VenueOrderAcknowledgement,
+    "venue-submission-command-v1": VenueSubmissionCommand,
 }
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / "data" / "schemas"

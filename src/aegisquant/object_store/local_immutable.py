@@ -21,6 +21,10 @@ class LocalImmutableObjectStore:
         self._root = root.resolve()
         self._root.mkdir(parents=True, exist_ok=True, mode=0o700)
 
+    @property
+    def root(self) -> Path:
+        return self._root
+
     def _path(self, tenant_id: Identifier, digest: str) -> Path:
         hex_digest = digest.removeprefix("sha256:")
         return self._root / tenant_id / "sha256" / hex_digest[:2] / hex_digest

@@ -30,6 +30,11 @@ uv run aegisquant-case learning propose propose.json
 uv run aegisquant-case learning evaluate evaluate.json
 uv run aegisquant-case learning approve approve.json
 uv run aegisquant-case learning verify verify.json
+uv run aegisquant-case release verify release.json --trust-store release-trust.json \
+  --recovery-receipt recovery-receipt.json
+uv run aegisquant-case recovery drill recovery-command.json \
+  --source-root /absolute/source --target-root /absolute/fresh-recovery-target
+uv run aegisquant-case venue verify venue-conformance.json
 uv run run-fixture-case data/fixtures/cases/multi_asset_control.json
 ```
 
@@ -54,6 +59,16 @@ role-scoped Ed25519 evaluator and human-approver attestations. The commands neve
 or run a case automatically. Only that fully attested strategy proposal can later change the
 allowlisted forecast uncertainty floor; risk policy, permissions, evaluation thresholds, and
 locked holdouts remain outside the learning path.
+
+`release verify` is the M6 production-prerequisite gate. It verifies an exact evidence manifest,
+independent reviewer and later human-operator Ed25519 attestations, an operator-owned public-key
+policy, the active PostgreSQL and Temporal dependencies, and a tenant-bound immutable-object-store
+round trip plus a content-bound recovery receipt. `recovery drill` restores an explicit manifest to
+a fresh local target; `venue verify` validates recorded provider fixtures only. The core remains
+jurisdiction-neutral through a selected compliance-policy-pack digest, while each deployment is
+evidence-bound. Passing the gate still reports `live_execution_enabled: false`: a provider-specific
+adapter, external acceptance, and a separate audit are required before `LIVE` can be introduced.
+See [`docs/operations/production-release.md`](docs/operations/production-release.md).
 
 See [`docs/BUILD_PLAN.md`](docs/BUILD_PLAN.md), [`docs/architecture/ADR-0001-security-kernel-first.md`](docs/architecture/ADR-0001-security-kernel-first.md), and [`docs/research/design-validation-2026-08-08.md`](docs/research/design-validation-2026-08-08.md).
 

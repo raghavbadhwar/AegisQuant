@@ -81,6 +81,11 @@ class OrderBundle(StrictModel):
     portfolio_state_sequence: int = Field(ge=0)
     orders: tuple[OrderIntent, ...] = Field(min_length=1, max_length=1000)
 
+    @field_validator("orders", mode="before")
+    @classmethod
+    def order_array(cls, value: object) -> object:
+        return tuple(value) if isinstance(value, list) else value
+
     @model_validator(mode="after")
     def order_ids_are_unique(self) -> "OrderBundle":
         ids = [order.client_order_id for order in self.orders]

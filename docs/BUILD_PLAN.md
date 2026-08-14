@@ -77,3 +77,24 @@ Supported profile: **personal and local-first** — one workstation and operator
 ## M6 — live-readiness assessment (not authorization)
 
 Requires jurisdiction-specific legal/compliance determination, data contracts, broker/venue rules, model validation, security certification, operational runbooks, human governance, and explicit user approval. Live trading is not implied by completion of earlier milestones.
+
+- [x] Exact production-release evidence manifest with tenant/account/broker/compliance-policy-pack
+  and exact DNS allowlist bindings.
+- [x] Current, revocable, role-scoped Ed25519 independent-review and later human-operator
+  attestations with separation of duties.
+- [x] Operator-owned trust policy plus real PostgreSQL, Temporal, and immutable-object-store
+  preflight in `aegisquant-case release verify`.
+- [x] Personal production release procedure and explicit stop conditions.
+- [ ] Select one jurisdiction and broker; record legal/data/broker acceptance and exact sandbox
+  contract evidence.
+- [ ] Implement and independently audit the venue-specific Temporal Activity, broker reconciliation,
+  kill/recovery behavior, credential boundary, and egress controls before adding `LIVE`.
+
+## M7 — jurisdiction-neutral venue and recovery conformance (verified offline foundation)
+
+- [x] Immutable compliance-policy-pack ID/digest binding; the core contains no jurisdiction rules.
+- [x] Recorded fixture contract for reviewed adapter capabilities, exact submissions,
+  acknowledgements, expiry, idempotency, hostnames, and reconciliation identifiers.
+- [x] Bounded immutable-object recovery drill into a fresh target with content-bound receipt.
+- [ ] Certified provider-specific Temporal Activity and sandbox/reconciliation evidence for each
+  selected venue. This is intentionally not generalized or activated by M7.

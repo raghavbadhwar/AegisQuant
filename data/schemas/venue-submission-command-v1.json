@@ -1,0 +1,98 @@
+{
+  "additionalProperties": false,
+  "description": "Exact fixture command for conformance tests; it is never a network request.",
+  "properties": {
+    "account_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Account Id",
+      "type": "string"
+    },
+    "broker_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Broker Id",
+      "type": "string"
+    },
+    "client_order_ids": {
+      "items": {
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+        "type": "string"
+      },
+      "maxItems": 1000,
+      "minItems": 1,
+      "title": "Client Order Ids",
+      "type": "array"
+    },
+    "compliance_policy_pack_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Compliance Policy Pack Digest",
+      "type": "string"
+    },
+    "compliance_policy_pack_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Compliance Policy Pack Id",
+      "type": "string"
+    },
+    "expires_at": {
+      "format": "date-time",
+      "title": "Expires At",
+      "type": "string"
+    },
+    "legal_entity_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Legal Entity Id",
+      "type": "string"
+    },
+    "not_before": {
+      "format": "date-time",
+      "title": "Not Before",
+      "type": "string"
+    },
+    "order_bundle_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Order Bundle Digest",
+      "type": "string"
+    },
+    "release_manifest_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Release Manifest Digest",
+      "type": "string"
+    },
+    "request_id": {
+      "format": "uuid",
+      "title": "Request Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "submission_hostname": {
+      "title": "Submission Hostname",
+      "type": "string"
+    },
+    "tenant_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Tenant Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "release_manifest_digest",
+    "compliance_policy_pack_id",
+    "compliance_policy_pack_digest",
+    "legal_entity_id",
+    "account_id",
+    "broker_id",
+    "request_id",
+    "order_bundle_digest",
+    "client_order_ids",
+    "submission_hostname",
+    "not_before",
+    "expires_at"
+  ],
+  "title": "VenueSubmissionCommand",
+  "type": "object"
+}

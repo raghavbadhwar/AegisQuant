@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import argparse
+import asyncio
 import json
+import os
 import sys
 from collections.abc import Sequence
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal, NoReturn
 
@@ -20,10 +22,22 @@ from aegisquant.contracts.learning import (
     LearningProposalManifest,
     PromotionApprovalV2,
 )
+from aegisquant.contracts.recovery import ObjectStoreRecoveryCommand, ObjectStoreRecoveryReceipt
+from aegisquant.contracts.release import ReleaseVerificationInput
+from aegisquant.contracts.venue import VenueConformanceInput
+from aegisquant.control_api import dependency_readiness
 from aegisquant.fixture_case import FixtureCaseReport, FixtureCaseSpec, run_fixture_case
 from aegisquant.learning.governance import approve_candidate_v2, evaluate_candidate_v2
 from aegisquant.learning.loop import propose_candidate, verify_learning_records
+from aegisquant.object_store import LocalImmutableObjectStore
+from aegisquant.object_store.recovery import run_local_object_store_recovery_drill
 from aegisquant.quant.multi_period import MultiPeriodCaseReport, MultiPeriodCaseSpec
+from aegisquant.security.digests import digest_canonical
+from aegisquant.security.release_attestation import (
+    ProductionReleaseVerifier,
+    load_release_trust_store,
+)
+from aegisquant.venue.conformance import verify_venue_conformance
 
 
 class ReportVerificationError(Exception):
@@ -236,6 +250,111 @@ def _learning_verify(args: argparse.Namespace) -> int:
     return 0
 
 
+def _now() -> datetime:
+    return datetime.now(UTC)
+
+
+def _probe_release_object_store(root: Path, request: ReleaseVerificationInput) -> bool:
+    if not root.is_absolute() or root.is_symlink():
+        return False
+    store = LocalImmutableObjectStore(root)
+    metadata = root.stat()
+    if metadata.st_uid != os.geteuid() or metadata.st_mode & 0o077:
+        return False
+    data = (
+        f"AEGISQUANT_RELEASE_PROBE_V1:{request.manifest.release_id}:"
+        f"{digest_canonical(request.manifest)}"
+    ).encode()
+    reference = store.put_if_absent(
+        tenant_id=request.manifest.tenant_id,
+        data=data,
+        media_type="application/vnd.aegisquant.release-probe",
+        retention_class="release-evidence",
+    )
+    return store.get(reference, authenticated_tenant_id=request.manifest.tenant_id) == data
+
+
+def _release_verify(args: argparse.Namespace) -> int:
+    request = ReleaseVerificationInput.model_validate_json(args.input.read_bytes())
+    trust_store = load_release_trust_store(args.trust_store)
+    if trust_store.tenant_id != request.manifest.tenant_id:
+        raise ValueError("release trust store tenant does not match the manifest")
+    now = _now()
+    verified = ProductionReleaseVerifier(trust_store.trusted_keys).verify(
+        request.manifest,
+        independent_review=request.independent_review,
+        operator_approval=request.operator_approval,
+        now=now,
+    )
+    recovery_receipt = ObjectStoreRecoveryReceipt.model_validate_json(
+        args.recovery_receipt.read_bytes()
+    )
+    if (
+        recovery_receipt.tenant_id != verified.tenant_id
+        or digest_canonical(recovery_receipt) != verified.backup_restore_drill_digest
+        or recovery_receipt.completed_at > now
+    ):
+        raise ValueError(
+            "release recovery receipt is missing, stale, or outside the manifest scope"
+        )
+    dependencies = asyncio.run(dependency_readiness())
+    object_store_root = os.environ.get("AEGISQUANT_OBJECT_STORE_ROOT")
+    object_store_ready = bool(
+        object_store_root and _probe_release_object_store(Path(object_store_root), request)
+    )
+    runtime = dependencies | {"object_store": object_store_ready}
+    if not all(runtime.values()):
+        unavailable = ", ".join(sorted(name for name, ready in runtime.items() if not ready))
+        raise ValueError(f"release runtime dependencies are not ready: {unavailable}")
+    _write_json(
+        {
+            "prerequisites_verified": True,
+            "manifest_digest": digest_canonical(verified),
+            "release_id": verified.release_id,
+            "broker_id": verified.broker_id,
+            "broker_api_hostnames": verified.broker_api_hostnames,
+            "runtime_dependencies": runtime,
+            "live_execution_enabled": False,
+            "next_required": "VENUE_ADAPTER_AND_EXTERNAL_ACCEPTANCE",
+        }
+    )
+    return 0
+
+
+def _recovery_drill(args: argparse.Namespace) -> int:
+    command = ObjectStoreRecoveryCommand.model_validate_json(args.input.read_bytes())
+    if (
+        not args.source_root.is_absolute()
+        or args.source_root.is_symlink()
+        or not args.source_root.is_dir()
+    ):
+        raise ValueError("recovery source root must be an existing absolute non-symlink directory")
+    if not args.target_root.is_absolute() or args.target_root.exists():
+        raise ValueError("recovery target root must be a new absolute path")
+    receipt = run_local_object_store_recovery_drill(
+        command,
+        source=LocalImmutableObjectStore(args.source_root),
+        target=LocalImmutableObjectStore(args.target_root),
+        completed_at=_now(),
+    )
+    sys.stdout.write(receipt.model_dump_json(indent=2) + "\n")
+    return 0
+
+
+def _venue_verify(args: argparse.Namespace) -> int:
+    value = VenueConformanceInput.model_validate_json(args.input.read_bytes())
+    report = verify_venue_conformance(
+        value.release,
+        value.profile,
+        value.order_bundle,
+        value.command,
+        value.acknowledgements,
+        now=value.now,
+    )
+    sys.stdout.write(report.model_dump_json(indent=2) + "\n")
+    return 0
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="aegisquant-case",
@@ -269,6 +388,41 @@ def _parser() -> argparse.ArgumentParser:
         command = lifecycle.add_parser(name, help=f"{name} a governed learning artifact")
         command.add_argument("input", type=Path, help="strict JSON command file")
         command.set_defaults(handler=handler)
+
+    release = commands.add_parser("release", help="verify M6 production release prerequisites")
+    release_commands = release.add_subparsers(dest="release_command", required=True)
+    release_verify = release_commands.add_parser(
+        "verify", help="verify signed release evidence and actual runtime dependencies"
+    )
+    release_verify.add_argument("input", type=Path, help="strict signed release JSON")
+    release_verify.add_argument(
+        "--trust-store", required=True, type=Path, help="operator-owned public-key trust policy"
+    )
+    release_verify.add_argument(
+        "--recovery-receipt",
+        required=True,
+        type=Path,
+        help="verified immutable-object recovery drill",
+    )
+    release_verify.set_defaults(handler=_release_verify)
+
+    recovery = commands.add_parser("recovery", help="run an immutable-object recovery drill")
+    recovery_commands = recovery.add_subparsers(dest="recovery_command", required=True)
+    recovery_drill = recovery_commands.add_parser(
+        "drill", help="restore an exact immutable-object manifest into a fresh local target"
+    )
+    recovery_drill.add_argument("input", type=Path, help="strict recovery drill JSON")
+    recovery_drill.add_argument("--source-root", required=True, type=Path)
+    recovery_drill.add_argument("--target-root", required=True, type=Path)
+    recovery_drill.set_defaults(handler=_recovery_drill)
+
+    venue = commands.add_parser("venue", help="verify a fixture-only venue conformance record")
+    venue_commands = venue.add_subparsers(dest="venue_command", required=True)
+    venue_verify = venue_commands.add_parser(
+        "verify", help="verify exact venue fixtures with no network transport"
+    )
+    venue_verify.add_argument("input", type=Path, help="strict venue conformance JSON")
+    venue_verify.set_defaults(handler=_venue_verify)
     return parser
 
 
