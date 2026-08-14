@@ -68,6 +68,11 @@ class PortfolioTarget(StrictModel):
     weights: tuple[TargetWeight, ...]
     cash_weight: FixedDecimal
 
+    @field_validator("weights", mode="before")
+    @classmethod
+    def parse_weights(cls, value: object) -> object:
+        return tuple(value) if isinstance(value, list) else value
+
     @model_validator(mode="after")
     def weights_are_complete(self) -> "PortfolioTarget":
         instruments = [item.instrument_id for item in self.weights]

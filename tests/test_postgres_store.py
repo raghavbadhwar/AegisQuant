@@ -68,7 +68,13 @@ def case_write() -> DurableCaseWrite:
 
 
 def execution_write() -> DurableExecutionWrite:
-    result_payload = {"fills": [{"fill_id": "fill-1"}]}
+    nonce = "0123456789abcdef0123456789abcdef"
+    decision_digest = "sha256:" + "2" * 64
+    result_payload = {
+        "fills": [{"fill_id": "fill-1"}],
+        "risk_decision_nonce": nonce,
+        "risk_decision_digest": decision_digest,
+    }
     account_payload = {"cash": "9900", "positions": []}
     return DurableExecutionWrite(
         tenant_id="tenant-a",
@@ -76,8 +82,8 @@ def execution_write() -> DurableExecutionWrite:
         account_id="paper-1",
         execution_id=EXECUTION_ID,
         idempotency_key="execute-1",
-        nonce="0123456789abcdef0123456789abcdef",
-        decision_digest="sha256:" + "2" * 64,
+        nonce=nonce,
+        decision_digest=decision_digest,
         request_digest="sha256:" + "3" * 64,
         result_digest=digest_jsonb(result_payload),
         result_payload=result_payload,
@@ -98,6 +104,11 @@ def test_durable_writes_reject_unbound_payload_digests() -> None:
             execution_write().model_dump() | {"result_digest": "sha256:" + "a" * 64}
         )
 
+    with pytest.raises(ValidationError, match="risk decision"):
+        DurableExecutionWrite.model_validate(
+            execution_write().model_dump() | {"nonce": "abcdef0123456789abcdef0123456789"}
+        )
+
 
 def test_prepare_and_execute_return_the_same_stored_reference_on_exact_retry(
     monkeypatch: pytest.MonkeyPatch,
@@ -106,7 +117,9 @@ def test_prepare_and_execute_return_the_same_stored_reference_on_exact_retry(
     execution = execution_write()
     case_row = initial.model_dump()
     execution_row = execution.model_dump(exclude={"account_snapshot_payload"})
-    connection = FakeConnection([case_row, execution_row, execution_row])
+    connection = FakeConnection(
+        [case_row, execution_row, execution_row, {"event_digest": "sha256:" + "f" * 64}]
+    )
     monkeypatch.setattr(
         "aegisquant.case_ledger.postgres.psycopg.connect",
         lambda *_args, **_kwargs: connection,
@@ -116,6 +129,13 @@ def test_prepare_and_execute_return_the_same_stored_reference_on_exact_retry(
     prepared = store.prepare_case(initial)
     first = store.execute_once(execution)
     second = store.execute_once(execution)
+    store.reconcile_once(
+        tenant_id=execution.tenant_id,
+        case_id=execution.case_id,
+        account_id=execution.account_id,
+        execution_id=execution.execution_id,
+        result_digest=execution.result_digest,
+    )
 
     assert prepared.snapshot_digest == initial.snapshot_digest
     assert first == second
@@ -175,6 +195,37 @@ def test_inspect_rejects_incoherent_stored_payload_digest(
     )
 
     with pytest.raises(RuntimeError, match="digest"):
+        PostgresCaseStore("postgresql:///fixture").inspect(
+            tenant_id="tenant-a", case_id=CASE_ID, account_id="paper-1"
+        )
+
+
+def test_inspect_rejects_stored_risk_decision_mismatch(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    initial = case_write()
+    execution = execution_write()
+    result_payload = execution.result_payload | {
+        "risk_decision_nonce": "abcdef0123456789abcdef0123456789"
+    }
+    row = {
+        "tenant_id": initial.tenant_id,
+        "case_id": initial.case_id,
+        "account_id": initial.account_id,
+        "state_sequence": execution.account_state_sequence,
+        "snapshot_digest": execution.account_snapshot_digest,
+        "snapshot_payload": execution.account_snapshot_payload,
+        **execution.model_dump(exclude={"tenant_id", "case_id", "account_id"}),
+        "result_payload": result_payload,
+        "result_digest": digest_jsonb(result_payload),
+    }
+    connection = FakeConnection([row])
+    monkeypatch.setattr(
+        "aegisquant.case_ledger.postgres.psycopg.connect",
+        lambda *_args, **_kwargs: connection,
+    )
+
+    with pytest.raises(ValidationError, match="stored risk decision"):
         PostgresCaseStore("postgresql:///fixture").inspect(
             tenant_id="tenant-a", case_id=CASE_ID, account_id="paper-1"
         )

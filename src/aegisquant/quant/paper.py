@@ -40,6 +40,11 @@ class PaperAccountState(StrictModel):
     positions: tuple[PositionLedgerEntry, ...]
     state_sequence: int = Field(ge=0)
 
+    @field_validator("positions", mode="before")
+    @classmethod
+    def parse_positions(cls, value: object) -> object:
+        return tuple(value) if isinstance(value, list) else value
+
     @field_validator("cash")
     @classmethod
     def nonnegative_cash(cls, value: Decimal) -> Decimal:

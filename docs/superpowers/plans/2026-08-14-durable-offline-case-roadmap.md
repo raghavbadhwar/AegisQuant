@@ -184,34 +184,34 @@ Expected: all exit 0.
   `DurableOfflineCaseWorkflow`, and activities `prepare_durable_case_v1`,
   `execute_durable_case_v1`, `reconcile_durable_case_v1`.
 
-- [ ] **Step 1: Write failing workflow contract and retry tests**
+- [x] **Step 1: Write failing workflow contract and retry tests**
 
 Cover nested tenant/case mismatch, incoherent returned digest, stable activity IDs, and an execution
 activity invoked twice after a simulated post-commit failure returning the same execution digest
 and fill IDs.
 
-- [ ] **Step 2: Run focused tests and observe RED**
+- [x] **Step 2: Run focused tests and observe RED**
 
 Run: `uv run pytest -q tests/test_durable_case_workflow.py`
 
 Expected: FAIL because V1 durable workflow types and activities are absent.
 
-- [ ] **Step 3: Implement typed references and idempotent activities**
+- [x] **Step 3: Implement typed references and idempotent activities**
 
 Each activity receives a small strict contract, calls the injected store, and returns one strict
 reference. Use stable deterministic identifiers derived from tenant, case, and input digest.
 
-- [ ] **Step 4: Implement the pinned workflow**
+- [x] **Step 4: Implement the pinned workflow**
 
 The workflow executes prepare, execute, then reconcile with explicit activity IDs, 30-second
 start-to-close, 45-second schedule-to-close, maximum two attempts, wait-for-cancellation, and exact
 digest/binding checks after every result.
 
-- [ ] **Step 5: Capture and test replay history**
+- [x] **Step 5: Capture and test replay history**
 
 Add a golden deterministic history fixture and replay it without any worker/network service.
 
-- [ ] **Step 6: Run focused checks**
+- [x] **Step 6: Run focused checks**
 
 Run:
 

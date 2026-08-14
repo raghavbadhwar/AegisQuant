@@ -52,6 +52,13 @@ def digest_jsonb(value: dict[str, Any]) -> str:
     return sha256_bytes(text.encode())
 
 
+def _risk_decision_is_bound(payload: dict[str, Any], *, nonce: str, decision_digest: str) -> bool:
+    return (
+        payload.get("risk_decision_nonce") == nonce
+        and payload.get("risk_decision_digest") == decision_digest
+    )
+
+
 class DurableCaseWrite(StrictModel):
     tenant_id: Identifier
     case_id: UUID
@@ -88,6 +95,10 @@ class DurableExecutionWrite(StrictModel):
             raise ValueError("result_digest does not bind result_payload")
         if digest_jsonb(self.account_snapshot_payload) != self.account_snapshot_digest:
             raise ValueError("account_snapshot_digest does not bind account_snapshot_payload")
+        if not _risk_decision_is_bound(
+            self.result_payload, nonce=self.nonce, decision_digest=self.decision_digest
+        ):
+            raise ValueError("result_payload does not bind the consumed risk decision")
         return self
 
 
@@ -105,11 +116,21 @@ class DurableExecutionRef(StrictModel):
     account_id: Identifier
     execution_id: UUID
     idempotency_key: Identifier
+    nonce: Nonce
+    decision_digest: Sha256Digest
     request_digest: Sha256Digest
     result_digest: Sha256Digest
     result_payload: dict[str, Any]
     account_state_sequence: int = Field(gt=0)
     account_snapshot_digest: Sha256Digest
+
+    @model_validator(mode="after")
+    def risk_decision_is_bound(self) -> DurableExecutionRef:
+        if not _risk_decision_is_bound(
+            self.result_payload, nonce=self.nonce, decision_digest=self.decision_digest
+        ):
+            raise ValueError("result_payload does not bind the stored risk decision")
+        return self
 
 
 class DurableAccountSnapshot(StrictModel):
@@ -207,6 +228,8 @@ class PostgresCaseStore:
             or result.account_id != write.account_id
             or result.execution_id != write.execution_id
             or result.idempotency_key != write.idempotency_key
+            or result.nonce != write.nonce
+            or result.decision_digest != write.decision_digest
             or result.request_digest != write.request_digest
             or result.result_digest != write.result_digest
             or result.account_state_sequence != write.account_state_sequence
@@ -214,6 +237,29 @@ class PostgresCaseStore:
         ):
             raise RuntimeError("durable execution result does not match its authenticated input")
         return result
+
+    def reconcile_once(
+        self,
+        *,
+        tenant_id: str,
+        case_id: UUID,
+        account_id: str,
+        execution_id: UUID,
+        result_digest: str,
+    ) -> None:
+        try:
+            with psycopg.connect(self._dsn, row_factory=dict_row) as connection:
+                row = connection.execute(
+                    """
+                    SELECT (aq_record_execution_reconciliation(%s,%s,%s,%s,%s)).event_digest
+                    AS event_digest
+                    """,
+                    (tenant_id, case_id, account_id, execution_id, result_digest),
+                ).fetchone()
+        except psycopg.Error as error:
+            self._raise_domain_error(error)
+        if row is None or not str(row.get("event_digest", "")).startswith("sha256:"):
+            raise RuntimeError("execution reconciliation returned no durable event")
 
     def inspect(self, *, tenant_id: str, case_id: UUID, account_id: str) -> DurableCaseSnapshot:
         params = (tenant_id, case_id, account_id)
@@ -229,6 +275,7 @@ class PostgresCaseStore:
                 )
                 SELECT account.*,
                        execution.execution_id, execution.idempotency_key,
+                       execution.nonce, execution.decision_digest,
                        execution.request_digest, execution.result_digest,
                        execution.result_payload, execution.account_state_sequence,
                        execution.account_snapshot_digest
@@ -259,6 +306,6 @@ class PostgresCaseStore:
 
     @staticmethod
     def _raise_domain_error(error: psycopg.Error) -> NoReturn:
-        if error.sqlstate in {"AQ001", "AQ002", "AQ003"}:
+        if error.sqlstate in {"AQ001", "AQ002", "AQ003", "AQ006"}:
             raise IdempotencyConflict(str(error)) from error
         raise error

@@ -68,6 +68,56 @@ CREATE TABLE paper_execution_results (
     CHECK (account_snapshot_digest ~ '^sha256:[0-9a-f]{64}$')
 );
 
+CREATE FUNCTION aq_append_durable_case_event(
+    p_tenant_id text,
+    p_case_id uuid,
+    p_event_type text,
+    p_idempotency_key text,
+    p_payload_canonical text
+) RETURNS case_events
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = pg_catalog, public AS $$
+DECLARE
+    tenant text := aq_current_tenant_id();
+    prior_sequence bigint;
+    prior_digest text;
+    event_time timestamptz := clock_timestamp();
+    stored case_events;
+BEGIN
+    IF tenant IS NULL OR p_tenant_id <> tenant THEN
+        RAISE EXCEPTION 'event tenant does not match authenticated database tenant'
+            USING ERRCODE = 'AQ004';
+    END IF;
+    PERFORM pg_advisory_xact_lock(hashtextextended(tenant || ':' || p_case_id::text, 0));
+    SELECT * INTO stored FROM case_events
+    WHERE tenant_id = tenant AND idempotency_key = p_idempotency_key;
+    IF FOUND THEN
+        IF stored.case_id <> p_case_id
+           OR stored.event_type <> p_event_type
+           OR stored.payload_canonical <> p_payload_canonical THEN
+            RAISE EXCEPTION 'durable event idempotency key reused with different content'
+                USING ERRCODE = 'AQ001';
+        END IF;
+        RETURN stored;
+    END IF;
+    SELECT sequence, event_digest INTO prior_sequence, prior_digest
+    FROM case_events
+    WHERE tenant_id = tenant AND case_id = p_case_id
+    ORDER BY sequence DESC
+    LIMIT 1;
+    INSERT INTO case_events (
+        tenant_id, case_id, event_id, sequence, event_type, occurred_at, recorded_at,
+        actor_id, correlation_id, idempotency_key, payload_canonical, previous_event_digest
+    ) VALUES (
+        tenant, p_case_id, gen_random_uuid(), coalesce(prior_sequence, 0) + 1,
+        p_event_type, event_time, event_time, 'durable-offline-runner', p_case_id,
+        p_idempotency_key, p_payload_canonical, prior_digest
+    ) RETURNING * INTO stored;
+    RETURN stored;
+END;
+$$;
+REVOKE ALL ON FUNCTION aq_append_durable_case_event(text,uuid,text,text,text) FROM PUBLIC;
+
 CREATE FUNCTION aq_prepare_paper_account(
     p_tenant_id text,
     p_case_id uuid,
@@ -110,6 +160,17 @@ BEGIN
         END IF;
         RETURN stored;
     END IF;
+    INSERT INTO cases (
+        tenant_id, case_id, strategy_id, request, status,
+        created_at, created_by, updated_at
+    ) VALUES (
+        tenant, p_case_id, 'durable-offline-fixture',
+        jsonb_build_object(
+            'account_id', p_account_id,
+            'initial_snapshot_digest', p_snapshot_digest
+        ),
+        'DURABLE_PREPARED', clock_timestamp(), 'durable-offline-runner', clock_timestamp()
+    ) ON CONFLICT DO NOTHING;
     INSERT INTO paper_account_snapshots (
         tenant_id, case_id, account_id, state_sequence,
         snapshot_digest, snapshot_payload, recorded_at
@@ -117,6 +178,14 @@ BEGIN
         tenant, p_case_id, p_account_id, p_state_sequence,
         p_snapshot_digest, p_snapshot_payload, clock_timestamp()
     ) RETURNING * INTO stored;
+    PERFORM aq_append_durable_case_event(
+        tenant,
+        p_case_id,
+        'DURABLE_CASE_PREPARED',
+        'durable-prepare:' || p_account_id,
+        '["object",[["account_id",["string","' || p_account_id
+            || '"]],["snapshot_digest",["string","' || p_snapshot_digest || '"]]]]'
+    );
     RETURN stored;
 END;
 $$;
@@ -154,6 +223,11 @@ BEGIN
     IF aq_jsonb_digest(p_result_payload) <> p_result_digest
        OR aq_jsonb_digest(p_account_snapshot_payload) <> p_account_snapshot_digest THEN
         RAISE EXCEPTION 'execution digest does not bind its JSON payload'
+            USING ERRCODE = 'AQ005';
+    END IF;
+    IF p_result_payload->>'risk_decision_nonce' IS DISTINCT FROM p_nonce
+       OR p_result_payload->>'risk_decision_digest' IS DISTINCT FROM p_decision_digest THEN
+        RAISE EXCEPTION 'execution result does not bind its consumed risk decision'
             USING ERRCODE = 'AQ005';
     END IF;
     PERFORM pg_advisory_xact_lock(hashtextextended(tenant || ':' || p_account_id, 0));
@@ -224,12 +298,58 @@ BEGIN
         p_decision_digest, p_request_digest, p_result_digest, p_result_payload,
         p_account_state_sequence, p_account_snapshot_digest, clock_timestamp()
     ) RETURNING * INTO stored;
+    PERFORM aq_append_durable_case_event(
+        tenant,
+        p_case_id,
+        'PAPER_EXECUTION_RECORDED',
+        'durable-execution:' || p_execution_id::text,
+        '["object",[["result_digest",["string","' || p_result_digest || '"]]]]'
+    );
     RETURN stored;
 END;
 $$;
 REVOKE ALL ON FUNCTION aq_record_paper_execution(
     text,uuid,text,uuid,text,text,text,text,text,jsonb,bigint,text,jsonb
 ) FROM PUBLIC;
+
+CREATE FUNCTION aq_record_execution_reconciliation(
+    p_tenant_id text,
+    p_case_id uuid,
+    p_account_id text,
+    p_execution_id uuid,
+    p_result_digest text
+) RETURNS case_events
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = pg_catalog, public AS $$
+DECLARE
+    tenant text := aq_current_tenant_id();
+    stored paper_execution_results;
+BEGIN
+    IF tenant IS NULL OR p_tenant_id <> tenant THEN
+        RAISE EXCEPTION 'reconciliation tenant does not match authenticated database tenant'
+            USING ERRCODE = 'AQ004';
+    END IF;
+    SELECT * INTO stored FROM paper_execution_results
+    WHERE tenant_id = tenant
+      AND case_id = p_case_id
+      AND account_id = p_account_id
+      AND execution_id = p_execution_id
+      AND result_digest = p_result_digest;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'reconciliation does not bind an exact durable execution'
+            USING ERRCODE = 'AQ006';
+    END IF;
+    RETURN aq_append_durable_case_event(
+        tenant,
+        p_case_id,
+        'EXECUTION_RECONCILED',
+        'durable-reconcile:' || p_execution_id::text,
+        '["object",[["result_digest",["string","' || p_result_digest || '"]]]]'
+    );
+END;
+$$;
+REVOKE ALL ON FUNCTION aq_record_execution_reconciliation(text,uuid,text,uuid,text)
+FROM PUBLIC;
 
 DO $$
 DECLARE table_name text;

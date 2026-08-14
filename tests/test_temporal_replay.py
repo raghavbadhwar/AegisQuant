@@ -10,14 +10,17 @@ from temporalio.worker import Replayer
 from temporalio.worker.workflow_sandbox import SandboxedWorkflowRunner, SandboxRestrictions
 
 from aegisquant.workflows.contracts import ResearchCaseWorkflowInput, SnapshotRef
+from aegisquant.workflows.durable_case import DurableOfflineCaseWorkflow
 from aegisquant.workflows.research_case import ResearchCaseWorkflow
 from aegisquant.workflows.research_case_v2 import ReproducibleResearchCaseWorkflow
 from aegisquant.workflows.versioning import DEPLOYMENT_NAME, worker_deployment_config
 
 FIXTURE = Path("tests/fixtures/temporal/research_case_workflow_v1.json")
 V2_FIXTURE = Path("tests/fixtures/temporal/research_case_workflow_v2.json")
+DURABLE_FIXTURE = Path("tests/fixtures/temporal/durable_offline_case_workflow_v1.json")
 WORKFLOW_ID = "m0-golden-research-case-v1"
 V2_WORKFLOW_ID = "m1-golden-research-case-v2"
+DURABLE_WORKFLOW_ID = "m2-golden-durable-offline-case-v1"
 V2_RUNNER = SandboxedWorkflowRunner(
     restrictions=SandboxRestrictions.default.with_passthrough_modules("pydantic_core")
 )
@@ -58,6 +61,19 @@ async def test_research_case_v2_golden_history_replays_offline() -> None:
         workflows=[ReproducibleResearchCaseWorkflow],
         data_converter=pydantic_data_converter,
         build_id="m1-golden-v2",
+        workflow_runner=V2_RUNNER,
+    ).replay_workflow(history)
+    assert result.replay_failure is None
+
+
+@pytest.mark.asyncio
+async def test_durable_offline_case_v1_golden_history_replays_offline() -> None:
+    history = WorkflowHistory.from_json(DURABLE_WORKFLOW_ID, DURABLE_FIXTURE.read_text())
+    assert len(history.events) == 23
+    result = await Replayer(
+        workflows=[DurableOfflineCaseWorkflow],
+        data_converter=pydantic_data_converter,
+        build_id="m2-golden-durable-v1",
         workflow_runner=V2_RUNNER,
     ).replay_workflow(history)
     assert result.replay_failure is None

@@ -486,6 +486,11 @@
       "title": "Risk Decision Digest",
       "type": "string"
     },
+    "risk_decision_nonce": {
+      "pattern": "^[0-9a-f]{32,128}$",
+      "title": "Risk Decision Nonce",
+      "type": "string"
+    },
     "schema_version": {
       "const": 1,
       "default": 1,
@@ -504,6 +509,7 @@
     "manifest_digest",
     "portfolio_target",
     "portfolio_target_digest",
+    "risk_decision_nonce",
     "risk_decision_digest",
     "execution_digest",
     "fills",

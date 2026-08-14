@@ -229,6 +229,13 @@ class PositionLedgerEntry(StrictModel):
     marked_at: datetime
     source_digest: Sha256Digest
 
+    @field_validator("marked_at", mode="before")
+    @classmethod
+    def parse_marked_at(cls, value: object) -> object:
+        if isinstance(value, str):
+            return datetime.fromisoformat(value.replace("Z", "+00:00"))
+        return value
+
     @field_validator("quantity", "mark_price")
     @classmethod
     def nonnegative(cls, value: Decimal) -> Decimal:
@@ -253,6 +260,13 @@ class PaperFill(StrictModel):
     transaction_cost: FixedDecimal
     filled_at: datetime
     market_data_digest: Sha256Digest
+
+    @field_validator("filled_at", mode="before")
+    @classmethod
+    def parse_filled_at(cls, value: object) -> object:
+        if isinstance(value, str):
+            return datetime.fromisoformat(value.replace("Z", "+00:00"))
+        return value
 
     @field_validator("quantity", "price", "transaction_cost")
     @classmethod

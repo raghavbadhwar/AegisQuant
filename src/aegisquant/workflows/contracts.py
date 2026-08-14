@@ -1,12 +1,12 @@
 """Small claim-check payloads for Temporal workflow history."""
 
 from typing import Literal
-from uuid import UUID
+from uuid import NAMESPACE_URL, UUID, uuid5
 
-from pydantic import model_validator
+from pydantic import field_validator, model_validator
 
 from aegisquant.contracts.artifact import BlobRef
-from aegisquant.contracts.common import Identifier, Sha256Digest, StrictModel
+from aegisquant.contracts.common import Identifier, Nonce, Sha256Digest, StrictModel
 from aegisquant.contracts.research import ResearchManifest
 
 
@@ -135,3 +135,124 @@ class ReproducibleResearchWorkflowResult(StrictModel):
     case_id: UUID
     research_manifest_digest: Sha256Digest
     artifact_digest: Sha256Digest
+
+
+class DurableOfflineCaseWorkflowInput(StrictModel):
+    schema_version: Literal[1] = 1
+    tenant_id: Identifier
+    case_id: UUID
+    account_id: Literal["fixture-paper-account"]
+    fixture_name: Identifier
+    fixture_spec_digest: Sha256Digest
+    initial_account_digest: Sha256Digest
+    execution_id: UUID
+
+    @model_validator(mode="after")
+    def execution_is_bound_to_fixture(self) -> "DurableOfflineCaseWorkflowInput":
+        expected = uuid5(NAMESPACE_URL, f"aegisquant:durable-execution:{self.fixture_spec_digest}")
+        if self.execution_id != expected:
+            raise ValueError("execution_id must bind the frozen fixture digest")
+        return self
+
+
+class DurablePreparedRef(StrictModel):
+    schema_version: Literal[1] = 1
+    tenant_id: Identifier
+    case_id: UUID
+    account_id: Identifier
+    state_sequence: Literal[0]
+    snapshot_digest: Sha256Digest
+
+
+class DurableExecutionWorkflowRef(StrictModel):
+    schema_version: Literal[1] = 1
+    tenant_id: Identifier
+    case_id: UUID
+    account_id: Identifier
+    execution_id: UUID
+    nonce: Nonce
+    decision_digest: Sha256Digest
+    request_digest: Sha256Digest
+    result_digest: Sha256Digest
+    account_state_sequence: Literal[1]
+    account_snapshot_digest: Sha256Digest
+    fill_digests: tuple[Sha256Digest, ...]
+
+    @field_validator("fill_digests", mode="before")
+    @classmethod
+    def parse_fill_digests(cls, value: object) -> object:
+        return tuple(value) if isinstance(value, list) else value
+
+
+class ReconcileDurableCaseInput(StrictModel):
+    schema_version: Literal[1] = 1
+    command: DurableOfflineCaseWorkflowInput
+    execution: DurableExecutionWorkflowRef
+
+    @model_validator(mode="after")
+    def execution_belongs_to_command(self) -> "ReconcileDurableCaseInput":
+        if (
+            self.execution.tenant_id != self.command.tenant_id
+            or self.execution.case_id != self.command.case_id
+            or self.execution.account_id != self.command.account_id
+            or self.execution.execution_id != self.command.execution_id
+            or self.execution.request_digest != self.command.fixture_spec_digest
+        ):
+            raise ValueError("durable execution must belong to the workflow command")
+        return self
+
+
+class DurableReconciliationRef(StrictModel):
+    schema_version: Literal[1] = 1
+    tenant_id: Identifier
+    case_id: UUID
+    account_id: Identifier
+    execution_id: UUID
+    result_digest: Sha256Digest
+    account_snapshot_digest: Sha256Digest
+    fill_digests: tuple[Sha256Digest, ...]
+    reconciled: Literal[True]
+
+    @field_validator("fill_digests", mode="before")
+    @classmethod
+    def parse_fill_digests(cls, value: object) -> object:
+        return tuple(value) if isinstance(value, list) else value
+
+
+class DurableOfflineCaseWorkflowResult(StrictModel):
+    schema_version: Literal[1] = 1
+    tenant_id: Identifier
+    case_id: UUID
+    prepared: DurablePreparedRef
+    execution: DurableExecutionWorkflowRef
+    reconciliation: DurableReconciliationRef
+
+    @model_validator(mode="after")
+    def references_are_coherent(self) -> "DurableOfflineCaseWorkflowResult":
+        if {
+            self.prepared.tenant_id,
+            self.execution.tenant_id,
+            self.reconciliation.tenant_id,
+        } != {self.tenant_id}:
+            raise ValueError("all durable references must belong to the workflow tenant")
+        if {
+            self.prepared.case_id,
+            self.execution.case_id,
+            self.reconciliation.case_id,
+        } != {self.case_id}:
+            raise ValueError("all durable references must belong to the workflow case")
+        if {
+            self.prepared.account_id,
+            self.execution.account_id,
+            self.reconciliation.account_id,
+        } != {self.execution.account_id}:
+            raise ValueError("all durable references must belong to the same account")
+        if self.execution.execution_id != self.reconciliation.execution_id:
+            raise ValueError("reconciliation must belong to the same execution")
+        if (
+            self.execution.result_digest != self.reconciliation.result_digest
+            or self.execution.account_snapshot_digest != self.reconciliation.account_snapshot_digest
+            or self.execution.fill_digests != self.reconciliation.fill_digests
+        ):
+            raise ValueError("reconciliation must bind the exact stored execution")
+        return self

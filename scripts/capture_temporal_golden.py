@@ -8,19 +8,29 @@ import asyncio
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
-from uuid import UUID
+from uuid import NAMESPACE_URL, UUID, uuid5
 
 import temporalio
+from temporalio import activity
 from temporalio.contrib.pydantic import pydantic_data_converter
 from temporalio.testing import WorkflowEnvironment
 from temporalio.worker import Worker
 
+from aegisquant.case_ledger.postgres import digest_jsonb
 from aegisquant.contracts.artifact import BlobRef
 from aegisquant.contracts.research import ResearchManifest
+from aegisquant.fixture_case import FixtureCaseSpec
+from aegisquant.security.digests import digest_canonical
 from aegisquant.workflows.contracts import (
+    DurableExecutionWorkflowRef,
+    DurableOfflineCaseWorkflowInput,
+    DurablePreparedRef,
+    DurableReconciliationRef,
+    ReconcileDurableCaseInput,
     ReproducibleResearchWorkflowInput,
     ResearchCaseWorkflowInput,
 )
+from aegisquant.workflows.durable_case import DurableOfflineCaseWorkflow
 from aegisquant.workflows.fixture_activities import FIXTURE_ACTIVITIES
 from aegisquant.workflows.reproducible_activities import REPRODUCIBLE_ACTIVITIES
 from aegisquant.workflows.research_case import ResearchCaseWorkflow
@@ -40,6 +50,9 @@ DEFAULT_OUTPUT = Path("tests/fixtures/temporal/research_case_workflow_v1.json")
 V2_WORKFLOW_ID = "m1-golden-research-case-v2"
 V2_BUILD_ID = "m1-golden-v2"
 V2_OUTPUT = Path("tests/fixtures/temporal/research_case_workflow_v2.json")
+DURABLE_WORKFLOW_ID = "m2-golden-durable-offline-case-v1"
+DURABLE_BUILD_ID = "m2-golden-durable-v1"
+DURABLE_OUTPUT = Path("tests/fixtures/temporal/durable_offline_case_workflow_v1.json")
 FIXTURE_DIGEST = "sha256:" + "a" * 64
 
 
@@ -86,10 +99,93 @@ def fixed_v2_command() -> ReproducibleResearchWorkflowInput:
     )
 
 
+def fixed_durable_command() -> DurableOfflineCaseWorkflowInput:
+    spec = FixtureCaseSpec.model_validate_json(
+        Path("data/fixtures/cases/multi_asset_control.json").read_bytes()
+    )
+    fixture_digest = digest_canonical(spec)
+    account_payload = {
+        "tenant_id": spec.manifest.tenant_id,
+        "case_id": str(spec.manifest.case_id),
+        "account_id": "fixture-paper-account",
+        "cash": str(spec.initial_cash),
+        "positions": [],
+        "state_sequence": 0,
+    }
+    return DurableOfflineCaseWorkflowInput(
+        tenant_id=spec.manifest.tenant_id,
+        case_id=spec.manifest.case_id,
+        account_id="fixture-paper-account",
+        fixture_name="multi_asset_control.json",
+        fixture_spec_digest=fixture_digest,
+        initial_account_digest=digest_jsonb(account_payload),
+        execution_id=uuid5(NAMESPACE_URL, f"aegisquant:durable-execution:{fixture_digest}"),
+    )
+
+
+@activity.defn(name="prepare_durable_case_v1")
+async def fixed_durable_prepare(
+    command: DurableOfflineCaseWorkflowInput,
+) -> DurablePreparedRef:
+    return DurablePreparedRef(
+        tenant_id=command.tenant_id,
+        case_id=command.case_id,
+        account_id=command.account_id,
+        state_sequence=0,
+        snapshot_digest=command.initial_account_digest,
+    )
+
+
+@activity.defn(name="execute_durable_case_v1")
+async def fixed_durable_execute(
+    command: DurableOfflineCaseWorkflowInput,
+) -> DurableExecutionWorkflowRef:
+    return DurableExecutionWorkflowRef(
+        tenant_id=command.tenant_id,
+        case_id=command.case_id,
+        account_id=command.account_id,
+        execution_id=command.execution_id,
+        nonce="0123456789abcdef0123456789abcdef",
+        decision_digest="sha256:" + "e" * 64,
+        request_digest=command.fixture_spec_digest,
+        result_digest="sha256:" + "b" * 64,
+        account_state_sequence=1,
+        account_snapshot_digest="sha256:" + "c" * 64,
+        fill_digests=("sha256:" + "d" * 64,),
+    )
+
+
+@activity.defn(name="reconcile_durable_case_v1")
+async def fixed_durable_reconcile(
+    value: ReconcileDurableCaseInput,
+) -> DurableReconciliationRef:
+    return DurableReconciliationRef(
+        tenant_id=value.command.tenant_id,
+        case_id=value.command.case_id,
+        account_id=value.command.account_id,
+        execution_id=value.command.execution_id,
+        result_digest=value.execution.result_digest,
+        account_snapshot_digest=value.execution.account_snapshot_digest,
+        fill_digests=value.execution.fill_digests,
+        reconciled=True,
+    )
+
+
+DURABLE_CAPTURE_ACTIVITIES = (
+    fixed_durable_prepare,
+    fixed_durable_execute,
+    fixed_durable_reconcile,
+)
+
+
 async def capture(output: Path, version: str) -> int:
     workflow_class: Any = ResearchCaseWorkflow
     activities = FIXTURE_ACTIVITIES
-    command: ResearchCaseWorkflowInput | ReproducibleResearchWorkflowInput = fixed_command()
+    command: (
+        ResearchCaseWorkflowInput
+        | ReproducibleResearchWorkflowInput
+        | DurableOfflineCaseWorkflowInput
+    ) = fixed_command()
     workflow_id = WORKFLOW_ID
     build_id = BUILD_ID
     task_queue = RESEARCH_CASE_TASK_QUEUE
@@ -100,6 +196,13 @@ async def capture(output: Path, version: str) -> int:
         workflow_id = V2_WORKFLOW_ID
         build_id = V2_BUILD_ID
         task_queue = "m1-golden-research-case-v2"
+    elif version == "durable":
+        workflow_class = DurableOfflineCaseWorkflow
+        activities = DURABLE_CAPTURE_ACTIVITIES
+        command = fixed_durable_command()
+        workflow_id = DURABLE_WORKFLOW_ID
+        build_id = DURABLE_BUILD_ID
+        task_queue = "m2-golden-durable-offline-case-v1"
     async with await WorkflowEnvironment.start_time_skipping(
         data_converter=pydantic_data_converter
     ) as environment:
@@ -127,7 +230,7 @@ async def capture(output: Path, version: str) -> int:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--version", choices=("v1", "v2"), default="v1")
+    parser.add_argument("--version", choices=("v1", "v2", "durable"), default="v1")
     parser.add_argument("--output", type=Path)
     parser.add_argument(
         "--accept",
@@ -137,7 +240,13 @@ def main() -> None:
     args = parser.parse_args()
     if not args.accept:
         parser.error("--accept is required; review and commit history changes explicitly")
-    output = args.output or (V2_OUTPUT if args.version == "v2" else DEFAULT_OUTPUT)
+    output = args.output or (
+        V2_OUTPUT
+        if args.version == "v2"
+        else DURABLE_OUTPUT
+        if args.version == "durable"
+        else DEFAULT_OUTPUT
+    )
     count = asyncio.run(capture(output, args.version))
     print(f"captured {count} events with temporalio {temporalio.__version__} to {output}")
 

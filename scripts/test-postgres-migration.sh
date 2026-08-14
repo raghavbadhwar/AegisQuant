@@ -33,6 +33,8 @@ GRANT EXECUTE ON FUNCTION aq_prepare_paper_account(text,uuid,text,bigint,text,js
 GRANT EXECUTE ON FUNCTION aq_record_paper_execution(
   text,uuid,text,uuid,text,text,text,text,text,jsonb,bigint,text,jsonb
 ) TO "$ROLE_A", "$ROLE_B";
+GRANT EXECUTE ON FUNCTION aq_record_execution_reconciliation(text,uuid,text,uuid,text)
+  TO "$ROLE_A", "$ROLE_B";
 GRANT SELECT, UPDATE ON paper_account_snapshots, consumed_risk_decisions, paper_execution_results
   TO "$ROLE_A", "$ROLE_B";
 SQL
@@ -210,8 +212,8 @@ SELECT aq_record_paper_execution(
   '00000000-0000-0000-0000-000000000030', 'execute-1', '0123456789abcdef0123456789abcdef',
   'sha256:2222222222222222222222222222222222222222222222222222222222222222',
   'sha256:3333333333333333333333333333333333333333333333333333333333333333',
-  'sha256:2e119c22414bb9ad4e1e574c9d1270f37487dd035419ddf2dc10b7ba52b6b412',
-  '{"fills":[{"fill_id":"fill-1"}]}', 1,
+  'sha256:9d64379e8ea21a3cb726d7183f048fee15c4347d7911453f03a06c2af601bde8',
+  '{"fills":[{"fill_id":"fill-1"}],"risk_decision_nonce":"0123456789abcdef0123456789abcdef","risk_decision_digest":"sha256:2222222222222222222222222222222222222222222222222222222222222222"}', 1,
   'sha256:b39282781415750ed7e03bd54492c42197c5fe57bad40ec2de9b1f8094536c66',
   '{"cash":"9900","positions":[{"instrument_id":"AAA","quantity":"1"}]}'
 );
@@ -220,8 +222,8 @@ SELECT aq_record_paper_execution(
   '00000000-0000-0000-0000-000000000030', 'execute-1', '0123456789abcdef0123456789abcdef',
   'sha256:2222222222222222222222222222222222222222222222222222222222222222',
   'sha256:3333333333333333333333333333333333333333333333333333333333333333',
-  'sha256:2e119c22414bb9ad4e1e574c9d1270f37487dd035419ddf2dc10b7ba52b6b412',
-  '{"fills":[{"fill_id":"fill-1"}]}', 1,
+  'sha256:9d64379e8ea21a3cb726d7183f048fee15c4347d7911453f03a06c2af601bde8',
+  '{"fills":[{"fill_id":"fill-1"}],"risk_decision_nonce":"0123456789abcdef0123456789abcdef","risk_decision_digest":"sha256:2222222222222222222222222222222222222222222222222222222222222222"}', 1,
   'sha256:b39282781415750ed7e03bd54492c42197c5fe57bad40ec2de9b1f8094536c66',
   '{"cash":"9900","positions":[{"instrument_id":"AAA","quantity":"1"}]}'
 );
@@ -238,6 +240,96 @@ SQL
 )
 durable_counts=$(printf '%s\n' "$durable_counts" | grep -E '^[0-9]+\|' | tail -1)
 [[ "$durable_counts" == "1|1|1|2" ]]
+
+pre_reconcile_count=$(psql -X -At -v ON_ERROR_STOP=1 -d "$DB" <<SQL
+SET SESSION AUTHORIZATION "$ROLE_A";
+SELECT count(*) FROM case_events WHERE event_type = 'EXECUTION_RECONCILED';
+SQL
+)
+pre_reconcile_count=$(printf '%s\n' "$pre_reconcile_count" | grep -E '^[0-9]+$' | tail -1)
+[[ "$pre_reconcile_count" == "0" ]]
+
+psql -X -v ON_ERROR_STOP=1 -d "$DB" <<SQL >/dev/null
+SET SESSION AUTHORIZATION "$ROLE_A";
+SELECT aq_record_execution_reconciliation(
+  'tenant-a', '00000000-0000-0000-0000-000000000001', 'paper-1',
+  '00000000-0000-0000-0000-000000000030',
+  'sha256:9d64379e8ea21a3cb726d7183f048fee15c4347d7911453f03a06c2af601bde8'
+);
+SELECT aq_record_execution_reconciliation(
+  'tenant-a', '00000000-0000-0000-0000-000000000001', 'paper-1',
+  '00000000-0000-0000-0000-000000000030',
+  'sha256:9d64379e8ea21a3cb726d7183f048fee15c4347d7911453f03a06c2af601bde8'
+);
+SQL
+
+durable_event_counts=$(psql -X -At -F '|' -v ON_ERROR_STOP=1 -d "$DB" <<SQL
+SET SESSION AUTHORIZATION "$ROLE_A";
+SELECT
+  count(*) FILTER (WHERE event_type = 'DURABLE_CASE_PREPARED'),
+  count(*) FILTER (WHERE event_type = 'PAPER_EXECUTION_RECORDED'),
+  count(*) FILTER (WHERE event_type = 'EXECUTION_RECONCILED')
+FROM case_events
+WHERE case_id = '00000000-0000-0000-0000-000000000001';
+SQL
+)
+durable_event_counts=$(printf '%s\n' "$durable_event_counts" | grep -E '^[0-9]+\|' | tail -1)
+[[ "$durable_event_counts" == "1|1|1" ]]
+
+if psql -X -v ON_ERROR_STOP=1 -d "$DB" <<SQL >/dev/null 2>&1
+SET SESSION AUTHORIZATION "$ROLE_A";
+SELECT aq_record_execution_reconciliation(
+  'tenant-a', '00000000-0000-0000-0000-000000000001', 'paper-1',
+  '00000000-0000-0000-0000-000000000030',
+  'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+);
+SQL
+then
+  echo 'reconciliation of a different result unexpectedly succeeded' >&2
+  exit 1
+fi
+
+if psql -X -v ON_ERROR_STOP=1 -d "$DB" <<SQL >/dev/null 2>&1
+SET SESSION AUTHORIZATION "$ROLE_A";
+SELECT aq_record_paper_execution(
+  'tenant-a', '00000000-0000-0000-0000-000000000001', 'paper-1',
+  '00000000-0000-0000-0000-000000000032', 'execute-unbound',
+  'abcdef0123456789abcdef0123456789',
+  'sha256:2222222222222222222222222222222222222222222222222222222222222222',
+  'sha256:3333333333333333333333333333333333333333333333333333333333333333',
+  'sha256:8640f5d3bf460c53c00a28b5bc917af02b6b1f6abb973d8cb884b7566697774b',
+  '{"fills":[],"risk_decision_nonce":"abcdef0123456789abcdef0123456789","risk_decision_digest":"sha256:4444444444444444444444444444444444444444444444444444444444444444"}', 2,
+  'sha256:4be01a978d923e44cc14effe36e384e528aaf2ce266b6addeed6e023faececc4',
+  '{"cash":"9900","positions":[]}'
+);
+SQL
+then
+  echo 'execution result with an unbound risk decision unexpectedly succeeded' >&2
+  exit 1
+fi
+
+# Preparation also creates an absent case instead of requiring an out-of-band insert.
+psql -X -v ON_ERROR_STOP=1 -d "$DB" <<SQL >/dev/null
+SET SESSION AUTHORIZATION "$ROLE_A";
+SELECT aq_prepare_paper_account(
+  'tenant-a', '00000000-0000-0000-0000-000000000004', 'paper-new', 0,
+  'sha256:ef36b4df8d2068129dfb1e91543cd8ef1075a1fb3574ded2e1923733c6fa927b',
+  '{"cash":"10000","positions":[]}'
+);
+SQL
+
+prepared_case_counts=$(psql -X -At -F '|' -v ON_ERROR_STOP=1 -d "$DB" <<SQL
+SET SESSION AUTHORIZATION "$ROLE_A";
+SELECT
+  (SELECT count(*) FROM cases
+   WHERE case_id = '00000000-0000-0000-0000-000000000004'),
+  (SELECT count(*) FROM case_events
+   WHERE case_id = '00000000-0000-0000-0000-000000000004'
+     AND event_type = 'DURABLE_CASE_PREPARED');
+SQL
+)
+prepared_case_counts=$(printf '%s\n' "$prepared_case_counts" | grep -E '^[0-9]+\|' | tail -1)
+[[ "$prepared_case_counts" == "1|1" ]]
 
 tenant_b_visible=$(psql -X -At -v ON_ERROR_STOP=1 -d "$DB" <<SQL
 SET SESSION AUTHORIZATION "$ROLE_B";
@@ -289,8 +381,8 @@ SELECT aq_record_paper_execution(
   '00000000-0000-0000-0000-000000000031', 'execute-2', '0123456789abcdef0123456789abcdef',
   'sha256:2222222222222222222222222222222222222222222222222222222222222222',
   'sha256:6666666666666666666666666666666666666666666666666666666666666666',
-  'sha256:c754d3d0a686b2b0ed2a916fc9084ff8c3c7659dd379fa8a1f4fcde737ade312',
-  '{"fills":[]}', 2,
+  'sha256:f3e5a8ffa84ebd8849e9625be3a17bd8859cbb36aa1b8b36fbeb78a69f2a2561',
+  '{"fills":[],"risk_decision_nonce":"0123456789abcdef0123456789abcdef","risk_decision_digest":"sha256:2222222222222222222222222222222222222222222222222222222222222222"}', 2,
   'sha256:4be01a978d923e44cc14effe36e384e528aaf2ce266b6addeed6e023faececc4',
   '{"cash":"9900","positions":[]}'
 );
@@ -307,8 +399,8 @@ SELECT aq_record_paper_execution(
   '00000000-0000-0000-0000-000000000030', 'execute-1', '0123456789abcdef0123456789abcdef',
   'sha256:2222222222222222222222222222222222222222222222222222222222222222',
   'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-  'sha256:2e119c22414bb9ad4e1e574c9d1270f37487dd035419ddf2dc10b7ba52b6b412',
-  '{"fills":[{"fill_id":"fill-1"}]}', 1,
+  'sha256:9d64379e8ea21a3cb726d7183f048fee15c4347d7911453f03a06c2af601bde8',
+  '{"fills":[{"fill_id":"fill-1"}],"risk_decision_nonce":"0123456789abcdef0123456789abcdef","risk_decision_digest":"sha256:2222222222222222222222222222222222222222222222222222222222222222"}', 1,
   'sha256:b39282781415750ed7e03bd54492c42197c5fe57bad40ec2de9b1f8094536c66',
   '{"cash":"9900","positions":[{"instrument_id":"AAA","quantity":"1"}]}'
 );

@@ -17,7 +17,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from pydantic import Field, field_validator, model_validator
 
 from aegisquant.case_ledger.store import InMemoryCaseEventStore
-from aegisquant.contracts.common import FixedDecimal, Identifier, Sha256Digest, StrictModel
+from aegisquant.contracts.common import FixedDecimal, Identifier, Nonce, Sha256Digest, StrictModel
 from aegisquant.contracts.research import (
     DataSnapshot,
     MarketBar,
@@ -213,6 +213,7 @@ class FixtureCaseReport(StrictModel):
     manifest_digest: Sha256Digest
     portfolio_target: PortfolioTarget
     portfolio_target_digest: Sha256Digest
+    risk_decision_nonce: Nonce
     risk_decision_digest: Sha256Digest
     execution_digest: Sha256Digest
     fills: tuple[PaperFill, ...]
@@ -223,6 +224,11 @@ class FixtureCaseReport(StrictModel):
     ledger_event_count: int = Field(ge=1)
     ledger_event_types: tuple[str, ...]
     performance: PerformanceReport
+
+    @field_validator("fills", "ledger_event_types", mode="before")
+    @classmethod
+    def parse_sequences(cls, value: object) -> object:
+        return tuple(value) if isinstance(value, list) else value
 
 
 def _current_bars(spec: FixtureCaseSpec) -> dict[str, MarketBar]:
@@ -474,6 +480,7 @@ def run_fixture_case(spec: FixtureCaseSpec) -> FixtureCaseReport:
         manifest_digest=manifest_digest,
         portfolio_target=target,
         portfolio_target_digest=target_digest,
+        risk_decision_nonce=payload.nonce,
         risk_decision_digest=digest_canonical(signed),
         execution_digest=execution.execution_digest,
         fills=execution.fills,
