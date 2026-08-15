@@ -11,6 +11,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 import aegisquant.case_cli as case_cli
 from aegisquant.case_cli import main
 from aegisquant.contracts.artifact import BlobRef
+from aegisquant.contracts.common import canonical_json_bytes
 from aegisquant.contracts.recovery import (
     ObjectStoreRecoveryReceipt,
     object_store_content_manifest_digest,
@@ -19,10 +20,12 @@ from aegisquant.contracts.recovery import (
 from aegisquant.contracts.release import (
     ProductionReleaseManifest,
     ReleaseApprovalPayload,
+    ReleaseEvidenceReference,
     ReleaseTrustStore,
     ReleaseVerificationInput,
     TrustedReleaseKeyRecord,
 )
+from aegisquant.object_store import LocalImmutableObjectStore
 from aegisquant.security.digests import digest_canonical
 from aegisquant.security.release_attestation import (
     ProductionReleaseVerifier,
@@ -38,33 +41,114 @@ def sha(character: str) -> str:
     return "sha256:" + character * 64
 
 
-def manifest(*, backup_restore_drill_digest: str = sha("5")) -> ProductionReleaseManifest:
+EVIDENCE_FIELDS = (
+    ("COMPLIANCE_POLICY_PACK", "compliance_policy_pack_digest", sha("0")),
+    ("DEPLOYMENT_ARTIFACT", "deployment_artifact_digest", sha("1")),
+    ("SBOM", "sbom_digest", sha("2")),
+    ("DATABASE_MIGRATION", "database_migration_digest", sha("3")),
+    ("OBJECT_STORE_CONFORMANCE", "object_store_conformance_digest", sha("4")),
+    ("BACKUP_RESTORE_DRILL", "backup_restore_drill_digest", sha("5")),
+    ("SERVICE_RECOVERY_DRILL", "service_recovery_drill_digest", sha("6")),
+    ("SECURITY_ASSESSMENT", "security_assessment_digest", sha("7")),
+    ("MODEL_VALIDATION_MANIFEST", "model_validation_manifest_digest", sha("8")),
+    ("LEGAL_COMPLIANCE", "legal_compliance_digest", sha("9")),
+    ("DATA_RIGHTS", "data_rights_digest", sha("a")),
+    ("BROKER_AGREEMENT", "broker_agreement_digest", sha("b")),
+    ("RISK_POLICY", "risk_policy_digest", sha("c")),
+    ("NETWORK_POLICY", "network_policy_digest", sha("d")),
+    ("SECRETS_MANAGEMENT", "secrets_management_digest", sha("e")),
+)
+
+
+def evidence_references(
+    *, backup_restore_drill_digest: str = sha("5")
+) -> tuple[ReleaseEvidenceReference, ...]:
+    return tuple(
+        ReleaseEvidenceReference(
+            evidence_name=evidence_name,  # type: ignore[arg-type]
+            payload=BlobRef(
+                tenant_id="tenant-personal",
+                uri=f"file:///private/aegisquant/{evidence_name.lower()}",
+                content_digest=(
+                    backup_restore_drill_digest
+                    if field_name == "backup_restore_drill_digest"
+                    else digest
+                ),
+                size_bytes=1,
+                media_type="application/json",
+                retention_class="release-evidence",
+            ),
+        )
+        for evidence_name, field_name, digest in EVIDENCE_FIELDS
+    )
+
+
+def manifest(
+    *,
+    backup_restore_drill_digest: str = sha("5"),
+    bound_evidence: tuple[ReleaseEvidenceReference, ...] | None = None,
+) -> ProductionReleaseManifest:
+    bound_evidence = bound_evidence or evidence_references(
+        backup_restore_drill_digest=backup_restore_drill_digest
+    )
+    digests = {
+        reference.evidence_name: reference.payload.content_digest for reference in bound_evidence
+    }
     return ProductionReleaseManifest(
         tenant_id="tenant-personal",
         release_id="release-2026-08-14",
         compliance_policy_pack_id="policy-pack-reviewed",
-        compliance_policy_pack_digest=sha("0"),
+        compliance_policy_pack_digest=digests["COMPLIANCE_POLICY_PACK"],
         legal_entity_id="operator-personal",
         account_id="broker-account-primary",
         broker_id="broker-selected",
         broker_api_hostnames=("api.broker.example",),
-        deployment_artifact_digest=sha("1"),
-        sbom_digest=sha("2"),
-        database_migration_digest=sha("3"),
-        object_store_conformance_digest=sha("4"),
-        backup_restore_drill_digest=backup_restore_drill_digest,
-        service_recovery_drill_digest=sha("6"),
-        security_assessment_digest=sha("7"),
-        model_validation_manifest_digest=sha("8"),
-        legal_compliance_digest=sha("9"),
-        data_rights_digest=sha("a"),
-        broker_agreement_digest=sha("b"),
-        risk_policy_digest=sha("c"),
-        network_policy_digest=sha("d"),
-        secrets_management_digest=sha("e"),
+        deployment_artifact_digest=digests["DEPLOYMENT_ARTIFACT"],
+        sbom_digest=digests["SBOM"],
+        database_migration_digest=digests["DATABASE_MIGRATION"],
+        object_store_conformance_digest=digests["OBJECT_STORE_CONFORMANCE"],
+        backup_restore_drill_digest=digests["BACKUP_RESTORE_DRILL"],
+        service_recovery_drill_digest=digests["SERVICE_RECOVERY_DRILL"],
+        security_assessment_digest=digests["SECURITY_ASSESSMENT"],
+        model_validation_manifest_digest=digests["MODEL_VALIDATION_MANIFEST"],
+        legal_compliance_digest=digests["LEGAL_COMPLIANCE"],
+        data_rights_digest=digests["DATA_RIGHTS"],
+        broker_agreement_digest=digests["BROKER_AGREEMENT"],
+        risk_policy_digest=digests["RISK_POLICY"],
+        network_policy_digest=digests["NETWORK_POLICY"],
+        secrets_management_digest=digests["SECRETS_MANAGEMENT"],
+        evidence_references=bound_evidence,
+        max_recovery_drill_age_seconds=30 * 24 * 60 * 60,
         created_at=NOW,
         expires_at=NOW + timedelta(days=7),
     )
+
+
+def manifest_with_stored_evidence(
+    root: Path, receipt: ObjectStoreRecoveryReceipt
+) -> ProductionReleaseManifest:
+    store = LocalImmutableObjectStore(root)
+    references: list[ReleaseEvidenceReference] = []
+    for evidence_name, field_name, _ in EVIDENCE_FIELDS:
+        data = (
+            canonical_json_bytes(receipt)
+            if field_name == "backup_restore_drill_digest"
+            else canonical_json_bytes({"evidence_name": evidence_name})
+        )
+        references.append(
+            ReleaseEvidenceReference(
+                evidence_name=evidence_name,  # type: ignore[arg-type]
+                payload=store.put_if_absent(
+                    tenant_id="tenant-personal",
+                    data=data,
+                    media_type="application/vnd.aegisquant.release-evidence",
+                    retention_class="release-evidence",
+                ),
+            )
+        )
+    release = manifest(bound_evidence=tuple(references))
+    assert release.backup_restore_drill_digest == digest_canonical(receipt)
+    return release
 
 
 def raw_public_key(key: Ed25519PrivateKey) -> str:
@@ -76,9 +160,11 @@ def raw_public_key(key: Ed25519PrivateKey) -> str:
 
 
 def verified_input(
-    *, backup_restore_drill_digest: str = sha("5")
+    *,
+    backup_restore_drill_digest: str = sha("5"),
+    release: ProductionReleaseManifest | None = None,
 ) -> tuple[ReleaseVerificationInput, ReleaseTrustStore, datetime]:
-    release = manifest(backup_restore_drill_digest=backup_restore_drill_digest)
+    release = release or manifest(backup_restore_drill_digest=backup_restore_drill_digest)
     release_digest = digest_canonical(release)
     reviewer_key = Ed25519PrivateKey.from_private_bytes(b"\x31" * 32)
     operator_key = Ed25519PrivateKey.from_private_bytes(b"\x32" * 32)
@@ -167,6 +253,107 @@ def recovery_receipt() -> ObjectStoreRecoveryReceipt:
         ),
         completed_at=NOW,
     )
+
+
+def test_release_manifest_requires_bound_evidence_references() -> None:
+    value = manifest().model_dump(mode="python")
+    value.pop("evidence_references", None)
+
+    with pytest.raises(ValueError, match="evidence_references"):
+        ProductionReleaseManifest.model_validate(value)
+
+
+def test_release_cli_rejects_stale_recovery_receipt(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    receipt = recovery_receipt().model_copy(
+        update={
+            "completed_at": NOW - timedelta(days=31),
+            "recovery_digest": object_store_recovery_receipt_digest(
+                tenant_id="tenant-personal",
+                drill_id="recovery-drill-a",
+                source_content_manifest_digest=recovery_receipt().source_content_manifest_digest,
+                recovered_content_manifest_digest=recovery_receipt().recovered_content_manifest_digest,
+                recovered_references=recovery_receipt().recovered_references,
+                object_count=1,
+                total_bytes=1,
+                completed_at=NOW - timedelta(days=31),
+            ),
+        }
+    )
+    request_path = tmp_path / "release.json"
+    trust_path = tmp_path / "release-trust.json"
+    receipt_path = tmp_path / "recovery.json"
+    object_root = tmp_path / "objects"
+    request, trust_store, now = verified_input(
+        release=manifest_with_stored_evidence(object_root, receipt)
+    )
+    request_path.write_text(request.model_dump_json(), encoding="utf-8")
+    trust_path.write_text(trust_store.model_dump_json(), encoding="utf-8")
+    receipt_path.write_text(receipt.model_dump_json(), encoding="utf-8")
+    trust_path.chmod(0o600)
+
+    async def dependencies() -> dict[str, bool]:
+        return {"postgresql": True, "temporal": True}
+
+    monkeypatch.setattr(case_cli, "dependency_readiness", dependencies)
+    monkeypatch.setattr(case_cli, "_now", lambda: now)
+    monkeypatch.setenv("AEGISQUANT_OBJECT_STORE_ROOT", str(object_root))
+
+    with pytest.raises(SystemExit) as error:
+        main(
+            [
+                "release",
+                "verify",
+                str(request_path),
+                "--trust-store",
+                str(trust_path),
+                "--recovery-receipt",
+                str(receipt_path),
+            ]
+        )
+    assert error.value.code == 2
+
+
+def test_release_cli_rejects_missing_bound_evidence(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    receipt = recovery_receipt()
+    object_root = tmp_path / "objects"
+    release = manifest_with_stored_evidence(object_root, receipt)
+    missing = release.evidence_references[0].payload
+    Path(missing.uri.removeprefix("file://")).unlink()
+    request, trust_store, now = verified_input(release=release)
+    request_path = tmp_path / "release.json"
+    trust_path = tmp_path / "release-trust.json"
+    receipt_path = tmp_path / "recovery.json"
+    request_path.write_text(request.model_dump_json(), encoding="utf-8")
+    trust_path.write_text(trust_store.model_dump_json(), encoding="utf-8")
+    receipt_path.write_text(receipt.model_dump_json(), encoding="utf-8")
+    trust_path.chmod(0o600)
+
+    async def dependencies() -> dict[str, bool]:
+        return {"postgresql": True, "temporal": True}
+
+    monkeypatch.setattr(case_cli, "dependency_readiness", dependencies)
+    monkeypatch.setattr(case_cli, "_now", lambda: now)
+    monkeypatch.setenv("AEGISQUANT_OBJECT_STORE_ROOT", str(object_root))
+
+    with pytest.raises(SystemExit) as error:
+        main(
+            [
+                "release",
+                "verify",
+                str(request_path),
+                "--trust-store",
+                str(trust_path),
+                "--recovery-receipt",
+                str(receipt_path),
+            ]
+        )
+    assert error.value.code == 2
 
 
 def test_release_gate_requires_exact_independent_current_approvals() -> None:
@@ -259,13 +446,13 @@ def test_release_cli_verifies_signatures_and_actual_runtime_dependencies(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     receipt = recovery_receipt()
-    request, trust_store, now = verified_input(
-        backup_restore_drill_digest=digest_canonical(receipt)
-    )
     request_path = tmp_path / "release.json"
     trust_path = tmp_path / "release-trust.json"
     receipt_path = tmp_path / "recovery.json"
     object_root = tmp_path / "objects"
+    request, trust_store, now = verified_input(
+        release=manifest_with_stored_evidence(object_root, receipt)
+    )
     request_path.write_text(request.model_dump_json(indent=2), encoding="utf-8")
     trust_path.write_text(trust_store.model_dump_json(indent=2), encoding="utf-8")
     receipt_path.write_text(receipt.model_dump_json(indent=2), encoding="utf-8")
@@ -293,7 +480,7 @@ def test_release_cli_verifies_signatures_and_actual_runtime_dependencies(
         == 0
     )
     output = capsys.readouterr().out
-    assert '"prerequisites_verified": true' in output
+    assert '"local_prerequisites_verified": true' in output
     assert '"live_execution_enabled": false' in output
     assert '"object_store": true' in output
 

@@ -157,9 +157,16 @@ class RiskDecisionPayload(StrictModel):
     not_before: datetime
     expires_at: datetime
 
-    @field_validator("created_at", "not_before", "expires_at")
+    @field_validator("rule_results", mode="before")
     @classmethod
-    def times_are_utc(cls, value: datetime) -> datetime:
+    def rule_result_array(cls, value: object) -> object:
+        return tuple(value) if isinstance(value, list) else value
+
+    @field_validator("created_at", "not_before", "expires_at", mode="before")
+    @classmethod
+    def times_are_utc(cls, value: datetime | str) -> datetime:
+        if isinstance(value, str):
+            value = datetime.fromisoformat(value.replace("Z", "+00:00"))
         return require_utc(value)
 
     @model_validator(mode="after")
@@ -187,6 +194,52 @@ class SignedRiskDecision(StrictModel):
     protected: ProtectedHeader
     payload: RiskDecisionPayload
     signature_b64url: str = Field(pattern=r"^[A-Za-z0-9_-]{86}$")
+
+
+class TrustedRiskKeyRecord(StrictModel):
+    schema_version: Literal[1] = 1
+    key_id: Identifier
+    public_key_b64url: str = Field(pattern=r"^[A-Za-z0-9_-]{43}$")
+    tenant_id: Identifier
+    valid_from: datetime
+    valid_until: datetime
+    revoked_at: datetime | None = None
+
+    @field_validator("valid_from", "valid_until", "revoked_at", mode="before")
+    @classmethod
+    def times_are_utc(cls, value: datetime | str | None) -> datetime | None:
+        if value is None:
+            return None
+        if isinstance(value, str):
+            value = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        return require_utc(value)
+
+    @model_validator(mode="after")
+    def validity_window(self) -> "TrustedRiskKeyRecord":
+        if self.valid_until <= self.valid_from:
+            raise ValueError("risk trust-key validity window is invalid")
+        return self
+
+
+class RiskTrustStore(StrictModel):
+    schema_version: Literal[1] = 1
+    tenant_id: Identifier
+    trusted_keys: tuple[TrustedRiskKeyRecord, ...]
+
+    @field_validator("trusted_keys", mode="before")
+    @classmethod
+    def key_array(cls, value: object) -> object:
+        return tuple(value) if isinstance(value, list) else value
+
+    @model_validator(mode="after")
+    def tenant_and_keys(self) -> "RiskTrustStore":
+        if not self.trusted_keys or any(
+            key.tenant_id != self.tenant_id for key in self.trusted_keys
+        ):
+            raise ValueError("risk trust store keys must share its tenant")
+        if len({key.key_id for key in self.trusted_keys}) != len(self.trusted_keys):
+            raise ValueError("risk trust store must not contain duplicate key IDs")
+        return self
 
 
 class HumanApprovalPayload(StrictModel):

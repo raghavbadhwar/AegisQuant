@@ -35,8 +35,18 @@ def run_local_object_store_recovery_drill(
         command.source_references
     ):
         raise ObjectStoreRecoveryError("recovery command source manifest is mismatched")
+    actual_inventory = source.references_for_tenant(command.tenant_id)
+    expected_inventory = tuple(
+        sorted(command.source_references, key=lambda reference: reference.content_digest)
+    )
+    if actual_inventory != expected_inventory:
+        raise ObjectStoreRecoveryError(
+            "recovery command does not cover the complete tenant inventory"
+        )
     if source.root == target.root:
         raise ObjectStoreRecoveryError("recovery source and target must be different")
+    if source.root.is_relative_to(target.root) or target.root.is_relative_to(source.root):
+        raise ObjectStoreRecoveryError("recovery roots must not be nested")
     if any(target.root.iterdir()):
         raise ObjectStoreRecoveryError("recovery target must be empty")
     total_bytes = sum(reference.size_bytes for reference in command.source_references)

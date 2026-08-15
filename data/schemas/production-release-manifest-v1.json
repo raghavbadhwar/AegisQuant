@@ -1,4 +1,94 @@
 {
+  "$defs": {
+    "BlobRef": {
+      "additionalProperties": false,
+      "properties": {
+        "content_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Content Digest",
+          "type": "string"
+        },
+        "media_type": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Media Type",
+          "type": "string"
+        },
+        "retention_class": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Retention Class",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "size_bytes": {
+          "minimum": 0,
+          "title": "Size Bytes",
+          "type": "integer"
+        },
+        "tenant_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Tenant Id",
+          "type": "string"
+        },
+        "uri": {
+          "maxLength": 2048,
+          "minLength": 1,
+          "title": "Uri",
+          "type": "string"
+        }
+      },
+      "required": [
+        "tenant_id",
+        "uri",
+        "content_digest",
+        "size_bytes",
+        "media_type",
+        "retention_class"
+      ],
+      "title": "BlobRef",
+      "type": "object"
+    },
+    "ReleaseEvidenceReference": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence_name": {
+          "enum": [
+            "COMPLIANCE_POLICY_PACK",
+            "DEPLOYMENT_ARTIFACT",
+            "SBOM",
+            "DATABASE_MIGRATION",
+            "OBJECT_STORE_CONFORMANCE",
+            "BACKUP_RESTORE_DRILL",
+            "SERVICE_RECOVERY_DRILL",
+            "SECURITY_ASSESSMENT",
+            "MODEL_VALIDATION_MANIFEST",
+            "LEGAL_COMPLIANCE",
+            "DATA_RIGHTS",
+            "BROKER_AGREEMENT",
+            "RISK_POLICY",
+            "NETWORK_POLICY",
+            "SECRETS_MANAGEMENT"
+          ],
+          "title": "Evidence Name",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/BlobRef"
+        }
+      },
+      "required": [
+        "evidence_name",
+        "payload"
+      ],
+      "title": "ReleaseEvidenceReference",
+      "type": "object"
+    }
+  },
   "additionalProperties": false,
   "description": "Exact evidence set required before a venue-specific LIVE adapter may be activated.",
   "properties": {
@@ -59,6 +149,13 @@
       "title": "Deployment Artifact Digest",
       "type": "string"
     },
+    "evidence_references": {
+      "items": {
+        "$ref": "#/$defs/ReleaseEvidenceReference"
+      },
+      "title": "Evidence References",
+      "type": "array"
+    },
     "expires_at": {
       "format": "date-time",
       "title": "Expires At",
@@ -73,6 +170,12 @@
       "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
       "title": "Legal Entity Id",
       "type": "string"
+    },
+    "max_recovery_drill_age_seconds": {
+      "maximum": 7776000,
+      "minimum": 1,
+      "title": "Max Recovery Drill Age Seconds",
+      "type": "integer"
     },
     "model_validation_manifest_digest": {
       "pattern": "^sha256:[0-9a-f]{64}$",
@@ -166,6 +269,8 @@
     "risk_policy_digest",
     "network_policy_digest",
     "secrets_management_digest",
+    "evidence_references",
+    "max_recovery_drill_age_seconds",
     "created_at",
     "expires_at"
   ],

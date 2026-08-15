@@ -10,9 +10,9 @@ from uuid import UUID
 
 from pydantic import Field, field_validator, model_validator
 
-from aegisquant.contracts.common import Identifier, Sha256Digest, StrictModel, require_utc
+from aegisquant.contracts.common import Identifier, Nonce, Sha256Digest, StrictModel, require_utc
 from aegisquant.contracts.release import ProductionReleaseManifest
-from aegisquant.contracts.risk import OrderBundle, OrderType
+from aegisquant.contracts.risk import OrderBundle, OrderType, SignedRiskDecision, TradingEnvironment
 
 _DNS_LABEL = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$")
 
@@ -92,6 +92,30 @@ class VenueAdapterProfile(StrictModel):
         return self
 
 
+class VenueRiskContext(StrictModel):
+    tenant_id: Identifier
+    environment: TradingEnvironment
+    legal_entity_id: Identifier
+    account_id: Identifier
+    broker_id: Identifier
+    strategy_id: Identifier
+    policy_epoch: int = Field(ge=1)
+    kill_switch_epoch: int = Field(ge=0)
+    portfolio_state_sequence: int = Field(ge=0)
+    input_manifest_digest: Sha256Digest
+    portfolio_snapshot_digest: Sha256Digest
+    open_orders_snapshot_digest: Sha256Digest
+    market_data_snapshot_digest: Sha256Digest
+    reference_data_snapshot_digest: Sha256Digest
+    fx_snapshot_digest: Sha256Digest
+    model_validation_manifest_digest: Sha256Digest
+
+
+class VenueRiskAuthorization(StrictModel):
+    decision: SignedRiskDecision
+    context: VenueRiskContext
+
+
 class VenueSubmissionCommand(StrictModel):
     """Exact fixture command for conformance tests; it is never a network request."""
 
@@ -105,6 +129,8 @@ class VenueSubmissionCommand(StrictModel):
     broker_id: Identifier
     request_id: UUID
     order_bundle_digest: Sha256Digest
+    risk_decision_digest: Sha256Digest
+    risk_nonce: Nonce
     client_order_ids: tuple[Identifier, ...] = Field(min_length=1, max_length=1000)
     submission_hostname: str
     not_before: datetime
@@ -151,6 +177,26 @@ class VenueOrderAcknowledgement(StrictModel):
         return _parse_utc(value)
 
 
+class VenueOrderLifecycleEvidence(StrictModel):
+    client_order_id: Identifier
+    first_attempt_at: datetime
+    timeout_at: datetime
+    retry_acknowledgement: VenueOrderAcknowledgement
+    status_venue_order_id: Identifier
+    status: Literal["OPEN"]
+    status_observed_at: datetime
+    cancellation_venue_order_id: Identifier
+    cancellation_status: Literal["CANCELLED"]
+    cancelled_at: datetime
+
+    @field_validator(
+        "first_attempt_at", "timeout_at", "status_observed_at", "cancelled_at", mode="before"
+    )
+    @classmethod
+    def utc(cls, value: object) -> datetime:
+        return _parse_utc(value)
+
+
 class VenueConformanceReport(StrictModel):
     schema_version: Literal[1] = 1
     outcome: Literal["CONFORMANT"] = "CONFORMANT"
@@ -178,12 +224,13 @@ class VenueConformanceInput(StrictModel):
     profile: VenueAdapterProfile
     order_bundle: OrderBundle
     command: VenueSubmissionCommand
-    acknowledgements: tuple[VenueOrderAcknowledgement, ...]
+    risk_authorization: VenueRiskAuthorization
+    lifecycles: tuple[VenueOrderLifecycleEvidence, ...]
     now: datetime
 
-    @field_validator("acknowledgements", mode="before")
+    @field_validator("lifecycles", mode="before")
     @classmethod
-    def acknowledgement_array(cls, value: object) -> object:
+    def lifecycle_array(cls, value: object) -> object:
         return tuple(value) if isinstance(value, list) else value
 
     @field_validator("now", mode="before")

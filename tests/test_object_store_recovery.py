@@ -74,6 +74,39 @@ def test_recovery_drill_rejects_same_or_nonempty_target(tmp_path: Path) -> None:
         )
 
 
+def test_recovery_drill_rejects_partial_tenant_inventory(tmp_path: Path) -> None:
+    source = LocalImmutableObjectStore(tmp_path / "source")
+    first = source.put_if_absent(
+        tenant_id="tenant-a", data=b"first", media_type="text/plain", retention_class="ops"
+    )
+    source.put_if_absent(
+        tenant_id="tenant-a", data=b"second", media_type="text/plain", retention_class="ops"
+    )
+
+    with pytest.raises(ObjectStoreRecoveryError, match="complete tenant inventory"):
+        run_local_object_store_recovery_drill(
+            command(first),
+            source=source,
+            target=LocalImmutableObjectStore(tmp_path / "target"),
+            completed_at=NOW,
+        )
+
+
+def test_recovery_drill_rejects_nested_roots(tmp_path: Path) -> None:
+    source = LocalImmutableObjectStore(tmp_path / "source")
+    reference = source.put_if_absent(
+        tenant_id="tenant-a", data=b"evidence", media_type="text/plain", retention_class="ops"
+    )
+
+    with pytest.raises(ObjectStoreRecoveryError, match="must not be nested"):
+        run_local_object_store_recovery_drill(
+            command(reference),
+            source=source,
+            target=LocalImmutableObjectStore(source.root / "recovered"),
+            completed_at=NOW,
+        )
+
+
 def test_recovery_drill_rejects_byte_limit_and_tampered_receipt(tmp_path: Path) -> None:
     source = LocalImmutableObjectStore(tmp_path / "source")
     reference = source.put_if_absent(

@@ -62,6 +62,16 @@
       "title": "Request Id",
       "type": "string"
     },
+    "risk_decision_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Risk Decision Digest",
+      "type": "string"
+    },
+    "risk_nonce": {
+      "pattern": "^[0-9a-f]{32,128}$",
+      "title": "Risk Nonce",
+      "type": "string"
+    },
     "schema_version": {
       "const": 1,
       "default": 1,
@@ -88,6 +98,8 @@
     "broker_id",
     "request_id",
     "order_bundle_digest",
+    "risk_decision_digest",
+    "risk_nonce",
     "client_order_ids",
     "submission_hostname",
     "not_before",

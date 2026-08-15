@@ -34,7 +34,7 @@ uv run aegisquant-case release verify release.json --trust-store release-trust.j
   --recovery-receipt recovery-receipt.json
 uv run aegisquant-case recovery drill recovery-command.json \
   --source-root /absolute/source --target-root /absolute/fresh-recovery-target
-uv run aegisquant-case venue verify venue-conformance.json
+uv run aegisquant-case venue verify venue-conformance.json --risk-trust-store risk-trust.json
 uv run run-fixture-case data/fixtures/cases/multi_asset_control.json
 ```
 
@@ -60,14 +60,17 @@ or run a case automatically. Only that fully attested strategy proposal can late
 allowlisted forecast uncertainty floor; risk policy, permissions, evaluation thresholds, and
 locked holdouts remain outside the learning path.
 
-`release verify` is the M6 production-prerequisite gate. It verifies an exact evidence manifest,
-independent reviewer and later human-operator Ed25519 attestations, an operator-owned public-key
-policy, the active PostgreSQL and Temporal dependencies, and a tenant-bound immutable-object-store
-round trip plus a content-bound recovery receipt. `recovery drill` restores an explicit manifest to
-a fresh local target; `venue verify` validates recorded provider fixtures only. The core remains
-jurisdiction-neutral through a selected compliance-policy-pack digest, while each deployment is
-evidence-bound. Passing the gate still reports `live_execution_enabled: false`: a provider-specific
-adapter, external acceptance, and a separate audit are required before `LIVE` can be introduced.
+`release verify` is an M6 local-prerequisite gate. It retrieves every signed evidence `BlobRef`,
+checks independent reviewer and later human-operator Ed25519 attestations, an operator-owned
+public-key policy, active PostgreSQL and Temporal dependencies, and a fresh content-bound recovery
+receipt. `recovery drill` restores the complete local tenant inventory to a distinct, non-nested
+target; it does not prove an independent backup or failure domain. `venue verify` validates an
+operator-owned risk public-key policy, a signed hard-risk authorization, and timeout/retry/status/
+cancel recorded fixtures only. The core
+remains jurisdiction-neutral through a selected compliance-policy-pack digest, while each deployment
+is evidence-bound. Passing the gate still reports `live_execution_enabled: false`: a
+provider-specific adapter, external acceptance, an independent recovery attestation, and a separate
+audit are required before `LIVE` can be introduced.
 See [`docs/operations/production-release.md`](docs/operations/production-release.md).
 
 See [`docs/BUILD_PLAN.md`](docs/BUILD_PLAN.md), [`docs/architecture/ADR-0001-security-kernel-first.md`](docs/architecture/ADR-0001-security-kernel-first.md), and [`docs/research/design-validation-2026-08-08.md`](docs/research/design-validation-2026-08-08.md).

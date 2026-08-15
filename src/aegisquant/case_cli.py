@@ -8,7 +8,7 @@ import json
 import os
 import sys
 from collections.abc import Sequence
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Literal, NoReturn
 
@@ -37,6 +37,7 @@ from aegisquant.security.release_attestation import (
     ProductionReleaseVerifier,
     load_release_trust_store,
 )
+from aegisquant.security.risk_signing import load_risk_trust_store, trusted_risk_keys_from_store
 from aegisquant.venue.conformance import verify_venue_conformance
 
 
@@ -274,6 +275,12 @@ def _probe_release_object_store(root: Path, request: ReleaseVerificationInput) -
     return store.get(reference, authenticated_tenant_id=request.manifest.tenant_id) == data
 
 
+def _verify_release_evidence(root: Path, request: ReleaseVerificationInput) -> None:
+    store = LocalImmutableObjectStore(root)
+    for reference in request.manifest.evidence_references:
+        store.get(reference.payload, authenticated_tenant_id=request.manifest.tenant_id)
+
+
 def _release_verify(args: argparse.Namespace) -> int:
     request = ReleaseVerificationInput.model_validate_json(args.input.read_bytes())
     trust_store = load_release_trust_store(args.trust_store)
@@ -293,6 +300,8 @@ def _release_verify(args: argparse.Namespace) -> int:
         recovery_receipt.tenant_id != verified.tenant_id
         or digest_canonical(recovery_receipt) != verified.backup_restore_drill_digest
         or recovery_receipt.completed_at > now
+        or now - recovery_receipt.completed_at
+        > timedelta(seconds=verified.max_recovery_drill_age_seconds)
     ):
         raise ValueError(
             "release recovery receipt is missing, stale, or outside the manifest scope"
@@ -302,13 +311,15 @@ def _release_verify(args: argparse.Namespace) -> int:
     object_store_ready = bool(
         object_store_root and _probe_release_object_store(Path(object_store_root), request)
     )
+    if object_store_ready and object_store_root:
+        _verify_release_evidence(Path(object_store_root), request)
     runtime = dependencies | {"object_store": object_store_ready}
     if not all(runtime.values()):
         unavailable = ", ".join(sorted(name for name, ready in runtime.items() if not ready))
         raise ValueError(f"release runtime dependencies are not ready: {unavailable}")
     _write_json(
         {
-            "prerequisites_verified": True,
+            "local_prerequisites_verified": True,
             "manifest_digest": digest_canonical(verified),
             "release_id": verified.release_id,
             "broker_id": verified.broker_id,
@@ -343,12 +354,17 @@ def _recovery_drill(args: argparse.Namespace) -> int:
 
 def _venue_verify(args: argparse.Namespace) -> int:
     value = VenueConformanceInput.model_validate_json(args.input.read_bytes())
+    risk_trust_store = load_risk_trust_store(args.risk_trust_store)
+    if risk_trust_store.tenant_id != value.release.tenant_id:
+        raise ValueError("risk trust store tenant does not match the release")
     report = verify_venue_conformance(
         value.release,
         value.profile,
         value.order_bundle,
         value.command,
-        value.acknowledgements,
+        risk_authorization=value.risk_authorization,
+        trusted_risk_keys=trusted_risk_keys_from_store(risk_trust_store),
+        lifecycles=value.lifecycles,
         now=value.now,
     )
     sys.stdout.write(report.model_dump_json(indent=2) + "\n")
@@ -422,6 +438,9 @@ def _parser() -> argparse.ArgumentParser:
         "verify", help="verify exact venue fixtures with no network transport"
     )
     venue_verify.add_argument("input", type=Path, help="strict venue conformance JSON")
+    venue_verify.add_argument(
+        "--risk-trust-store", required=True, type=Path, help="operator-owned risk public-key policy"
+    )
     venue_verify.set_defaults(handler=_venue_verify)
     return parser
 

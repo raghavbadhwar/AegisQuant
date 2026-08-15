@@ -9,9 +9,44 @@ from typing import Literal
 
 from pydantic import Field, field_validator, model_validator
 
+from aegisquant.contracts.artifact import BlobRef
 from aegisquant.contracts.common import Identifier, Sha256Digest, StrictModel, require_utc
 
 ReleaseRole = Literal["INDEPENDENT_REVIEWER", "HUMAN_OPERATOR"]
+ReleaseEvidenceName = Literal[
+    "COMPLIANCE_POLICY_PACK",
+    "DEPLOYMENT_ARTIFACT",
+    "SBOM",
+    "DATABASE_MIGRATION",
+    "OBJECT_STORE_CONFORMANCE",
+    "BACKUP_RESTORE_DRILL",
+    "SERVICE_RECOVERY_DRILL",
+    "SECURITY_ASSESSMENT",
+    "MODEL_VALIDATION_MANIFEST",
+    "LEGAL_COMPLIANCE",
+    "DATA_RIGHTS",
+    "BROKER_AGREEMENT",
+    "RISK_POLICY",
+    "NETWORK_POLICY",
+    "SECRETS_MANAGEMENT",
+]
+_RELEASE_EVIDENCE_FIELDS: tuple[tuple[ReleaseEvidenceName, str], ...] = (
+    ("COMPLIANCE_POLICY_PACK", "compliance_policy_pack_digest"),
+    ("DEPLOYMENT_ARTIFACT", "deployment_artifact_digest"),
+    ("SBOM", "sbom_digest"),
+    ("DATABASE_MIGRATION", "database_migration_digest"),
+    ("OBJECT_STORE_CONFORMANCE", "object_store_conformance_digest"),
+    ("BACKUP_RESTORE_DRILL", "backup_restore_drill_digest"),
+    ("SERVICE_RECOVERY_DRILL", "service_recovery_drill_digest"),
+    ("SECURITY_ASSESSMENT", "security_assessment_digest"),
+    ("MODEL_VALIDATION_MANIFEST", "model_validation_manifest_digest"),
+    ("LEGAL_COMPLIANCE", "legal_compliance_digest"),
+    ("DATA_RIGHTS", "data_rights_digest"),
+    ("BROKER_AGREEMENT", "broker_agreement_digest"),
+    ("RISK_POLICY", "risk_policy_digest"),
+    ("NETWORK_POLICY", "network_policy_digest"),
+    ("SECRETS_MANAGEMENT", "secrets_management_digest"),
+)
 _DNS_LABEL = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$")
 
 
@@ -35,6 +70,11 @@ def _exact_dns_hostname(value: str) -> str:
     if "." not in value or any(not _DNS_LABEL.fullmatch(label) for label in value.split(".")):
         raise ValueError("broker hostname must be an exact lowercase DNS name")
     return value
+
+
+class ReleaseEvidenceReference(StrictModel):
+    evidence_name: ReleaseEvidenceName
+    payload: BlobRef
 
 
 class ProductionReleaseManifest(StrictModel):
@@ -65,12 +105,19 @@ class ProductionReleaseManifest(StrictModel):
     risk_policy_digest: Sha256Digest
     network_policy_digest: Sha256Digest
     secrets_management_digest: Sha256Digest
+    evidence_references: tuple[ReleaseEvidenceReference, ...]
+    max_recovery_drill_age_seconds: int = Field(ge=1, le=90 * 24 * 60 * 60)
     created_at: datetime
     expires_at: datetime
 
     @field_validator("broker_api_hostnames", mode="before")
     @classmethod
     def hostname_array(cls, value: object) -> object:
+        return tuple(value) if isinstance(value, list) else value
+
+    @field_validator("evidence_references", mode="before")
+    @classmethod
+    def evidence_array(cls, value: object) -> object:
         return tuple(value) if isinstance(value, list) else value
 
     @field_validator("broker_api_hostnames")
@@ -90,6 +137,21 @@ class ProductionReleaseManifest(StrictModel):
     def validity_window(self) -> ProductionReleaseManifest:
         if self.expires_at <= self.created_at:
             raise ValueError("release manifest validity window is invalid")
+        expected_digests = {
+            evidence_name: getattr(self, field_name)
+            for evidence_name, field_name in _RELEASE_EVIDENCE_FIELDS
+        }
+        actual_names = tuple(reference.evidence_name for reference in self.evidence_references)
+        if actual_names != tuple(expected_digests):
+            raise ValueError("release evidence references must cover every named digest in order")
+        if any(
+            reference.payload.tenant_id != self.tenant_id
+            or reference.payload.content_digest != expected_digests[reference.evidence_name]
+            for reference in self.evidence_references
+        ):
+            raise ValueError(
+                "release evidence references must bind the manifest tenant and digests"
+            )
         return self
 
 

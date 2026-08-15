@@ -17,7 +17,8 @@ safe.
    selected and reviewed. The M6 gate does not add an execution path.
 2. Bind one release to exact deployment, SBOM, database, object-store, backup/restore,
    service-recovery, security, model-validation, legal/compliance, data-rights, broker-agreement,
-   risk-policy, network-policy, and secrets-management evidence digests.
+   risk-policy, network-policy, and secrets-management evidence digests. Each digest has one
+   tenant-scoped immutable `BlobRef` that `release verify` must retrieve unchanged.
 3. Bind the same manifest to the exact tenant, legal entity, account, broker, immutable compliance
    policy-pack ID/digest, and sorted exact DNS hostname allowlist. Wildcards, URLs, ports, and IP
    literals are rejected. The policy pack carries deployment-specific jurisdiction evidence; the
@@ -27,8 +28,10 @@ safe.
 5. Load public-key policy only from an operator-owned, non-symlink file that group and other users
    cannot modify.
 6. `aegisquant-case release verify` must also prove the configured PostgreSQL and Temporal
-   deployment are ready, bind an immutable-object recovery receipt, and round-trip a tenant-bound
-   immutable object-store probe.
+   deployment are ready, retrieve every evidence reference, bind a recovery receipt within the
+   signed maximum age, and round-trip a tenant-bound immutable object-store probe. The receipt is
+   deliberately scoped as a complete local-tenant restore exercise, not evidence of an independent
+   backup or failure domain.
 7. A later venue adapter must be a Temporal Activity with atomic submission idempotency,
    broker-order reconciliation, bounded timeouts, an exact egress allowlist, a kill switch, and no
    public mutation API. It needs its own ADR, threat model, recorded contract tests, sandbox/paper
@@ -36,7 +39,7 @@ safe.
 
 ## Consequences
 
-The repository now has a verifiable production-release prerequisite gate without pretending that
-self-authored files prove external legal, broker, security, or operational acceptance. The CLI
-reports `live_execution_enabled: false` until a reviewed venue adapter exists. No credential or
-private signing key is stored by this gate.
+The repository now has a locally verifiable prerequisite gate without pretending that self-authored
+files prove external legal, broker, security, operational, or disaster-recovery acceptance. The CLI
+reports `live_execution_enabled: false` until a reviewed venue adapter and external acceptance
+exist. No credential or private signing key is stored by this gate.

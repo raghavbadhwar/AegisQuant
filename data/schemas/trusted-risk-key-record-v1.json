@@ -1,0 +1,58 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "key_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Key Id",
+      "type": "string"
+    },
+    "public_key_b64url": {
+      "pattern": "^[A-Za-z0-9_-]{43}$",
+      "title": "Public Key B64Url",
+      "type": "string"
+    },
+    "revoked_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Revoked At"
+    },
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "tenant_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Tenant Id",
+      "type": "string"
+    },
+    "valid_from": {
+      "format": "date-time",
+      "title": "Valid From",
+      "type": "string"
+    },
+    "valid_until": {
+      "format": "date-time",
+      "title": "Valid Until",
+      "type": "string"
+    }
+  },
+  "required": [
+    "key_id",
+    "public_key_b64url",
+    "tenant_id",
+    "valid_from",
+    "valid_until"
+  ],
+  "title": "TrustedRiskKeyRecord",
+  "type": "object"
+}

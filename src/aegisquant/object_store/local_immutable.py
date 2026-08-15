@@ -25,6 +25,43 @@ class LocalImmutableObjectStore:
     def root(self) -> Path:
         return self._root
 
+    def references_for_tenant(self, tenant_id: Identifier) -> tuple[BlobRef, ...]:
+        """Return the complete verified local inventory for one tenant."""
+
+        objects_root = self._root / tenant_id / "sha256"
+        if not objects_root.exists():
+            return ()
+        if objects_root.is_symlink() or not objects_root.is_dir():
+            raise ObjectIntegrityError("object-store tenant root is unsafe")
+        files: set[Path] = set()
+        for path in objects_root.rglob("*"):
+            if path.is_symlink():
+                raise ObjectIntegrityError("object-store inventory contains a symlink")
+            if path.is_file():
+                files.add(path)
+            elif not path.is_dir():
+                raise ObjectIntegrityError("object-store inventory contains an unsupported entry")
+        references: list[BlobRef] = []
+        expected_files: set[Path] = set()
+        for metadata_path in sorted(path for path in files if path.name.endswith(".metadata.json")):
+            try:
+                reference = BlobRef.model_validate_json(metadata_path.read_bytes())
+            except ValueError as exc:
+                raise ObjectIntegrityError("object-store metadata is invalid") from exc
+            object_path = self._path(reference.tenant_id, reference.content_digest)
+            if reference.tenant_id != tenant_id or metadata_path != object_path.with_name(
+                f"{object_path.name}.metadata.json"
+            ):
+                raise ObjectIntegrityError(
+                    "object-store metadata is outside the canonical inventory"
+                )
+            expected_files.update((object_path, metadata_path))
+            self.get(reference, authenticated_tenant_id=tenant_id)
+            references.append(reference)
+        if files != expected_files:
+            raise ObjectIntegrityError("object-store inventory is incomplete or unexpected")
+        return tuple(sorted(references, key=lambda reference: reference.content_digest))
+
     def _path(self, tenant_id: Identifier, digest: str) -> Path:
         hex_digest = digest.removeprefix("sha256:")
         return self._root / tenant_id / "sha256" / hex_digest[:2] / hex_digest

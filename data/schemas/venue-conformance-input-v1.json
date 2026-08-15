@@ -1,5 +1,68 @@
 {
   "$defs": {
+    "BlobRef": {
+      "additionalProperties": false,
+      "properties": {
+        "content_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Content Digest",
+          "type": "string"
+        },
+        "media_type": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Media Type",
+          "type": "string"
+        },
+        "retention_class": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Retention Class",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "size_bytes": {
+          "minimum": 0,
+          "title": "Size Bytes",
+          "type": "integer"
+        },
+        "tenant_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Tenant Id",
+          "type": "string"
+        },
+        "uri": {
+          "maxLength": 2048,
+          "minLength": 1,
+          "title": "Uri",
+          "type": "string"
+        }
+      },
+      "required": [
+        "tenant_id",
+        "uri",
+        "content_digest",
+        "size_bytes",
+        "media_type",
+        "retention_class"
+      ],
+      "title": "BlobRef",
+      "type": "object"
+    },
+    "DecisionOutcome": {
+      "enum": [
+        "APPROVE",
+        "REJECT",
+        "HALT",
+        "COUNTERPROPOSAL"
+      ],
+      "title": "DecisionOutcome",
+      "type": "string"
+    },
     "OrderBundle": {
       "additionalProperties": false,
       "properties": {
@@ -240,6 +303,13 @@
           "title": "Deployment Artifact Digest",
           "type": "string"
         },
+        "evidence_references": {
+          "items": {
+            "$ref": "#/$defs/ReleaseEvidenceReference"
+          },
+          "title": "Evidence References",
+          "type": "array"
+        },
         "expires_at": {
           "format": "date-time",
           "title": "Expires At",
@@ -254,6 +324,12 @@
           "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
           "title": "Legal Entity Id",
           "type": "string"
+        },
+        "max_recovery_drill_age_seconds": {
+          "maximum": 7776000,
+          "minimum": 1,
+          "title": "Max Recovery Drill Age Seconds",
+          "type": "integer"
         },
         "model_validation_manifest_digest": {
           "pattern": "^sha256:[0-9a-f]{64}$",
@@ -347,10 +423,442 @@
         "risk_policy_digest",
         "network_policy_digest",
         "secrets_management_digest",
+        "evidence_references",
+        "max_recovery_drill_age_seconds",
         "created_at",
         "expires_at"
       ],
       "title": "ProductionReleaseManifest",
+      "type": "object"
+    },
+    "ProtectedHeader": {
+      "additionalProperties": false,
+      "properties": {
+        "alg": {
+          "const": "Ed25519",
+          "default": "Ed25519",
+          "title": "Alg",
+          "type": "string"
+        },
+        "key_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Key Id",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "typ": {
+          "const": "AQ-RISK-DECISION",
+          "default": "AQ-RISK-DECISION",
+          "title": "Typ",
+          "type": "string"
+        }
+      },
+      "required": [
+        "key_id"
+      ],
+      "title": "ProtectedHeader",
+      "type": "object"
+    },
+    "ReleaseEvidenceReference": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence_name": {
+          "enum": [
+            "COMPLIANCE_POLICY_PACK",
+            "DEPLOYMENT_ARTIFACT",
+            "SBOM",
+            "DATABASE_MIGRATION",
+            "OBJECT_STORE_CONFORMANCE",
+            "BACKUP_RESTORE_DRILL",
+            "SERVICE_RECOVERY_DRILL",
+            "SECURITY_ASSESSMENT",
+            "MODEL_VALIDATION_MANIFEST",
+            "LEGAL_COMPLIANCE",
+            "DATA_RIGHTS",
+            "BROKER_AGREEMENT",
+            "RISK_POLICY",
+            "NETWORK_POLICY",
+            "SECRETS_MANAGEMENT"
+          ],
+          "title": "Evidence Name",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/BlobRef"
+        }
+      },
+      "required": [
+        "evidence_name",
+        "payload"
+      ],
+      "title": "ReleaseEvidenceReference",
+      "type": "object"
+    },
+    "RiskDecisionPayload": {
+      "additionalProperties": false,
+      "properties": {
+        "account_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Account Id",
+          "type": "string"
+        },
+        "approved_order_bundle_digest": {
+          "anyOf": [
+            {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Approved Order Bundle Digest"
+        },
+        "audience": {
+          "const": "aegisquant-execution",
+          "default": "aegisquant-execution",
+          "title": "Audience",
+          "type": "string"
+        },
+        "broker_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Broker Id",
+          "type": "string"
+        },
+        "case_id": {
+          "format": "uuid",
+          "title": "Case Id",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "decision_id": {
+          "format": "uuid",
+          "title": "Decision Id",
+          "type": "string"
+        },
+        "environment": {
+          "$ref": "#/$defs/TradingEnvironment"
+        },
+        "execution_plan_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Execution Plan Digest",
+          "type": "string"
+        },
+        "expires_at": {
+          "format": "date-time",
+          "title": "Expires At",
+          "type": "string"
+        },
+        "fx_snapshot_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Fx Snapshot Digest",
+          "type": "string"
+        },
+        "input_manifest_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Input Manifest Digest",
+          "type": "string"
+        },
+        "issuance_sequence": {
+          "minimum": 1,
+          "title": "Issuance Sequence",
+          "type": "integer"
+        },
+        "issuer": {
+          "const": "aegisquant-hard-risk",
+          "default": "aegisquant-hard-risk",
+          "title": "Issuer",
+          "type": "string"
+        },
+        "kill_switch_epoch": {
+          "minimum": 0,
+          "title": "Kill Switch Epoch",
+          "type": "integer"
+        },
+        "legal_entity_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Legal Entity Id",
+          "type": "string"
+        },
+        "market_data_snapshot_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Market Data Snapshot Digest",
+          "type": "string"
+        },
+        "model_validation_manifest_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Model Validation Manifest Digest",
+          "type": "string"
+        },
+        "nonce": {
+          "pattern": "^[0-9a-f]{32,128}$",
+          "title": "Nonce",
+          "type": "string"
+        },
+        "not_before": {
+          "format": "date-time",
+          "title": "Not Before",
+          "type": "string"
+        },
+        "open_orders_snapshot_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Open Orders Snapshot Digest",
+          "type": "string"
+        },
+        "outcome": {
+          "$ref": "#/$defs/DecisionOutcome"
+        },
+        "policy_bundle_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Policy Bundle Digest",
+          "type": "string"
+        },
+        "policy_epoch": {
+          "minimum": 1,
+          "title": "Policy Epoch",
+          "type": "integer"
+        },
+        "portfolio_snapshot_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Portfolio Snapshot Digest",
+          "type": "string"
+        },
+        "portfolio_state_sequence": {
+          "minimum": 0,
+          "title": "Portfolio State Sequence",
+          "type": "integer"
+        },
+        "projected_portfolio_digest": {
+          "anyOf": [
+            {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Projected Portfolio Digest"
+        },
+        "reference_data_snapshot_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Reference Data Snapshot Digest",
+          "type": "string"
+        },
+        "request_id": {
+          "format": "uuid",
+          "title": "Request Id",
+          "type": "string"
+        },
+        "requested_order_bundle_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Requested Order Bundle Digest",
+          "type": "string"
+        },
+        "required_human_approval_digest": {
+          "anyOf": [
+            {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Required Human Approval Digest"
+        },
+        "rule_results": {
+          "items": {
+            "$ref": "#/$defs/RuleResult"
+          },
+          "title": "Rule Results",
+          "type": "array"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "strategy_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Strategy Id",
+          "type": "string"
+        },
+        "tenant_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Tenant Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "tenant_id",
+        "decision_id",
+        "request_id",
+        "case_id",
+        "issuance_sequence",
+        "nonce",
+        "environment",
+        "legal_entity_id",
+        "account_id",
+        "broker_id",
+        "strategy_id",
+        "outcome",
+        "policy_bundle_digest",
+        "policy_epoch",
+        "kill_switch_epoch",
+        "input_manifest_digest",
+        "portfolio_state_sequence",
+        "portfolio_snapshot_digest",
+        "open_orders_snapshot_digest",
+        "market_data_snapshot_digest",
+        "reference_data_snapshot_digest",
+        "fx_snapshot_digest",
+        "model_validation_manifest_digest",
+        "execution_plan_digest",
+        "requested_order_bundle_digest",
+        "rule_results",
+        "created_at",
+        "not_before",
+        "expires_at"
+      ],
+      "title": "RiskDecisionPayload",
+      "type": "object"
+    },
+    "RuleResult": {
+      "additionalProperties": false,
+      "properties": {
+        "input_ids": {
+          "default": [],
+          "items": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+            "type": "string"
+          },
+          "title": "Input Ids",
+          "type": "array"
+        },
+        "limit": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Limit"
+        },
+        "observed": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Observed"
+        },
+        "reason_code": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Reason Code",
+          "type": "string"
+        },
+        "rule_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Rule Id",
+          "type": "string"
+        },
+        "rule_version": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Rule Version",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "status": {
+          "$ref": "#/$defs/RuleStatus"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
+        }
+      },
+      "required": [
+        "rule_id",
+        "rule_version",
+        "status",
+        "reason_code"
+      ],
+      "title": "RuleResult",
+      "type": "object"
+    },
+    "RuleStatus": {
+      "enum": [
+        "PASS",
+        "FAIL",
+        "WARN",
+        "NOT_APPLICABLE"
+      ],
+      "title": "RuleStatus",
+      "type": "string"
+    },
+    "SignedRiskDecision": {
+      "additionalProperties": false,
+      "properties": {
+        "payload": {
+          "$ref": "#/$defs/RiskDecisionPayload"
+        },
+        "protected": {
+          "$ref": "#/$defs/ProtectedHeader"
+        },
+        "signature_b64url": {
+          "pattern": "^[A-Za-z0-9_-]{86}$",
+          "title": "Signature B64Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "protected",
+        "payload",
+        "signature_b64url"
+      ],
+      "title": "SignedRiskDecision",
       "type": "object"
     },
     "TimeInForce": {
@@ -527,6 +1035,193 @@
       "title": "VenueOrderAcknowledgement",
       "type": "object"
     },
+    "VenueOrderLifecycleEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "cancellation_status": {
+          "const": "CANCELLED",
+          "title": "Cancellation Status",
+          "type": "string"
+        },
+        "cancellation_venue_order_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Cancellation Venue Order Id",
+          "type": "string"
+        },
+        "cancelled_at": {
+          "format": "date-time",
+          "title": "Cancelled At",
+          "type": "string"
+        },
+        "client_order_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Client Order Id",
+          "type": "string"
+        },
+        "first_attempt_at": {
+          "format": "date-time",
+          "title": "First Attempt At",
+          "type": "string"
+        },
+        "retry_acknowledgement": {
+          "$ref": "#/$defs/VenueOrderAcknowledgement"
+        },
+        "status": {
+          "const": "OPEN",
+          "title": "Status",
+          "type": "string"
+        },
+        "status_observed_at": {
+          "format": "date-time",
+          "title": "Status Observed At",
+          "type": "string"
+        },
+        "status_venue_order_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Status Venue Order Id",
+          "type": "string"
+        },
+        "timeout_at": {
+          "format": "date-time",
+          "title": "Timeout At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "client_order_id",
+        "first_attempt_at",
+        "timeout_at",
+        "retry_acknowledgement",
+        "status_venue_order_id",
+        "status",
+        "status_observed_at",
+        "cancellation_venue_order_id",
+        "cancellation_status",
+        "cancelled_at"
+      ],
+      "title": "VenueOrderLifecycleEvidence",
+      "type": "object"
+    },
+    "VenueRiskAuthorization": {
+      "additionalProperties": false,
+      "properties": {
+        "context": {
+          "$ref": "#/$defs/VenueRiskContext"
+        },
+        "decision": {
+          "$ref": "#/$defs/SignedRiskDecision"
+        }
+      },
+      "required": [
+        "decision",
+        "context"
+      ],
+      "title": "VenueRiskAuthorization",
+      "type": "object"
+    },
+    "VenueRiskContext": {
+      "additionalProperties": false,
+      "properties": {
+        "account_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Account Id",
+          "type": "string"
+        },
+        "broker_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Broker Id",
+          "type": "string"
+        },
+        "environment": {
+          "$ref": "#/$defs/TradingEnvironment"
+        },
+        "fx_snapshot_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Fx Snapshot Digest",
+          "type": "string"
+        },
+        "input_manifest_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Input Manifest Digest",
+          "type": "string"
+        },
+        "kill_switch_epoch": {
+          "minimum": 0,
+          "title": "Kill Switch Epoch",
+          "type": "integer"
+        },
+        "legal_entity_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Legal Entity Id",
+          "type": "string"
+        },
+        "market_data_snapshot_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Market Data Snapshot Digest",
+          "type": "string"
+        },
+        "model_validation_manifest_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Model Validation Manifest Digest",
+          "type": "string"
+        },
+        "open_orders_snapshot_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Open Orders Snapshot Digest",
+          "type": "string"
+        },
+        "policy_epoch": {
+          "minimum": 1,
+          "title": "Policy Epoch",
+          "type": "integer"
+        },
+        "portfolio_snapshot_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Portfolio Snapshot Digest",
+          "type": "string"
+        },
+        "portfolio_state_sequence": {
+          "minimum": 0,
+          "title": "Portfolio State Sequence",
+          "type": "integer"
+        },
+        "reference_data_snapshot_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Reference Data Snapshot Digest",
+          "type": "string"
+        },
+        "strategy_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Strategy Id",
+          "type": "string"
+        },
+        "tenant_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Tenant Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "tenant_id",
+        "environment",
+        "legal_entity_id",
+        "account_id",
+        "broker_id",
+        "strategy_id",
+        "policy_epoch",
+        "kill_switch_epoch",
+        "portfolio_state_sequence",
+        "input_manifest_digest",
+        "portfolio_snapshot_digest",
+        "open_orders_snapshot_digest",
+        "market_data_snapshot_digest",
+        "reference_data_snapshot_digest",
+        "fx_snapshot_digest",
+        "model_validation_manifest_digest"
+      ],
+      "title": "VenueRiskContext",
+      "type": "object"
+    },
     "VenueSubmissionCommand": {
       "additionalProperties": false,
       "description": "Exact fixture command for conformance tests; it is never a network request.",
@@ -591,6 +1286,16 @@
           "title": "Request Id",
           "type": "string"
         },
+        "risk_decision_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Risk Decision Digest",
+          "type": "string"
+        },
+        "risk_nonce": {
+          "pattern": "^[0-9a-f]{32,128}$",
+          "title": "Risk Nonce",
+          "type": "string"
+        },
         "schema_version": {
           "const": 1,
           "default": 1,
@@ -617,6 +1322,8 @@
         "broker_id",
         "request_id",
         "order_bundle_digest",
+        "risk_decision_digest",
+        "risk_nonce",
         "client_order_ids",
         "submission_hostname",
         "not_before",
@@ -628,15 +1335,15 @@
   },
   "additionalProperties": false,
   "properties": {
-    "acknowledgements": {
-      "items": {
-        "$ref": "#/$defs/VenueOrderAcknowledgement"
-      },
-      "title": "Acknowledgements",
-      "type": "array"
-    },
     "command": {
       "$ref": "#/$defs/VenueSubmissionCommand"
+    },
+    "lifecycles": {
+      "items": {
+        "$ref": "#/$defs/VenueOrderLifecycleEvidence"
+      },
+      "title": "Lifecycles",
+      "type": "array"
     },
     "now": {
       "format": "date-time",
@@ -652,6 +1359,9 @@
     "release": {
       "$ref": "#/$defs/ProductionReleaseManifest"
     },
+    "risk_authorization": {
+      "$ref": "#/$defs/VenueRiskAuthorization"
+    },
     "schema_version": {
       "const": 1,
       "default": 1,
@@ -664,7 +1374,8 @@
     "profile",
     "order_bundle",
     "command",
-    "acknowledgements",
+    "risk_authorization",
+    "lifecycles",
     "now"
   ],
   "title": "VenueConformanceInput",

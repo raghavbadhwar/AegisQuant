@@ -79,12 +79,14 @@ Supported profile: **personal and local-first** — one workstation and operator
 Requires jurisdiction-specific legal/compliance determination, data contracts, broker/venue rules, model validation, security certification, operational runbooks, human governance, and explicit user approval. Live trading is not implied by completion of earlier milestones.
 
 - [x] Exact production-release evidence manifest with tenant/account/broker/compliance-policy-pack
-  and exact DNS allowlist bindings.
+  and exact DNS allowlist bindings, where every named digest is a tenant-bound immutable-object
+  reference retrieved at verification time.
 - [x] Current, revocable, role-scoped Ed25519 independent-review and later human-operator
   attestations with separation of duties.
 - [x] Operator-owned trust policy plus real PostgreSQL, Temporal, and immutable-object-store
   preflight in `aegisquant-case release verify`.
-- [x] Personal production release procedure and explicit stop conditions.
+- [x] Fresh complete-local-inventory restore exercise, explicit local-proof boundary, and stop
+  conditions. It does not substitute for an independent backup/failure-domain attestation.
 - [ ] Select one jurisdiction and broker; record legal/data/broker acceptance and exact sandbox
   contract evidence.
 - [ ] Implement and independently audit the venue-specific Temporal Activity, broker reconciliation,
@@ -93,8 +95,10 @@ Requires jurisdiction-specific legal/compliance determination, data contracts, b
 ## M7 — jurisdiction-neutral venue and recovery conformance (verified offline foundation)
 
 - [x] Immutable compliance-policy-pack ID/digest binding; the core contains no jurisdiction rules.
-- [x] Recorded fixture contract for reviewed adapter capabilities, exact submissions,
-  acknowledgements, expiry, idempotency, hostnames, and reconciliation identifiers.
-- [x] Bounded immutable-object recovery drill into a fresh target with content-bound receipt.
+- [x] Recorded fixture contract binding an operator-owned risk public-key policy, an exact signed
+  risk decision/nonce/context, and exercised timeout, retry, status, cancellation, expiry,
+  idempotency, hostname, and reconciliation evidence.
+- [x] Bounded full-tenant immutable-object recovery drill into a fresh, non-nested target with a
+  content-bound receipt and signed maximum age.
 - [ ] Certified provider-specific Temporal Activity and sandbox/reconciliation evidence for each
   selected venue. This is intentionally not generalized or activated by M7.

@@ -4,8 +4,9 @@ This procedure validates M6 prerequisites. It does not enable LIVE execution or 
 
 ## 1. Produce real evidence
 
-Create immutable reports for the exact release and hash each with SHA-256. Do not use placeholder
-digests. Select an immutable compliance-policy pack for the deployment; it carries the applicable
+Create immutable reports for the exact release, store each canonical report in the configured
+immutable object store, and bind its `BlobRef` to the matching manifest digest. Do not use
+placeholder digests or references. Select an immutable compliance-policy pack for the deployment; it carries the applicable
 jurisdiction, data-rights, and broker evidence without hard-coding them into AegisQuant. The signed
 manifest requires:
 
@@ -50,23 +51,30 @@ uv run aegisquant-case release verify /absolute/path/release.json \
   --recovery-receipt /absolute/path/recovery-receipt.json
 ```
 
-Success means the signed prerequisites and current local dependencies verified. It deliberately
-returns `live_execution_enabled: false` and `VENUE_ADAPTER_AND_EXTERNAL_ACCEPTANCE` until the
-venue-specific milestone is implemented and accepted.
+Success means the signed local prerequisites, stored evidence, fresh local restore evidence, and
+current local dependencies verified. It deliberately returns `live_execution_enabled: false` and
+`VENUE_ADAPTER_AND_EXTERNAL_ACCEPTANCE` until the venue-specific milestone is implemented and
+accepted.
 
 ## 4. Exercise recovery and venue conformance
 
-Use a fresh, empty target path to make restore evidence; the drill will never overwrite it:
+Use a fresh, empty, non-nested target path to restore the complete local tenant inventory; the
+drill will never overwrite it:
 
 ```bash
 uv run aegisquant-case recovery drill /absolute/path/recovery-command.json \
   --source-root /absolute/private/aegisquant-objects \
   --target-root /absolute/private/aegisquant-restore-drill
-uv run aegisquant-case venue verify /absolute/path/venue-conformance.json
+uv run aegisquant-case venue verify /absolute/path/venue-conformance.json \
+  --risk-trust-store /absolute/path/risk-trust.json
 ```
 
-`venue verify` is recorded-fixture validation only. It establishes exact interface invariants for a
-future provider adapter; it does not connect to a broker or submit an order.
+`venue verify` is recorded-fixture validation only. It requires an operator-owned, non-symlink risk
+public-key policy, a signed hard-risk authorization, and one bounded timeout/retry/status/cancel
+lifecycle per order. It establishes exact interface
+invariants for a future provider adapter; it does not connect to a broker or submit an order. The
+local restore exercise does not prove an independent backup or failure domain; obtain an external
+recovery attestation before any future LIVE acceptance.
 
 ## 5. Stop conditions
 

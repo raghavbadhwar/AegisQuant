@@ -15,13 +15,16 @@ cancel, status, idempotency, and reconciliation semantics.
    selected per deployment and carries the external legal, rights, and broker evidence; the core
    does not interpret or hard-code jurisdictional rules.
 2. Add a no-transport venue conformance contract: a reviewed adapter profile, exact release/policy
-   binding, exact hostname, exact authorized PAPER order bundle, client request ID, ordered
-   acknowledgements, expiry, and reconciliation identifiers.
+   binding, exact hostname, an operator-owned risk public-key policy, exact signed hard-risk
+   decision/nonce/context, exact authorized PAPER
+   order bundle, client request ID, and one timeout/retry/status/cancel lifecycle fixture per order.
+   The existing hard-risk gate verifies the signature and one-time nonce in the fixture path.
 3. `aegisquant-case venue verify` accepts only recorded fixtures. It cannot connect, authenticate,
    send, cancel, or observe an order.
-4. Add `aegisquant-case recovery drill` to restore an explicit immutable-object manifest into a
-   fresh local target and issue a content-bound receipt. It has a declared byte limit and never
-   deletes a source or existing target.
+4. Add `aegisquant-case recovery drill` to restore the complete local tenant inventory into a
+   fresh, non-nested local target and issue a content-bound receipt. It has a declared byte limit
+   and never deletes a source or existing target. It does not claim independent backup durability
+   or a distinct failure domain.
 5. A concrete provider adapter remains a separate Temporal Activity and must pass this conformance
    suite plus a provider-specific ADR, threat model, sandbox certification, reconciliation/retry
    drill, credential-boundary review, and independent review before it may introduce `LIVE`.

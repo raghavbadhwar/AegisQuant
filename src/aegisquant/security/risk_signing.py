@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import base64
+import os
+import stat
 from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
 from threading import Lock
 
 from cryptography.exceptions import InvalidSignature
@@ -18,6 +21,7 @@ from aegisquant.contracts.risk import (
     OrderBundle,
     ProtectedHeader,
     RiskDecisionPayload,
+    RiskTrustStore,
     SignedHumanApproval,
     SignedRiskDecision,
 )
@@ -49,6 +53,36 @@ def _b64url(data: bytes) -> str:
 
 def _b64url_decode(text: str) -> bytes:
     return base64.urlsafe_b64decode(text + "=" * (-len(text) % 4))
+
+
+def load_risk_trust_store(path: Path) -> RiskTrustStore:
+    """Load operator-owned risk-verification keys without following a path replacement."""
+
+    if not path.is_absolute():
+        raise RiskVerificationError("risk trust store path must be absolute")
+    descriptor = -1
+    try:
+        descriptor = os.open(path, os.O_RDONLY | os.O_CLOEXEC | os.O_NOFOLLOW)
+        metadata = os.fstat(descriptor)
+        with os.fdopen(descriptor, "rb", closefd=True) as stream:
+            descriptor = -1
+            data = stream.read(1_048_577)
+    except OSError as exc:
+        raise RiskVerificationError("risk trust store cannot be read") from exc
+    finally:
+        if descriptor >= 0:
+            os.close(descriptor)
+    if (
+        not stat.S_ISREG(metadata.st_mode)
+        or metadata.st_uid != os.geteuid()
+        or stat.S_IMODE(metadata.st_mode) & 0o022
+        or len(data) > 1_048_576
+    ):
+        raise RiskVerificationError("risk trust store ownership or permissions are unsafe")
+    try:
+        return RiskTrustStore.model_validate_json(data)
+    except ValueError as exc:
+        raise RiskVerificationError("risk trust store is invalid") from exc
 
 
 class RiskDecisionSigner:
@@ -109,6 +143,24 @@ class TrustedRiskKey:
     valid_from: datetime
     valid_until: datetime
     revoked_at: datetime | None = None
+
+
+def trusted_risk_keys_from_store(store: RiskTrustStore) -> dict[str, TrustedRiskKey]:
+    keys: dict[str, TrustedRiskKey] = {}
+    for record in store.trusted_keys:
+        try:
+            public_key = Ed25519PublicKey.from_public_bytes(
+                _b64url_decode(record.public_key_b64url)
+            )
+        except ValueError as exc:
+            raise RiskVerificationError("risk trust store contains an invalid public key") from exc
+        keys[record.key_id] = TrustedRiskKey(
+            public_key=public_key,
+            valid_from=record.valid_from,
+            valid_until=record.valid_until,
+            revoked_at=record.revoked_at,
+        )
+    return keys
 
 
 @dataclass(frozen=True)
