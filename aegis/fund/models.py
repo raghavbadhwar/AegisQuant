@@ -1,0 +1,265 @@
+"""Research-provider seam shared by replay, historical, and LangGraph desks."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+from typing import Protocol, runtime_checkable
+
+from pydantic import (
+    AwareDatetime,
+    BaseModel,
+    ConfigDict,
+    Field,
+    TypeAdapter,
+    model_validator,
+)
+
+from aegis.contracts import (
+    AlphaForecast,
+    ClaimGraphSnapshot,
+    EvidenceAuditResult,
+    EvidenceBundle,
+    EvidenceRecord,
+    MemoryHit,
+    ResearchArtifact,
+    ResearchCase,
+    canonical_sha256,
+)
+from aegis.data import MarketSnapshot
+from aegis.observability import GraphEvent
+
+
+class ForecastIntegrityError(RuntimeError):
+    """Replay or model output is missing, malformed, or inconsistent."""
+
+
+class ReplayManifest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    case_id: str = Field(min_length=1)
+    mode: str
+    as_of: AwareDatetime
+    created_at: AwareDatetime
+    horizon_days: int = Field(gt=0)
+    research_question: str = Field(min_length=1)
+    tickers: list[str] = Field(min_length=1)
+    fund_path: str
+    agent_output_fixture: str
+    forecast_fixture: str
+    evidence_fixture: str
+
+    def research_case(self) -> ResearchCase:
+        return ResearchCase(
+            case_id=self.case_id,
+            mode="replay",
+            as_of=self.as_of,
+            created_at=self.created_at,
+            horizon_days=self.horizon_days,
+            research_question=self.research_question,
+            tickers=self.tickers,
+        )
+
+
+class ResearchDossier(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    case_id: str
+    as_of: AwareDatetime
+    evidence: EvidenceBundle
+    artifacts: tuple[ResearchArtifact, ...]
+    forecasts: tuple[AlphaForecast, ...]
+    graph_events: tuple[GraphEvent, ...]
+    claim_graph: ClaimGraphSnapshot | None = None
+    evidence_audit: EvidenceAuditResult | None = None
+    memory_hits: tuple[MemoryHit, ...] = ()
+    memory_snapshot_hash: str = canonical_sha256([])
+    relation_snapshot_hash: str = canonical_sha256([])
+    content_hash: str
+
+    def hash_payload(self) -> dict[str, object]:
+        return {
+            "case_id": self.case_id,
+            "as_of": self.as_of,
+            "evidence": self.evidence,
+            "artifacts": self.artifacts,
+            "forecasts": self.forecasts,
+            "graph_events": self.graph_events,
+            "claim_graph": self.claim_graph,
+            "evidence_audit": self.evidence_audit,
+            "memory_hits": self.memory_hits,
+            "memory_snapshot_hash": self.memory_snapshot_hash,
+            "relation_snapshot_hash": self.relation_snapshot_hash,
+        }
+
+    @model_validator(mode="after")
+    def dossier_is_closed_and_hashed(self) -> ResearchDossier:
+        if self.evidence.case_id != self.case_id or self.evidence.as_of != self.as_of:
+            raise ValueError("dossier evidence does not match the case")
+        evidence_ids = {record.evidence_id for record in self.evidence.records}
+        for forecast in self.forecasts:
+            if not forecast.abstained and not set(forecast.evidence_ids).issubset(evidence_ids):
+                raise ValueError("forecast cites evidence outside the dossier")
+        for artifact in self.artifacts:
+            if not set(artifact.evidence_ids).issubset(evidence_ids):
+                raise ValueError("artifact cites evidence outside the dossier")
+        if self.claim_graph is not None:
+            if self.claim_graph.case_id != self.case_id:
+                raise ValueError("claim graph does not match the dossier case")
+            claim_ids = {claim.claim_id for claim in self.claim_graph.claims}
+            if any(not set(artifact.claim_ids).issubset(claim_ids) for artifact in self.artifacts):
+                raise ValueError("artifact cites a claim outside the dossier claim graph")
+        if self.evidence_audit is not None and (
+            self.evidence_audit.case_id != self.case_id or not self.evidence_audit.approved
+        ):
+            raise ValueError("dossier requires an approved deterministic evidence audit")
+        if self.content_hash != canonical_sha256(self.hash_payload()):
+            raise ValueError("dossier content_hash mismatch")
+        return self
+
+
+def build_dossier(
+    case: ResearchCase,
+    evidence: EvidenceBundle,
+    artifacts: tuple[ResearchArtifact, ...],
+    forecasts: tuple[AlphaForecast, ...],
+    graph_events: tuple[GraphEvent, ...],
+    claim_graph: ClaimGraphSnapshot | None = None,
+    evidence_audit: EvidenceAuditResult | None = None,
+    memory_hits: tuple[MemoryHit, ...] = (),
+    memory_snapshot_hash: str = canonical_sha256([]),
+    relation_snapshot_hash: str = canonical_sha256([]),
+) -> ResearchDossier:
+    payload = {
+        "case_id": case.case_id,
+        "as_of": case.as_of,
+        "evidence": evidence,
+        "artifacts": artifacts,
+        "forecasts": forecasts,
+        "graph_events": graph_events,
+        "claim_graph": claim_graph,
+        "evidence_audit": evidence_audit,
+        "memory_hits": memory_hits,
+        "memory_snapshot_hash": memory_snapshot_hash,
+        "relation_snapshot_hash": relation_snapshot_hash,
+    }
+    return ResearchDossier(
+        case_id=case.case_id,
+        as_of=case.as_of,
+        evidence=evidence,
+        artifacts=artifacts,
+        forecasts=forecasts,
+        graph_events=graph_events,
+        claim_graph=claim_graph,
+        evidence_audit=evidence_audit,
+        memory_hits=memory_hits,
+        memory_snapshot_hash=memory_snapshot_hash,
+        relation_snapshot_hash=relation_snapshot_hash,
+        content_hash=canonical_sha256(payload),
+    )
+
+
+@runtime_checkable
+class ForecastProvider(Protocol):
+    network_enabled: bool
+
+    def research(self, case: ResearchCase, snapshot: MarketSnapshot) -> ResearchDossier: ...
+
+
+class FixtureForecastProvider:
+    """Fail-closed provider for deterministic local replay artifacts."""
+
+    network_enabled = False
+
+    def __init__(self, forecast_path: str | Path, evidence_path: str | Path) -> None:
+        self.forecast_path = Path(forecast_path).resolve()
+        self.evidence_path = Path(evidence_path).resolve()
+        self._forecasts = self._load_forecasts()
+        self._evidence = self._load_evidence()
+
+    def _load_forecasts(self) -> tuple[AlphaForecast, ...]:
+        if not self.forecast_path.is_file():
+            raise ForecastIntegrityError(f"missing replay forecasts: {self.forecast_path}")
+        try:
+            forecasts = TypeAdapter(list[AlphaForecast]).validate_json(
+                self.forecast_path.read_bytes()
+            )
+        except Exception as exc:
+            raise ForecastIntegrityError("invalid replay forecast fixture") from exc
+        tickers = [forecast.ticker for forecast in forecasts]
+        if len(tickers) != len(set(tickers)):
+            raise ForecastIntegrityError("duplicate ticker forecasts in replay fixture")
+        return tuple(sorted(forecasts, key=lambda forecast: forecast.ticker))
+
+    def _load_evidence(self) -> tuple[EvidenceRecord, ...]:
+        if not self.evidence_path.is_file():
+            raise ForecastIntegrityError(f"missing replay evidence: {self.evidence_path}")
+        records: list[EvidenceRecord] = []
+        try:
+            for line in self.evidence_path.read_text(encoding="utf-8").splitlines():
+                if line.strip():
+                    records.append(EvidenceRecord.model_validate_json(line))
+        except Exception as exc:
+            raise ForecastIntegrityError("invalid replay evidence fixture") from exc
+        ids = [record.evidence_id for record in records]
+        if len(ids) != len(set(ids)):
+            raise ForecastIntegrityError("duplicate evidence IDs in replay fixture")
+        return tuple(sorted(records, key=lambda record: record.evidence_id))
+
+    def research(self, case: ResearchCase, snapshot: MarketSnapshot) -> ResearchDossier:
+        if case.mode != "replay":
+            raise ForecastIntegrityError("fixture provider is replay-only")
+        requested = set(case.tickers)
+        available_tickers = {bar.ticker for bar in snapshot.bars}
+        if not requested.issubset(available_tickers):
+            missing = sorted(requested.difference(available_tickers))
+            raise ForecastIntegrityError(f"snapshot missing requested tickers: {missing}")
+        forecasts = tuple(forecast for forecast in self._forecasts if forecast.ticker in requested)
+        if {forecast.ticker for forecast in forecasts} != requested:
+            raise ForecastIntegrityError("replay forecasts do not cover the requested universe")
+        evidence = EvidenceBundle(
+            case_id=case.case_id,
+            as_of=case.as_of,
+            records=list(self._evidence),
+            mode=case.mode,
+        )
+        evidence_ids = {record.evidence_id for record in self._evidence}
+        for forecast in forecasts:
+            if forecast.as_of != case.as_of or forecast.horizon_days != case.horizon_days:
+                raise ForecastIntegrityError("forecast date/horizon does not match case")
+            if not set(forecast.evidence_ids).issubset(evidence_ids):
+                raise ForecastIntegrityError(
+                    f"unknown evidence ID in forecast for {forecast.ticker}"
+                )
+        payload = {"forecasts": [item.model_dump(mode="json") for item in forecasts]}
+        artifact = ResearchArtifact(
+            artifact_id=f"{case.case_id}:replay-cio",
+            case_id=case.case_id,
+            artifact_type="replay_forecast_batch",
+            producer_agent="replay-cio",
+            model_alias="research-standard",
+            actual_model="fixture/replay-cio-v2",
+            skill_versions=["cio-synthesis@fixture-v2"],
+            evidence_ids=sorted(evidence_ids),
+            payload=payload,
+            content_hash=canonical_sha256(payload),
+        )
+        event = GraphEvent(
+            event_id=f"{case.case_id}:fixture-loaded",
+            case_id=case.case_id,
+            sequence=0,
+            node="replay-provider",
+            event_type="provider_complete",
+            status="completed",
+            occurred_at=case.as_of,
+            metadata={"forecast_count": len(forecasts)},
+        )
+        return build_dossier(case, evidence, (artifact,), forecasts, (event,))
+
+
+def load_replay_manifest(path: str | Path) -> ReplayManifest:
+    try:
+        payload = json.loads(Path(path).read_text(encoding="utf-8"))
+        return ReplayManifest.model_validate(payload)
+    except Exception as exc:
+        raise ForecastIntegrityError(f"invalid replay case manifest: {path}") from exc

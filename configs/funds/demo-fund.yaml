@@ -1,0 +1,41 @@
+name: aegisquant-demo-fund
+capital: 100000.0
+rebalance: weekly
+benchmark: SPY
+portfolio:
+  gross_target: 0.85
+  market_neutral: false
+risk:
+  max_position_pct: 0.15
+  max_gross_exposure: 0.90
+  max_net_exposure: 0.90
+  max_turnover_pct: 0.30
+  minimum_cash_pct: 0.10
+  minimum_confidence: 0.55
+  maximum_sector_pct: 0.35
+  maximum_single_strategy_pct: 0.60
+  allow_leverage: false
+  allow_shorting: false
+  commission_bps: 5.0
+  slippage_bps: 5.0
+  stale_price_minutes: 10080
+  version: demo-risk-v1
+strategies:
+  - name: fundamental-quality
+    display_name: Fundamental Quality
+    weight: 1.0
+    models:
+      - name: fundamental-specialist-v1
+        provider: replay
+  - name: event-momentum
+    display_name: Event and Momentum
+    weight: 1.0
+    models:
+      - name: quant-specialist-v1
+        provider: replay
+  - name: behavioral-overlay
+    display_name: Behavioral Overlay
+    weight: 0.5
+    models:
+      - name: event-behavioral-specialist-v1
+        provider: replay

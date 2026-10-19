@@ -1,0 +1,24 @@
+- source_id: company-ir
+  display_name: Approved company investor relations
+  source_type: official_web
+  domains:
+  - investor.apple.com
+  markets:
+  - US
+  information_types:
+  - company_announcement
+  - earnings
+  live_safe: true
+  historical_safe: false
+  point_in_time_safe: false
+  requires_auth: false
+  credential_scope: null
+  licence_classification: public-web
+  obey_robots: true
+  minimum_interval_seconds: 2
+  max_pages_per_job: 3
+  max_depth: 1
+  retention_policy: immutable
+  parser_profile: html-v1
+  reliability_prior: 0.9
+  version: 1.0.0

@@ -1,0 +1,77 @@
+[project]
+name = "aegisquant"
+version = "0.1.0"
+description = "Evidence-first agentic investment research, honest backtesting, deterministic risk, and governed self-improvement."
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+license = { text = "MIT" }
+authors = [{ name = "AegisQuant contributors" }]
+dependencies = [
+  "langgraph>=0.3,<2",
+  "numpy>=2.0,<3",
+  "pandas>=2.2,<3",
+  "pyarrow>=18,<24",
+  "pydantic>=2.10,<3",
+  "PyYAML>=6.0,<7",
+  "typer>=0.15,<1",
+]
+
+[project.optional-dependencies]
+sources = [
+  "httpx>=0.28,<1",
+]
+lab = [
+  "purgedcv>=0.1.2,<0.2",
+  "qtype @ git+https://github.com/VernonOY/qtype.git@5277e433a524742c80889af8982377f2bbf8d8f3",
+]
+dashboard = [
+  "streamlit>=1.42,<2",
+]
+
+[project.scripts]
+aegis = "apps.cli:main"
+
+[dependency-groups]
+dev = [
+  "mypy>=1.14,<2",
+  "pandas-stubs>=2.2,<3",
+  "pre-commit>=4,<5",
+  "pytest>=8.3,<10",
+  "pytest-cov>=6,<8",
+  "ruff>=0.9,<1",
+  "types-PyYAML>=6,<7",
+]
+
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["aegis", "apps"]
+
+[tool.pytest.ini_options]
+addopts = "-ra --strict-config --strict-markers"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+packages = ["aegis", "apps"]
+
+[tool.coverage.run]
+branch = true
+source = ["aegis"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
