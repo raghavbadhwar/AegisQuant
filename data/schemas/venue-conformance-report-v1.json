@@ -1,0 +1,60 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "acknowledged_order_ids": {
+      "items": {
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+        "type": "string"
+      },
+      "title": "Acknowledged Order Ids",
+      "type": "array"
+    },
+    "broker_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Broker Id",
+      "type": "string"
+    },
+    "command_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Command Digest",
+      "type": "string"
+    },
+    "outcome": {
+      "const": "CONFORMANT",
+      "default": "CONFORMANT",
+      "title": "Outcome",
+      "type": "string"
+    },
+    "report_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Report Digest",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "tenant_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Tenant Id",
+      "type": "string"
+    },
+    "verified_at": {
+      "format": "date-time",
+      "title": "Verified At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "broker_id",
+    "command_digest",
+    "acknowledged_order_ids",
+    "report_digest",
+    "verified_at"
+  ],
+  "title": "VenueConformanceReport",
+  "type": "object"
+}

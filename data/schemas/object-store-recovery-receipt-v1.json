@@ -1,0 +1,126 @@
+{
+  "$defs": {
+    "BlobRef": {
+      "additionalProperties": false,
+      "properties": {
+        "content_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Content Digest",
+          "type": "string"
+        },
+        "media_type": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Media Type",
+          "type": "string"
+        },
+        "retention_class": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Retention Class",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "size_bytes": {
+          "minimum": 0,
+          "title": "Size Bytes",
+          "type": "integer"
+        },
+        "tenant_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Tenant Id",
+          "type": "string"
+        },
+        "uri": {
+          "maxLength": 2048,
+          "minLength": 1,
+          "title": "Uri",
+          "type": "string"
+        }
+      },
+      "required": [
+        "tenant_id",
+        "uri",
+        "content_digest",
+        "size_bytes",
+        "media_type",
+        "retention_class"
+      ],
+      "title": "BlobRef",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "completed_at": {
+      "format": "date-time",
+      "title": "Completed At",
+      "type": "string"
+    },
+    "drill_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Drill Id",
+      "type": "string"
+    },
+    "object_count": {
+      "minimum": 1,
+      "title": "Object Count",
+      "type": "integer"
+    },
+    "recovered_content_manifest_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Recovered Content Manifest Digest",
+      "type": "string"
+    },
+    "recovered_references": {
+      "items": {
+        "$ref": "#/$defs/BlobRef"
+      },
+      "title": "Recovered References",
+      "type": "array"
+    },
+    "recovery_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Recovery Digest",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "source_content_manifest_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Source Content Manifest Digest",
+      "type": "string"
+    },
+    "tenant_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Tenant Id",
+      "type": "string"
+    },
+    "total_bytes": {
+      "minimum": 0,
+      "title": "Total Bytes",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "drill_id",
+    "source_content_manifest_digest",
+    "recovered_content_manifest_digest",
+    "recovered_references",
+    "object_count",
+    "total_bytes",
+    "recovery_digest",
+    "completed_at"
+  ],
+  "title": "ObjectStoreRecoveryReceipt",
+  "type": "object"
+}

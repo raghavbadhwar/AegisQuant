@@ -1,0 +1,101 @@
+{
+  "$defs": {
+    "TradingEnvironment": {
+      "enum": [
+        "SIM",
+        "PAPER"
+      ],
+      "title": "TradingEnvironment",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "account_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Account Id",
+      "type": "string"
+    },
+    "approval_id": {
+      "format": "uuid",
+      "title": "Approval Id",
+      "type": "string"
+    },
+    "approved_order_bundle_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Approved Order Bundle Digest",
+      "type": "string"
+    },
+    "approver_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Approver Id",
+      "type": "string"
+    },
+    "approver_role": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Approver Role",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "environment": {
+      "$ref": "#/$defs/TradingEnvironment"
+    },
+    "expires_at": {
+      "format": "date-time",
+      "title": "Expires At",
+      "type": "string"
+    },
+    "issuer": {
+      "const": "aegisquant-approval",
+      "default": "aegisquant-approval",
+      "title": "Issuer",
+      "type": "string"
+    },
+    "nonce": {
+      "pattern": "^[0-9a-f]{32,128}$",
+      "title": "Nonce",
+      "type": "string"
+    },
+    "not_before": {
+      "format": "date-time",
+      "title": "Not Before",
+      "type": "string"
+    },
+    "policy_epoch": {
+      "minimum": 1,
+      "title": "Policy Epoch",
+      "type": "integer"
+    },
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "tenant_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Tenant Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "environment",
+    "approval_id",
+    "approver_id",
+    "approver_role",
+    "account_id",
+    "approved_order_bundle_digest",
+    "policy_epoch",
+    "nonce",
+    "created_at",
+    "not_before",
+    "expires_at"
+  ],
+  "title": "HumanApprovalPayload",
+  "type": "object"
+}

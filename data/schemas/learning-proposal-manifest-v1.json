@@ -1,0 +1,118 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "baseline_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Baseline Digest",
+      "type": "string"
+    },
+    "candidate_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Candidate Id",
+      "type": "string"
+    },
+    "candidate_type": {
+      "const": "STRATEGY",
+      "default": "STRATEGY",
+      "title": "Candidate Type",
+      "type": "string"
+    },
+    "case_id": {
+      "format": "uuid",
+      "title": "Case Id",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "evaluation_plan_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Evaluation Plan Digest",
+      "type": "string"
+    },
+    "independent_evaluator_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Independent Evaluator Id",
+      "type": "string"
+    },
+    "locked_holdout_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Locked Holdout Digest",
+      "type": "string"
+    },
+    "proposal_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Proposal Digest",
+      "type": "string"
+    },
+    "proposed_value": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "title": "Proposed Value"
+    },
+    "rollback_manifest_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Rollback Manifest Digest",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "source_actor_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Source Actor Id",
+      "type": "string"
+    },
+    "source_case_id": {
+      "format": "uuid",
+      "title": "Source Case Id",
+      "type": "string"
+    },
+    "source_outcome_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Source Outcome Digest",
+      "type": "string"
+    },
+    "strategy_parameter": {
+      "const": "portfolio_policy.uncertainty_floor",
+      "title": "Strategy Parameter",
+      "type": "string"
+    },
+    "tenant_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Tenant Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "case_id",
+    "source_case_id",
+    "candidate_id",
+    "source_actor_id",
+    "independent_evaluator_id",
+    "source_outcome_digest",
+    "baseline_digest",
+    "proposal_digest",
+    "evaluation_plan_digest",
+    "rollback_manifest_digest",
+    "locked_holdout_digest",
+    "strategy_parameter",
+    "proposed_value",
+    "created_at"
+  ],
+  "title": "LearningProposalManifest",
+  "type": "object"
+}

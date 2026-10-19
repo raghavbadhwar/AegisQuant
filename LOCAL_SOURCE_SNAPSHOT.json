@@ -1,0 +1,17 @@
+{
+  "project": "AegisQuant",
+  "copy_id": "aegisquant-02",
+  "snapshot_date": "2026-10-19",
+  "original_local_head": "9890b8d074e6e1bd7c20e03735800b3adcfe637b",
+  "original_history_included": false,
+  "scope": "Reviewed current source snapshot, not a full disk backup. Dependencies, generated builds, private data, credentials and workflow execution definitions omitted. No build or production-readiness claim.",
+  "source_file_count": 175,
+  "source_manifest_sha256": "1e1087ab9d77c7ca7451548e3de6dd409187c5d1b4c9fbeed9ca4d514e7a4881",
+  "exclusion_reason_counts": {
+    "workflow_execution_prevention": 2,
+    "potential_private_or_runtime_evidence": 1,
+    "unclassified_file_type": 1,
+    "data_payload_not_source": 3
+  },
+  "original_source_untouched": true
+}

@@ -1,0 +1,607 @@
+{
+  "$defs": {
+    "DataSnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "as_of": {
+          "format": "date-time",
+          "title": "As Of",
+          "type": "string"
+        },
+        "case_id": {
+          "format": "uuid",
+          "title": "Case Id",
+          "type": "string"
+        },
+        "content_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Content Digest",
+          "type": "string"
+        },
+        "frozen_at": {
+          "format": "date-time",
+          "title": "Frozen At",
+          "type": "string"
+        },
+        "manifest_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Manifest Digest",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "snapshot_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Snapshot Id",
+          "type": "string"
+        },
+        "tenant_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Tenant Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "tenant_id",
+        "case_id",
+        "snapshot_id",
+        "manifest_digest",
+        "content_digest",
+        "as_of",
+        "frozen_at"
+      ],
+      "title": "DataSnapshot",
+      "type": "object"
+    },
+    "Forecast": {
+      "additionalProperties": false,
+      "properties": {
+        "confidence": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Confidence"
+        },
+        "expected_return": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Expected Return"
+        },
+        "feature_provenance": {
+          "anyOf": [
+            {
+              "items": {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Feature Provenance"
+        },
+        "horizon_days": {
+          "maximum": 3650,
+          "minimum": 1,
+          "title": "Horizon Days",
+          "type": "integer"
+        },
+        "instrument_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Instrument Id",
+          "type": "string"
+        },
+        "probability_positive": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Probability Positive"
+        },
+        "uncertainty": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Uncertainty"
+        }
+      },
+      "required": [
+        "instrument_id",
+        "horizon_days",
+        "expected_return",
+        "probability_positive",
+        "confidence",
+        "uncertainty"
+      ],
+      "title": "Forecast",
+      "type": "object"
+    },
+    "MarketBar": {
+      "additionalProperties": false,
+      "properties": {
+        "available_at": {
+          "format": "date-time",
+          "title": "Available At",
+          "type": "string"
+        },
+        "close_price": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Close Price"
+        },
+        "currency": {
+          "pattern": "^[A-Z]{3}$",
+          "title": "Currency",
+          "type": "string"
+        },
+        "instrument_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Instrument Id",
+          "type": "string"
+        },
+        "instrument_version": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Instrument Version",
+          "type": "string"
+        },
+        "observed_at": {
+          "format": "date-time",
+          "title": "Observed At",
+          "type": "string"
+        },
+        "open_price": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Open Price"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "tradable_at": {
+          "format": "date-time",
+          "title": "Tradable At",
+          "type": "string"
+        },
+        "volume": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Volume"
+        }
+      },
+      "required": [
+        "instrument_id",
+        "instrument_version",
+        "observed_at",
+        "available_at",
+        "tradable_at",
+        "open_price",
+        "close_price",
+        "volume",
+        "currency"
+      ],
+      "title": "MarketBar",
+      "type": "object"
+    },
+    "PortfolioPolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "maximum_position_weight": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "default": "0.20",
+          "title": "Maximum Position Weight"
+        },
+        "uncertainty_floor": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "default": "0.01",
+          "title": "Uncertainty Floor"
+        }
+      },
+      "title": "PortfolioPolicy",
+      "type": "object"
+    },
+    "ResearchManifest": {
+      "additionalProperties": false,
+      "description": "All inputs necessary to deterministically reproduce a research case.",
+      "properties": {
+        "case_id": {
+          "format": "uuid",
+          "title": "Case Id",
+          "type": "string"
+        },
+        "data_manifest_digests": {
+          "items": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Data Manifest Digests",
+          "type": "array"
+        },
+        "frozen_at": {
+          "format": "date-time",
+          "title": "Frozen At",
+          "type": "string"
+        },
+        "model_fixture_digests": {
+          "default": [],
+          "items": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "type": "string"
+          },
+          "title": "Model Fixture Digests",
+          "type": "array"
+        },
+        "relation_manifest_digests": {
+          "default": [],
+          "items": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "type": "string"
+          },
+          "title": "Relation Manifest Digests",
+          "type": "array"
+        },
+        "rights_manifest_ids": {
+          "items": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Rights Manifest Ids",
+          "type": "array"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "skill_manifest_digests": {
+          "default": [],
+          "items": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "type": "string"
+          },
+          "title": "Skill Manifest Digests",
+          "type": "array"
+        },
+        "snapshot_content_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Snapshot Content Digest",
+          "type": "string"
+        },
+        "snapshot_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Snapshot Id",
+          "type": "string"
+        },
+        "snapshot_manifest_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Snapshot Manifest Digest",
+          "type": "string"
+        },
+        "source_receipt_digests": {
+          "default": [],
+          "items": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "type": "string"
+          },
+          "title": "Source Receipt Digests",
+          "type": "array"
+        },
+        "tenant_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Tenant Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "tenant_id",
+        "case_id",
+        "snapshot_id",
+        "snapshot_manifest_digest",
+        "snapshot_content_digest",
+        "data_manifest_digests",
+        "rights_manifest_ids",
+        "frozen_at"
+      ],
+      "title": "ResearchManifest",
+      "type": "object"
+    },
+    "RiskPolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "maximum_gross_exposure": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "default": "1",
+          "title": "Maximum Gross Exposure"
+        },
+        "maximum_order_notional": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "default": "100000",
+          "title": "Maximum Order Notional"
+        },
+        "maximum_position_weight": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "default": "0.20",
+          "title": "Maximum Position Weight"
+        },
+        "maximum_sector_weight": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "default": "0.40",
+          "title": "Maximum Sector Weight"
+        },
+        "maximum_staleness_seconds": {
+          "default": 86400,
+          "minimum": 0,
+          "title": "Maximum Staleness Seconds",
+          "type": "integer"
+        },
+        "maximum_turnover": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "default": "0.25",
+          "title": "Maximum Turnover"
+        },
+        "policy_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Policy Id",
+          "type": "string"
+        },
+        "policy_version": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Policy Version",
+          "type": "string"
+        },
+        "schema_version": {
+          "default": 1,
+          "minimum": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "policy_id",
+        "policy_version"
+      ],
+      "title": "RiskPolicy",
+      "type": "object"
+    },
+    "SecurityVersion": {
+      "additionalProperties": false,
+      "properties": {
+        "instrument_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Instrument Id",
+          "type": "string"
+        },
+        "instrument_version": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Instrument Version",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "sector_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Sector Id",
+          "type": "string"
+        },
+        "valid_from": {
+          "format": "date-time",
+          "title": "Valid From",
+          "type": "string"
+        },
+        "valid_until": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Valid Until"
+        }
+      },
+      "required": [
+        "instrument_id",
+        "instrument_version",
+        "sector_id",
+        "valid_from"
+      ],
+      "title": "SecurityVersion",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "annualization_periods": {
+      "default": 252,
+      "minimum": 1,
+      "title": "Annualization Periods",
+      "type": "integer"
+    },
+    "bars": {
+      "items": {
+        "$ref": "#/$defs/MarketBar"
+      },
+      "minItems": 2,
+      "title": "Bars",
+      "type": "array"
+    },
+    "forecasts": {
+      "items": {
+        "$ref": "#/$defs/Forecast"
+      },
+      "minItems": 1,
+      "title": "Forecasts",
+      "type": "array"
+    },
+    "initial_cash": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "title": "Initial Cash"
+    },
+    "manifest": {
+      "$ref": "#/$defs/ResearchManifest"
+    },
+    "portfolio_policy": {
+      "$ref": "#/$defs/PortfolioPolicy"
+    },
+    "risk_policy": {
+      "$ref": "#/$defs/RiskPolicy"
+    },
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "securities": {
+      "items": {
+        "$ref": "#/$defs/SecurityVersion"
+      },
+      "minItems": 1,
+      "title": "Securities",
+      "type": "array"
+    },
+    "snapshot": {
+      "$ref": "#/$defs/DataSnapshot"
+    }
+  },
+  "required": [
+    "manifest",
+    "snapshot",
+    "forecasts",
+    "bars",
+    "securities",
+    "portfolio_policy",
+    "risk_policy",
+    "initial_cash"
+  ],
+  "title": "FixtureCaseSpec",
+  "type": "object"
+}

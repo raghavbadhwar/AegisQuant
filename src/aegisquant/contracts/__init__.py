@@ -1,0 +1,77 @@
+"""Strict, versioned cross-service contracts."""
+
+from aegisquant.contracts.capability import CapabilityGrant, ToolAuthorizationRequest
+from aegisquant.contracts.case import InvestmentCase, InvestmentCaseRequest
+from aegisquant.contracts.evidence import EvidenceRecord, NumericClaim, RightsManifest
+from aegisquant.contracts.learning import (
+    LearningAttestationHeader,
+    LearningCandidate,
+    LearningCycleResult,
+    LearningEvaluation,
+    LearningEvaluationV2,
+    LearningProposalManifest,
+    PromotionApproval,
+    PromotionApprovalV2,
+    SignedLearningEvaluation,
+    SignedPromotionApproval,
+)
+from aegisquant.contracts.research import (
+    CashLedgerEntry,
+    CorporateAction,
+    DataSnapshot,
+    Last30DaysResearchRecord,
+    MarketBar,
+    PaperFill,
+    PerformanceReport,
+    PositionLedgerEntry,
+    ResearchManifest,
+    SecurityVersion,
+    SourceReceipt,
+    TrialManifest,
+)
+from aegisquant.contracts.risk import (
+    HumanApprovalPayload,
+    OrderBundle,
+    OrderIntent,
+    RiskDecisionPayload,
+    SignedHumanApproval,
+    SignedRiskDecision,
+)
+
+__all__ = [
+    "CapabilityGrant",
+    "CashLedgerEntry",
+    "CorporateAction",
+    "DataSnapshot",
+    "EvidenceRecord",
+    "HumanApprovalPayload",
+    "InvestmentCase",
+    "InvestmentCaseRequest",
+    "Last30DaysResearchRecord",
+    "LearningAttestationHeader",
+    "LearningCandidate",
+    "LearningCycleResult",
+    "LearningEvaluation",
+    "LearningEvaluationV2",
+    "LearningProposalManifest",
+    "MarketBar",
+    "NumericClaim",
+    "OrderBundle",
+    "OrderIntent",
+    "PaperFill",
+    "PerformanceReport",
+    "PositionLedgerEntry",
+    "PromotionApproval",
+    "PromotionApprovalV2",
+    "ResearchManifest",
+    "RightsManifest",
+    "RiskDecisionPayload",
+    "SecurityVersion",
+    "SignedHumanApproval",
+    "SignedLearningEvaluation",
+    "SignedPromotionApproval",
+    "SignedRiskDecision",
+    "SourceReceipt",
+    "ToolAuthorizationRequest",
+    "TrialManifest",
+]

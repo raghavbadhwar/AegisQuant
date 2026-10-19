@@ -1,0 +1,694 @@
+{
+  "$defs": {
+    "CorporateAction": {
+      "additionalProperties": false,
+      "properties": {
+        "available_at": {
+          "format": "date-time",
+          "title": "Available At",
+          "type": "string"
+        },
+        "cash_per_share": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cash Per Share"
+        },
+        "effective_at": {
+          "format": "date-time",
+          "title": "Effective At",
+          "type": "string"
+        },
+        "instrument_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Instrument Id",
+          "type": "string"
+        },
+        "instrument_version": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Instrument Version",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/CorporateActionKind"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "split_ratio": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Split Ratio"
+        }
+      },
+      "required": [
+        "instrument_id",
+        "instrument_version",
+        "kind",
+        "effective_at",
+        "available_at"
+      ],
+      "title": "CorporateAction",
+      "type": "object"
+    },
+    "CorporateActionKind": {
+      "enum": [
+        "CASH_DIVIDEND",
+        "DELISTING_CASH",
+        "SPLIT"
+      ],
+      "title": "CorporateActionKind",
+      "type": "string"
+    },
+    "OrderSide": {
+      "enum": [
+        "BUY",
+        "SELL"
+      ],
+      "title": "OrderSide",
+      "type": "string"
+    },
+    "PaperFill": {
+      "additionalProperties": false,
+      "properties": {
+        "client_order_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Client Order Id",
+          "type": "string"
+        },
+        "filled_at": {
+          "format": "date-time",
+          "title": "Filled At",
+          "type": "string"
+        },
+        "instrument_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Instrument Id",
+          "type": "string"
+        },
+        "instrument_version": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Instrument Version",
+          "type": "string"
+        },
+        "market_data_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Market Data Digest",
+          "type": "string"
+        },
+        "price": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Price"
+        },
+        "quantity": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Quantity"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "side": {
+          "$ref": "#/$defs/OrderSide"
+        },
+        "transaction_cost": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Transaction Cost"
+        }
+      },
+      "required": [
+        "client_order_id",
+        "instrument_id",
+        "instrument_version",
+        "side",
+        "quantity",
+        "price",
+        "transaction_cost",
+        "filled_at",
+        "market_data_digest"
+      ],
+      "title": "PaperFill",
+      "type": "object"
+    },
+    "PerformanceReport": {
+      "additionalProperties": false,
+      "properties": {
+        "annualization_periods": {
+          "minimum": 1,
+          "title": "Annualization Periods",
+          "type": "integer"
+        },
+        "annualized_return": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Annualized Return"
+        },
+        "annualized_volatility": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Annualized Volatility"
+        },
+        "deflated_sharpe_ratio": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Deflated Sharpe Ratio"
+        },
+        "observations": {
+          "minimum": 0,
+          "title": "Observations",
+          "type": "integer"
+        },
+        "probabilistic_sharpe_ratio": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Probabilistic Sharpe Ratio"
+        },
+        "probability_of_backtest_overfitting": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Probability Of Backtest Overfitting"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "sortino_ratio": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sortino Ratio"
+        },
+        "sufficient_evidence": {
+          "title": "Sufficient Evidence",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "observations",
+        "annualization_periods",
+        "sufficient_evidence"
+      ],
+      "title": "PerformanceReport",
+      "type": "object"
+    },
+    "PeriodResult": {
+      "additionalProperties": false,
+      "properties": {
+        "applied_actions": {
+          "items": {
+            "$ref": "#/$defs/CorporateAction"
+          },
+          "title": "Applied Actions",
+          "type": "array"
+        },
+        "benchmark_return": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Benchmark Return"
+        },
+        "cash": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Cash"
+        },
+        "decision_at": {
+          "format": "date-time",
+          "title": "Decision At",
+          "type": "string"
+        },
+        "fill_at": {
+          "format": "date-time",
+          "title": "Fill At",
+          "type": "string"
+        },
+        "fills": {
+          "items": {
+            "$ref": "#/$defs/PaperFill"
+          },
+          "title": "Fills",
+          "type": "array"
+        },
+        "nav": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Nav"
+        },
+        "period_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Period Id",
+          "type": "string"
+        },
+        "period_return": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Period Return"
+        },
+        "positions": {
+          "items": {
+            "$ref": "#/$defs/PositionLedgerEntry"
+          },
+          "title": "Positions",
+          "type": "array"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "stale_rejected_order_ids": {
+          "items": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+            "type": "string"
+          },
+          "title": "Stale Rejected Order Ids",
+          "type": "array"
+        },
+        "unfilled_order_ids": {
+          "items": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+            "type": "string"
+          },
+          "title": "Unfilled Order Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "period_id",
+        "decision_at",
+        "fill_at",
+        "applied_actions",
+        "fills",
+        "unfilled_order_ids",
+        "stale_rejected_order_ids",
+        "cash",
+        "positions",
+        "nav",
+        "period_return",
+        "benchmark_return"
+      ],
+      "title": "PeriodResult",
+      "type": "object"
+    },
+    "PositionLedgerEntry": {
+      "additionalProperties": false,
+      "properties": {
+        "instrument_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Instrument Id",
+          "type": "string"
+        },
+        "instrument_version": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Instrument Version",
+          "type": "string"
+        },
+        "mark_price": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Mark Price"
+        },
+        "marked_at": {
+          "format": "date-time",
+          "title": "Marked At",
+          "type": "string"
+        },
+        "quantity": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Quantity"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "source_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Source Digest",
+          "type": "string"
+        }
+      },
+      "required": [
+        "instrument_id",
+        "instrument_version",
+        "quantity",
+        "mark_price",
+        "marked_at",
+        "source_digest"
+      ],
+      "title": "PositionLedgerEntry",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "benchmark_return": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "title": "Benchmark Return"
+    },
+    "benchmark_returns": {
+      "items": {
+        "anyOf": [
+          {
+            "type": "number"
+          },
+          {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "type": "string"
+          }
+        ]
+      },
+      "title": "Benchmark Returns",
+      "type": "array"
+    },
+    "case_id": {
+      "format": "uuid",
+      "title": "Case Id",
+      "type": "string"
+    },
+    "final_cash": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "title": "Final Cash"
+    },
+    "final_nav": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "title": "Final Nav"
+    },
+    "final_positions": {
+      "items": {
+        "$ref": "#/$defs/PositionLedgerEntry"
+      },
+      "title": "Final Positions",
+      "type": "array"
+    },
+    "holdout_returns": {
+      "items": {
+        "anyOf": [
+          {
+            "type": "number"
+          },
+          {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "type": "string"
+          }
+        ]
+      },
+      "title": "Holdout Returns",
+      "type": "array"
+    },
+    "locked_holdout_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Locked Holdout Digest",
+      "type": "string"
+    },
+    "performance": {
+      "$ref": "#/$defs/PerformanceReport"
+    },
+    "periods": {
+      "items": {
+        "$ref": "#/$defs/PeriodResult"
+      },
+      "title": "Periods",
+      "type": "array"
+    },
+    "placebo_returns": {
+      "items": {
+        "anyOf": [
+          {
+            "type": "number"
+          },
+          {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "type": "string"
+          }
+        ]
+      },
+      "title": "Placebo Returns",
+      "type": "array"
+    },
+    "report_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Report Digest",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "spec_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Spec Digest",
+      "type": "string"
+    },
+    "strategy_returns": {
+      "items": {
+        "anyOf": [
+          {
+            "type": "number"
+          },
+          {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "type": "string"
+          }
+        ]
+      },
+      "title": "Strategy Returns",
+      "type": "array"
+    },
+    "tenant_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Tenant Id",
+      "type": "string"
+    },
+    "walk_forward_windows": {
+      "items": {
+        "maxItems": 4,
+        "minItems": 4,
+        "prefixItems": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "type": "integer"
+          }
+        ],
+        "type": "array"
+      },
+      "title": "Walk Forward Windows",
+      "type": "array"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "case_id",
+    "spec_digest",
+    "periods",
+    "final_cash",
+    "final_positions",
+    "final_nav",
+    "benchmark_return",
+    "strategy_returns",
+    "benchmark_returns",
+    "walk_forward_windows",
+    "locked_holdout_digest",
+    "holdout_returns",
+    "placebo_returns",
+    "performance",
+    "report_digest"
+  ],
+  "title": "MultiPeriodCaseReport",
+  "type": "object"
+}

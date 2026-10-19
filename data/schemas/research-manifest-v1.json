@@ -1,0 +1,108 @@
+{
+  "additionalProperties": false,
+  "description": "All inputs necessary to deterministically reproduce a research case.",
+  "properties": {
+    "case_id": {
+      "format": "uuid",
+      "title": "Case Id",
+      "type": "string"
+    },
+    "data_manifest_digests": {
+      "items": {
+        "pattern": "^sha256:[0-9a-f]{64}$",
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Data Manifest Digests",
+      "type": "array"
+    },
+    "frozen_at": {
+      "format": "date-time",
+      "title": "Frozen At",
+      "type": "string"
+    },
+    "model_fixture_digests": {
+      "default": [],
+      "items": {
+        "pattern": "^sha256:[0-9a-f]{64}$",
+        "type": "string"
+      },
+      "title": "Model Fixture Digests",
+      "type": "array"
+    },
+    "relation_manifest_digests": {
+      "default": [],
+      "items": {
+        "pattern": "^sha256:[0-9a-f]{64}$",
+        "type": "string"
+      },
+      "title": "Relation Manifest Digests",
+      "type": "array"
+    },
+    "rights_manifest_ids": {
+      "items": {
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Rights Manifest Ids",
+      "type": "array"
+    },
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "skill_manifest_digests": {
+      "default": [],
+      "items": {
+        "pattern": "^sha256:[0-9a-f]{64}$",
+        "type": "string"
+      },
+      "title": "Skill Manifest Digests",
+      "type": "array"
+    },
+    "snapshot_content_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Snapshot Content Digest",
+      "type": "string"
+    },
+    "snapshot_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Snapshot Id",
+      "type": "string"
+    },
+    "snapshot_manifest_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Snapshot Manifest Digest",
+      "type": "string"
+    },
+    "source_receipt_digests": {
+      "default": [],
+      "items": {
+        "pattern": "^sha256:[0-9a-f]{64}$",
+        "type": "string"
+      },
+      "title": "Source Receipt Digests",
+      "type": "array"
+    },
+    "tenant_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Tenant Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "case_id",
+    "snapshot_id",
+    "snapshot_manifest_digest",
+    "snapshot_content_digest",
+    "data_manifest_digests",
+    "rights_manifest_ids",
+    "frozen_at"
+  ],
+  "title": "ResearchManifest",
+  "type": "object"
+}

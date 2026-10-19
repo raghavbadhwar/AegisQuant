@@ -1,0 +1,98 @@
+{
+  "$defs": {
+    "OrderSide": {
+      "enum": [
+        "BUY",
+        "SELL"
+      ],
+      "title": "OrderSide",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "client_order_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Client Order Id",
+      "type": "string"
+    },
+    "filled_at": {
+      "format": "date-time",
+      "title": "Filled At",
+      "type": "string"
+    },
+    "instrument_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Instrument Id",
+      "type": "string"
+    },
+    "instrument_version": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Instrument Version",
+      "type": "string"
+    },
+    "market_data_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Market Data Digest",
+      "type": "string"
+    },
+    "price": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "title": "Price"
+    },
+    "quantity": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "title": "Quantity"
+    },
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "side": {
+      "$ref": "#/$defs/OrderSide"
+    },
+    "transaction_cost": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "title": "Transaction Cost"
+    }
+  },
+  "required": [
+    "client_order_id",
+    "instrument_id",
+    "instrument_version",
+    "side",
+    "quantity",
+    "price",
+    "transaction_cost",
+    "filled_at",
+    "market_data_digest"
+  ],
+  "title": "PaperFill",
+  "type": "object"
+}

@@ -1,0 +1,115 @@
+{
+  "$defs": {
+    "CasePurpose": {
+      "enum": [
+        "research",
+        "rebalance",
+        "event_response",
+        "strategy_validation",
+        "paper_trade"
+      ],
+      "title": "CasePurpose",
+      "type": "string"
+    },
+    "ResearchMode": {
+      "enum": [
+        "screen",
+        "standard",
+        "deep",
+        "exceptional"
+      ],
+      "title": "ResearchMode",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "analysis_time": {
+      "format": "date-time",
+      "title": "Analysis Time",
+      "type": "string"
+    },
+    "data_snapshot_id": {
+      "anyOf": [
+        {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Data Snapshot Id"
+    },
+    "deadline": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Deadline"
+    },
+    "forecast_horizon_days": {
+      "maximum": 3650,
+      "minimum": 1,
+      "title": "Forecast Horizon Days",
+      "type": "integer"
+    },
+    "instrument_ids": {
+      "items": {
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+        "type": "string"
+      },
+      "maxItems": 1000,
+      "minItems": 1,
+      "title": "Instrument Ids",
+      "type": "array"
+    },
+    "maximum_cost_usd": {
+      "pattern": "^(?:0|[1-9][0-9]*)(?:\\.[0-9]{1,2})?$",
+      "title": "Maximum Cost Usd",
+      "type": "string"
+    },
+    "portfolio_snapshot_id": {
+      "anyOf": [
+        {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Portfolio Snapshot Id"
+    },
+    "purpose": {
+      "$ref": "#/$defs/CasePurpose"
+    },
+    "requested_mode": {
+      "$ref": "#/$defs/ResearchMode"
+    },
+    "strategy_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Strategy Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "strategy_id",
+    "instrument_ids",
+    "analysis_time",
+    "forecast_horizon_days",
+    "requested_mode",
+    "maximum_cost_usd",
+    "purpose"
+  ],
+  "title": "InvestmentCaseRequest",
+  "type": "object"
+}

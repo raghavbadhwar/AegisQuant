@@ -1,0 +1,83 @@
+{
+  "$defs": {
+    "ForecastAssessmentOutcome": {
+      "enum": [
+        "SUPPORTED",
+        "ABSTAIN"
+      ],
+      "title": "ForecastAssessmentOutcome",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "bundle_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Bundle Digest",
+      "type": "string"
+    },
+    "case_id": {
+      "format": "uuid",
+      "title": "Case Id",
+      "type": "string"
+    },
+    "evaluated_at": {
+      "format": "date-time",
+      "title": "Evaluated At",
+      "type": "string"
+    },
+    "forecast_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Forecast Digest",
+      "type": "string"
+    },
+    "outcome": {
+      "$ref": "#/$defs/ForecastAssessmentOutcome"
+    },
+    "reason_codes": {
+      "items": {
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+        "type": "string"
+      },
+      "title": "Reason Codes",
+      "type": "array"
+    },
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "snapshot_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Snapshot Id",
+      "type": "string"
+    },
+    "supporting_evidence_digests": {
+      "items": {
+        "pattern": "^sha256:[0-9a-f]{64}$",
+        "type": "string"
+      },
+      "title": "Supporting Evidence Digests",
+      "type": "array"
+    },
+    "tenant_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Tenant Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "case_id",
+    "snapshot_id",
+    "evaluated_at",
+    "outcome",
+    "bundle_digest",
+    "forecast_digest",
+    "supporting_evidence_digests",
+    "reason_codes"
+  ],
+  "title": "ForecastAssessment",
+  "type": "object"
+}

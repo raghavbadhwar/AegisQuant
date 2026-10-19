@@ -1,0 +1,402 @@
+{
+  "events": [
+    {
+      "eventId": "1",
+      "eventTime": "2026-08-08T12:55:54.337Z",
+      "eventType": "EVENT_TYPE_WORKFLOW_EXECUTION_STARTED",
+      "workflowExecutionStartedEventAttributes": {
+        "workflowType": {
+          "name": "ResearchCaseWorkflowV1"
+        },
+        "taskQueue": {
+          "name": "aegisquant-research-case-v1"
+        },
+        "input": {
+          "payloads": [
+            {
+              "metadata": {
+                "encoding": "anNvbi9wbGFpbg=="
+              },
+              "data": "eyJzY2hlbWFfdmVyc2lvbiI6MSwidGVuYW50X2lkIjoidGVuYW50LWEiLCJjYXNlX2lkIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMTAxIiwiZGF0YV9zbmFwc2hvdF9pZCI6ImZpeHR1cmUtc25hcHNob3QtdjEiLCJmaXh0dXJlX2V2aWRlbmNlIjp7InNjaGVtYV92ZXJzaW9uIjoxLCJ0ZW5hbnRfaWQiOiJ0ZW5hbnQtYSIsInVyaSI6ImZpeHR1cmU6Ly9hcHByb3ZlZC9yZXNlYXJjaC1jYXNlLXYxIiwiY29udGVudF9kaWdlc3QiOiJzaGEyNTY6YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYSIsInNpemVfYnl0ZXMiOjI2LCJtZWRpYV90eXBlIjoidGV4dC9wbGFpbiIsInJldGVudGlvbl9jbGFzcyI6ImdvbGRlbi1oaXN0b3J5In19"
+            }
+          ]
+        },
+        "workflowExecutionTimeout": "315360000s",
+        "workflowRunTimeout": "315360000s",
+        "workflowTaskTimeout": "10s",
+        "originalExecutionRunId": "5d3c1efe-715e-4dcc-b0de-58a9fcf886e5",
+        "identity": "44948@Raghavs-MacBook-Air-2.local",
+        "firstExecutionRunId": "5d3c1efe-715e-4dcc-b0de-58a9fcf886e5",
+        "attempt": 1,
+        "firstWorkflowTaskBackoff": "0s",
+        "priority": {}
+      }
+    },
+    {
+      "eventId": "2",
+      "eventTime": "2026-08-08T12:55:54.337Z",
+      "eventType": "EVENT_TYPE_WORKFLOW_TASK_SCHEDULED",
+      "workflowTaskScheduledEventAttributes": {
+        "taskQueue": {
+          "name": "aegisquant-research-case-v1"
+        },
+        "startToCloseTimeout": "10s",
+        "attempt": 1
+      }
+    },
+    {
+      "eventId": "3",
+      "eventTime": "2026-08-08T12:55:54.337Z",
+      "eventType": "EVENT_TYPE_WORKFLOW_TASK_STARTED",
+      "workflowTaskStartedEventAttributes": {
+        "scheduledEventId": "2",
+        "identity": "44948@Raghavs-MacBook-Air-2.local",
+        "historySizeBytes": "717"
+      }
+    },
+    {
+      "eventId": "4",
+      "eventTime": "2026-08-08T12:55:54.345Z",
+      "eventType": "EVENT_TYPE_WORKFLOW_TASK_COMPLETED",
+      "workflowTaskCompletedEventAttributes": {
+        "scheduledEventId": "2",
+        "identity": "44948@Raghavs-MacBook-Air-2.local",
+        "binaryChecksum": "m0-golden-v1",
+        "sdkMetadata": {
+          "coreUsedFlags": [
+            1,
+            2,
+            3
+          ],
+          "sdkName": "temporal-python",
+          "sdkVersion": "1.31.0"
+        },
+        "meteringMetadata": {}
+      }
+    },
+    {
+      "eventId": "5",
+      "eventTime": "2026-08-08T12:55:54.345Z",
+      "eventType": "EVENT_TYPE_ACTIVITY_TASK_SCHEDULED",
+      "activityTaskScheduledEventAttributes": {
+        "activityId": "freeze-v1:tenant-a:00000000-0000-0000-0000-000000000101",
+        "activityType": {
+          "name": "freeze_fixture_snapshot_v1"
+        },
+        "taskQueue": {
+          "name": "aegisquant-research-case-v1",
+          "kind": "TASK_QUEUE_KIND_NORMAL"
+        },
+        "header": {},
+        "input": {
+          "payloads": [
+            {
+              "metadata": {
+                "encoding": "anNvbi9wbGFpbg=="
+              },
+              "data": "eyJzY2hlbWFfdmVyc2lvbiI6MSwidGVuYW50X2lkIjoidGVuYW50LWEiLCJjYXNlX2lkIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMTAxIiwiZGF0YV9zbmFwc2hvdF9pZCI6ImZpeHR1cmUtc25hcHNob3QtdjEiLCJmaXh0dXJlX2V2aWRlbmNlIjp7InNjaGVtYV92ZXJzaW9uIjoxLCJ0ZW5hbnRfaWQiOiJ0ZW5hbnQtYSIsInVyaSI6ImZpeHR1cmU6Ly9hcHByb3ZlZC9yZXNlYXJjaC1jYXNlLXYxIiwiY29udGVudF9kaWdlc3QiOiJzaGEyNTY6YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYSIsInNpemVfYnl0ZXMiOjI2LCJtZWRpYV90eXBlIjoidGV4dC9wbGFpbiIsInJldGVudGlvbl9jbGFzcyI6ImdvbGRlbi1oaXN0b3J5In19"
+            }
+          ]
+        },
+        "scheduleToCloseTimeout": "45s",
+        "scheduleToStartTimeout": "10s",
+        "startToCloseTimeout": "30s",
+        "heartbeatTimeout": "10s",
+        "workflowTaskCompletedEventId": "3",
+        "retryPolicy": {
+          "initialInterval": "1s",
+          "backoffCoefficient": 2.0,
+          "maximumInterval": "100s",
+          "maximumAttempts": 2
+        },
+        "priority": {}
+      }
+    },
+    {
+      "eventId": "6",
+      "eventTime": "2026-08-08T12:55:54.345Z",
+      "eventType": "EVENT_TYPE_ACTIVITY_TASK_STARTED",
+      "activityTaskStartedEventAttributes": {
+        "scheduledEventId": "5",
+        "identity": "44948@Raghavs-MacBook-Air-2.local",
+        "attempt": 1
+      }
+    },
+    {
+      "eventId": "7",
+      "eventTime": "2026-08-08T12:55:54.346Z",
+      "eventType": "EVENT_TYPE_ACTIVITY_TASK_COMPLETED",
+      "activityTaskCompletedEventAttributes": {
+        "result": {
+          "payloads": [
+            {
+              "metadata": {
+                "encoding": "anNvbi9wbGFpbg=="
+              },
+              "data": "eyJzY2hlbWFfdmVyc2lvbiI6MSwidGVuYW50X2lkIjoidGVuYW50LWEiLCJzbmFwc2hvdF9pZCI6ImZpeHR1cmUtc25hcHNob3QtdjEiLCJtYW5pZmVzdF9kaWdlc3QiOiJzaGEyNTY6Y2Q2M2M0NGYyMDk3MDhlZTBkMDA5ZjI2YmM4YjRhNzYxNDhlZjBmOGVjOTI3ZWYyMGIyYTBhOTM2NTdmOTEwZiJ9"
+            }
+          ]
+        },
+        "scheduledEventId": "5",
+        "startedEventId": "6",
+        "identity": "44948@Raghavs-MacBook-Air-2.local"
+      }
+    },
+    {
+      "eventId": "8",
+      "eventTime": "2026-08-08T12:55:54.346Z",
+      "eventType": "EVENT_TYPE_WORKFLOW_TASK_SCHEDULED",
+      "workflowTaskScheduledEventAttributes": {
+        "taskQueue": {
+          "name": "aegisquant-research-case-v1"
+        },
+        "startToCloseTimeout": "10s",
+        "attempt": 1
+      }
+    },
+    {
+      "eventId": "9",
+      "eventTime": "2026-08-08T12:55:54.346Z",
+      "eventType": "EVENT_TYPE_WORKFLOW_TASK_STARTED",
+      "workflowTaskStartedEventAttributes": {
+        "scheduledEventId": "8",
+        "identity": "44948@Raghavs-MacBook-Air-2.local",
+        "historySizeBytes": "1889"
+      }
+    },
+    {
+      "eventId": "10",
+      "eventTime": "2026-08-08T12:55:54.347Z",
+      "eventType": "EVENT_TYPE_WORKFLOW_TASK_COMPLETED",
+      "workflowTaskCompletedEventAttributes": {
+        "scheduledEventId": "8",
+        "identity": "44948@Raghavs-MacBook-Air-2.local",
+        "binaryChecksum": "m0-golden-v1",
+        "sdkMetadata": {},
+        "meteringMetadata": {}
+      }
+    },
+    {
+      "eventId": "11",
+      "eventTime": "2026-08-08T12:55:54.347Z",
+      "eventType": "EVENT_TYPE_ACTIVITY_TASK_SCHEDULED",
+      "activityTaskScheduledEventAttributes": {
+        "activityId": "evidence-v1:tenant-a:00000000-0000-0000-0000-000000000101",
+        "activityType": {
+          "name": "register_fixture_evidence_v1"
+        },
+        "taskQueue": {
+          "name": "aegisquant-research-case-v1",
+          "kind": "TASK_QUEUE_KIND_NORMAL"
+        },
+        "header": {},
+        "input": {
+          "payloads": [
+            {
+              "metadata": {
+                "encoding": "anNvbi9wbGFpbg=="
+              },
+              "data": "eyJzY2hlbWFfdmVyc2lvbiI6MSwidGVuYW50X2lkIjoidGVuYW50LWEiLCJjYXNlX2lkIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMTAxIiwiZml4dHVyZV9ldmlkZW5jZSI6eyJzY2hlbWFfdmVyc2lvbiI6MSwidGVuYW50X2lkIjoidGVuYW50LWEiLCJ1cmkiOiJmaXh0dXJlOi8vYXBwcm92ZWQvcmVzZWFyY2gtY2FzZS12MSIsImNvbnRlbnRfZGlnZXN0Ijoic2hhMjU2OmFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWEiLCJzaXplX2J5dGVzIjoyNiwibWVkaWFfdHlwZSI6InRleHQvcGxhaW4iLCJyZXRlbnRpb25fY2xhc3MiOiJnb2xkZW4taGlzdG9yeSJ9LCJzbmFwc2hvdCI6eyJzY2hlbWFfdmVyc2lvbiI6MSwidGVuYW50X2lkIjoidGVuYW50LWEiLCJzbmFwc2hvdF9pZCI6ImZpeHR1cmUtc25hcHNob3QtdjEiLCJtYW5pZmVzdF9kaWdlc3QiOiJzaGEyNTY6Y2Q2M2M0NGYyMDk3MDhlZTBkMDA5ZjI2YmM4YjRhNzYxNDhlZjBmOGVjOTI3ZWYyMGIyYTBhOTM2NTdmOTEwZiJ9fQ=="
+            }
+          ]
+        },
+        "scheduleToCloseTimeout": "45s",
+        "scheduleToStartTimeout": "10s",
+        "startToCloseTimeout": "30s",
+        "heartbeatTimeout": "10s",
+        "workflowTaskCompletedEventId": "9",
+        "retryPolicy": {
+          "initialInterval": "1s",
+          "backoffCoefficient": 2.0,
+          "maximumInterval": "100s",
+          "maximumAttempts": 2
+        },
+        "priority": {}
+      }
+    },
+    {
+      "eventId": "12",
+      "eventTime": "2026-08-08T12:55:54.347Z",
+      "eventType": "EVENT_TYPE_ACTIVITY_TASK_STARTED",
+      "activityTaskStartedEventAttributes": {
+        "scheduledEventId": "11",
+        "identity": "44948@Raghavs-MacBook-Air-2.local",
+        "attempt": 1
+      }
+    },
+    {
+      "eventId": "13",
+      "eventTime": "2026-08-08T12:55:54.348Z",
+      "eventType": "EVENT_TYPE_ACTIVITY_TASK_COMPLETED",
+      "activityTaskCompletedEventAttributes": {
+        "result": {
+          "payloads": [
+            {
+              "metadata": {
+                "encoding": "anNvbi9wbGFpbg=="
+              },
+              "data": "eyJzY2hlbWFfdmVyc2lvbiI6MSwidGVuYW50X2lkIjoidGVuYW50LWEiLCJjYXNlX2lkIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMTAxIiwiZXZpZGVuY2VfaWQiOiI3OWY3ODkwYy1hMzYwLTVkMmYtYTVhMy1mNjU3Nzk5OTU4NjUiLCJzb3VyY2VfY29udGVudF9kaWdlc3QiOiJzaGEyNTY6YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYSIsImV2aWRlbmNlX2RpZ2VzdCI6InNoYTI1Njo1MDFjZjhmOGNhZmIxYjMxNThiODg0NGUwN2IyYTk5YWFmMmQxZDQ0ODlkOGYxMDg3MTZiOTliNzI2MGRlMDQ3In0="
+            }
+          ]
+        },
+        "scheduledEventId": "11",
+        "startedEventId": "12",
+        "identity": "44948@Raghavs-MacBook-Air-2.local"
+      }
+    },
+    {
+      "eventId": "14",
+      "eventTime": "2026-08-08T12:55:54.348Z",
+      "eventType": "EVENT_TYPE_WORKFLOW_TASK_SCHEDULED",
+      "workflowTaskScheduledEventAttributes": {
+        "taskQueue": {
+          "name": "aegisquant-research-case-v1"
+        },
+        "startToCloseTimeout": "10s",
+        "attempt": 1
+      }
+    },
+    {
+      "eventId": "15",
+      "eventTime": "2026-08-08T12:55:54.348Z",
+      "eventType": "EVENT_TYPE_WORKFLOW_TASK_STARTED",
+      "workflowTaskStartedEventAttributes": {
+        "scheduledEventId": "14",
+        "identity": "44948@Raghavs-MacBook-Air-2.local",
+        "historySizeBytes": "3341"
+      }
+    },
+    {
+      "eventId": "16",
+      "eventTime": "2026-08-08T12:55:54.349Z",
+      "eventType": "EVENT_TYPE_WORKFLOW_TASK_COMPLETED",
+      "workflowTaskCompletedEventAttributes": {
+        "scheduledEventId": "14",
+        "identity": "44948@Raghavs-MacBook-Air-2.local",
+        "binaryChecksum": "m0-golden-v1",
+        "sdkMetadata": {},
+        "meteringMetadata": {}
+      }
+    },
+    {
+      "eventId": "17",
+      "eventTime": "2026-08-08T12:55:54.349Z",
+      "eventType": "EVENT_TYPE_ACTIVITY_TASK_SCHEDULED",
+      "activityTaskScheduledEventAttributes": {
+        "activityId": "artifact-v1:tenant-a:00000000-0000-0000-0000-000000000101",
+        "activityType": {
+          "name": "emit_fixture_artifact_v1"
+        },
+        "taskQueue": {
+          "name": "aegisquant-research-case-v1",
+          "kind": "TASK_QUEUE_KIND_NORMAL"
+        },
+        "header": {},
+        "input": {
+          "payloads": [
+            {
+              "metadata": {
+                "encoding": "anNvbi9wbGFpbg=="
+              },
+              "data": "eyJzY2hlbWFfdmVyc2lvbiI6MSwidGVuYW50X2lkIjoidGVuYW50LWEiLCJjYXNlX2lkIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMTAxIiwic25hcHNob3QiOnsic2NoZW1hX3ZlcnNpb24iOjEsInRlbmFudF9pZCI6InRlbmFudC1hIiwic25hcHNob3RfaWQiOiJmaXh0dXJlLXNuYXBzaG90LXYxIiwibWFuaWZlc3RfZGlnZXN0Ijoic2hhMjU2OmNkNjNjNDRmMjA5NzA4ZWUwZDAwOWYyNmJjOGI0YTc2MTQ4ZWYwZjhlYzkyN2VmMjBiMmEwYTkzNjU3ZjkxMGYifSwiZXZpZGVuY2UiOnsic2NoZW1hX3ZlcnNpb24iOjEsInRlbmFudF9pZCI6InRlbmFudC1hIiwiY2FzZV9pZCI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDEwMSIsImV2aWRlbmNlX2lkIjoiNzlmNzg5MGMtYTM2MC01ZDJmLWE1YTMtZjY1Nzc5OTk1ODY1Iiwic291cmNlX2NvbnRlbnRfZGlnZXN0Ijoic2hhMjU2OmFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWEiLCJldmlkZW5jZV9kaWdlc3QiOiJzaGEyNTY6NTAxY2Y4ZjhjYWZiMWIzMTU4Yjg4NDRlMDdiMmE5OWFhZjJkMWQ0NDg5ZDhmMTA4NzE2Yjk5YjcyNjBkZTA0NyJ9fQ=="
+            }
+          ]
+        },
+        "scheduleToCloseTimeout": "45s",
+        "scheduleToStartTimeout": "10s",
+        "startToCloseTimeout": "30s",
+        "heartbeatTimeout": "10s",
+        "workflowTaskCompletedEventId": "15",
+        "retryPolicy": {
+          "initialInterval": "1s",
+          "backoffCoefficient": 2.0,
+          "maximumInterval": "100s",
+          "maximumAttempts": 2
+        },
+        "priority": {}
+      }
+    },
+    {
+      "eventId": "18",
+      "eventTime": "2026-08-08T12:55:54.349Z",
+      "eventType": "EVENT_TYPE_ACTIVITY_TASK_STARTED",
+      "activityTaskStartedEventAttributes": {
+        "scheduledEventId": "17",
+        "identity": "44948@Raghavs-MacBook-Air-2.local",
+        "attempt": 1
+      }
+    },
+    {
+      "eventId": "19",
+      "eventTime": "2026-08-08T12:55:54.350Z",
+      "eventType": "EVENT_TYPE_ACTIVITY_TASK_COMPLETED",
+      "activityTaskCompletedEventAttributes": {
+        "result": {
+          "payloads": [
+            {
+              "metadata": {
+                "encoding": "anNvbi9wbGFpbg=="
+              },
+              "data": "eyJzY2hlbWFfdmVyc2lvbiI6MSwidGVuYW50X2lkIjoidGVuYW50LWEiLCJjYXNlX2lkIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMTAxIiwic25hcHNob3RfaWQiOiJmaXh0dXJlLXNuYXBzaG90LXYxIiwiZXZpZGVuY2VfZGlnZXN0Ijoic2hhMjU2OjUwMWNmOGY4Y2FmYjFiMzE1OGI4ODQ0ZTA3YjJhOTlhYWYyZDFkNDQ4OWQ4ZjEwODcxNmI5OWI3MjYwZGUwNDciLCJhcnRpZmFjdF9pZCI6ImQ0ZDM3NGY1LWI2ZjctNTAzMC1hM2RlLTQ2YTU0ZmYwODdiMiIsImFydGlmYWN0X2RpZ2VzdCI6InNoYTI1Njo0MzIyYTQxNmExNDhjNDFiODZhYmQzOGFmN2RlZmE5MGEwYjg0ZGJmNTU3ODUwYmM5NjYyYmFmYWEyY2Y2NmQyIn0="
+            }
+          ]
+        },
+        "scheduledEventId": "17",
+        "startedEventId": "18",
+        "identity": "44948@Raghavs-MacBook-Air-2.local"
+      }
+    },
+    {
+      "eventId": "20",
+      "eventTime": "2026-08-08T12:55:54.350Z",
+      "eventType": "EVENT_TYPE_WORKFLOW_TASK_SCHEDULED",
+      "workflowTaskScheduledEventAttributes": {
+        "taskQueue": {
+          "name": "aegisquant-research-case-v1"
+        },
+        "startToCloseTimeout": "10s",
+        "attempt": 1
+      }
+    },
+    {
+      "eventId": "21",
+      "eventTime": "2026-08-08T12:55:54.350Z",
+      "eventType": "EVENT_TYPE_WORKFLOW_TASK_STARTED",
+      "workflowTaskStartedEventAttributes": {
+        "scheduledEventId": "20",
+        "identity": "44948@Raghavs-MacBook-Air-2.local",
+        "historySizeBytes": "4891"
+      }
+    },
+    {
+      "eventId": "22",
+      "eventTime": "2026-08-08T12:55:54.351Z",
+      "eventType": "EVENT_TYPE_WORKFLOW_TASK_COMPLETED",
+      "workflowTaskCompletedEventAttributes": {
+        "scheduledEventId": "20",
+        "identity": "44948@Raghavs-MacBook-Air-2.local",
+        "binaryChecksum": "m0-golden-v1",
+        "sdkMetadata": {},
+        "meteringMetadata": {}
+      }
+    },
+    {
+      "eventId": "23",
+      "eventTime": "2026-08-08T12:55:54.351Z",
+      "eventType": "EVENT_TYPE_WORKFLOW_EXECUTION_COMPLETED",
+      "workflowExecutionCompletedEventAttributes": {
+        "result": {
+          "payloads": [
+            {
+              "metadata": {
+                "encoding": "anNvbi9wbGFpbg=="
+              },
+              "data": "eyJzY2hlbWFfdmVyc2lvbiI6MSwidGVuYW50X2lkIjoidGVuYW50LWEiLCJjYXNlX2lkIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMTAxIiwic25hcHNob3QiOnsic2NoZW1hX3ZlcnNpb24iOjEsInRlbmFudF9pZCI6InRlbmFudC1hIiwic25hcHNob3RfaWQiOiJmaXh0dXJlLXNuYXBzaG90LXYxIiwibWFuaWZlc3RfZGlnZXN0Ijoic2hhMjU2OmNkNjNjNDRmMjA5NzA4ZWUwZDAwOWYyNmJjOGI0YTc2MTQ4ZWYwZjhlYzkyN2VmMjBiMmEwYTkzNjU3ZjkxMGYifSwiZXZpZGVuY2UiOnsic2NoZW1hX3ZlcnNpb24iOjEsInRlbmFudF9pZCI6InRlbmFudC1hIiwiY2FzZV9pZCI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDEwMSIsImV2aWRlbmNlX2lkIjoiNzlmNzg5MGMtYTM2MC01ZDJmLWE1YTMtZjY1Nzc5OTk1ODY1Iiwic291cmNlX2NvbnRlbnRfZGlnZXN0Ijoic2hhMjU2OmFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWEiLCJldmlkZW5jZV9kaWdlc3QiOiJzaGEyNTY6NTAxY2Y4ZjhjYWZiMWIzMTU4Yjg4NDRlMDdiMmE5OWFhZjJkMWQ0NDg5ZDhmMTA4NzE2Yjk5YjcyNjBkZTA0NyJ9LCJhcnRpZmFjdCI6eyJzY2hlbWFfdmVyc2lvbiI6MSwidGVuYW50X2lkIjoidGVuYW50LWEiLCJjYXNlX2lkIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMTAxIiwic25hcHNob3RfaWQiOiJmaXh0dXJlLXNuYXBzaG90LXYxIiwiZXZpZGVuY2VfZGlnZXN0Ijoic2hhMjU2OjUwMWNmOGY4Y2FmYjFiMzE1OGI4ODQ0ZTA3YjJhOTlhYWYyZDFkNDQ4OWQ4ZjEwODcxNmI5OWI3MjYwZGUwNDciLCJhcnRpZmFjdF9pZCI6ImQ0ZDM3NGY1LWI2ZjctNTAzMC1hM2RlLTQ2YTU0ZmYwODdiMiIsImFydGlmYWN0X2RpZ2VzdCI6InNoYTI1Njo0MzIyYTQxNmExNDhjNDFiODZhYmQzOGFmN2RlZmE5MGEwYjg0ZGJmNTU3ODUwYmM5NjYyYmFmYWEyY2Y2NmQyIn19"
+            }
+          ]
+        },
+        "workflowTaskCompletedEventId": "21"
+      }
+    }
+  ]
+}

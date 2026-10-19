@@ -1,0 +1,128 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "annualization_periods": {
+      "minimum": 1,
+      "title": "Annualization Periods",
+      "type": "integer"
+    },
+    "annualized_return": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Annualized Return"
+    },
+    "annualized_volatility": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Annualized Volatility"
+    },
+    "deflated_sharpe_ratio": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Deflated Sharpe Ratio"
+    },
+    "observations": {
+      "minimum": 0,
+      "title": "Observations",
+      "type": "integer"
+    },
+    "probabilistic_sharpe_ratio": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Probabilistic Sharpe Ratio"
+    },
+    "probability_of_backtest_overfitting": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Probability Of Backtest Overfitting"
+    },
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "sortino_ratio": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Sortino Ratio"
+    },
+    "sufficient_evidence": {
+      "title": "Sufficient Evidence",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "observations",
+    "annualization_periods",
+    "sufficient_evidence"
+  ],
+  "title": "PerformanceReport",
+  "type": "object"
+}

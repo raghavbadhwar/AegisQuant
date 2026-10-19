@@ -1,0 +1,125 @@
+{
+  "$defs": {
+    "LearningAttestationHeader": {
+      "additionalProperties": false,
+      "properties": {
+        "alg": {
+          "const": "Ed25519",
+          "default": "Ed25519",
+          "title": "Alg",
+          "type": "string"
+        },
+        "key_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Key Id",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "typ": {
+          "const": "AQ-LEARNING-ATTESTATION",
+          "default": "AQ-LEARNING-ATTESTATION",
+          "title": "Typ",
+          "type": "string"
+        }
+      },
+      "required": [
+        "key_id"
+      ],
+      "title": "LearningAttestationHeader",
+      "type": "object"
+    },
+    "LearningEvaluationV2": {
+      "additionalProperties": false,
+      "properties": {
+        "canary_passed": {
+          "title": "Canary Passed",
+          "type": "boolean"
+        },
+        "candidate_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Candidate Id",
+          "type": "string"
+        },
+        "case_id": {
+          "format": "uuid",
+          "title": "Case Id",
+          "type": "string"
+        },
+        "evaluated_at": {
+          "format": "date-time",
+          "title": "Evaluated At",
+          "type": "string"
+        },
+        "evaluation_manifest_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Evaluation Manifest Digest",
+          "type": "string"
+        },
+        "evaluator_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Evaluator Id",
+          "type": "string"
+        },
+        "proposal_manifest_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Proposal Manifest Digest",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": 2,
+          "default": 2,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "shadow_passed": {
+          "title": "Shadow Passed",
+          "type": "boolean"
+        },
+        "tenant_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "title": "Tenant Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "tenant_id",
+        "case_id",
+        "candidate_id",
+        "proposal_manifest_digest",
+        "evaluation_manifest_digest",
+        "evaluator_id",
+        "shadow_passed",
+        "canary_passed",
+        "evaluated_at"
+      ],
+      "title": "LearningEvaluationV2",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "payload": {
+      "$ref": "#/$defs/LearningEvaluationV2"
+    },
+    "protected": {
+      "$ref": "#/$defs/LearningAttestationHeader"
+    },
+    "signature_b64url": {
+      "pattern": "^[A-Za-z0-9_-]{86}$",
+      "title": "Signature B64Url",
+      "type": "string"
+    }
+  },
+  "required": [
+    "protected",
+    "payload",
+    "signature_b64url"
+  ],
+  "title": "SignedLearningEvaluation",
+  "type": "object"
+}

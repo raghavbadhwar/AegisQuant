@@ -1,0 +1,64 @@
+{
+  "additionalProperties": false,
+  "description": "A 30-day research result bound to an immutable source capture.",
+  "properties": {
+    "available_at": {
+      "format": "date-time",
+      "title": "Available At",
+      "type": "string"
+    },
+    "case_id": {
+      "format": "uuid",
+      "title": "Case Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "snapshot_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Snapshot Id",
+      "type": "string"
+    },
+    "snapshot_manifest_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Snapshot Manifest Digest",
+      "type": "string"
+    },
+    "source_content_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Source Content Digest",
+      "type": "string"
+    },
+    "source_receipt_digest": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Source Receipt Digest",
+      "type": "string"
+    },
+    "tenant_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "title": "Tenant Id",
+      "type": "string"
+    },
+    "window_days": {
+      "const": 30,
+      "default": 30,
+      "title": "Window Days",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "case_id",
+    "snapshot_id",
+    "snapshot_manifest_digest",
+    "source_receipt_digest",
+    "source_content_digest",
+    "available_at"
+  ],
+  "title": "Last30DaysResearchRecord",
+  "type": "object"
+}
